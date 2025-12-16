@@ -1,0 +1,5 @@
+group,country,country_code,year,indicator,value,source
+South Asia,India,IND,2019,gini,35.3,World Bank
+South Asia,Nepal,NPL,2019,gini,32.2,World Bank
+OECD,OECD,OECD,2019,gini,31.5,OECD
+ASEAN,ASEAN,ASEAN,2019,gini,37.0,ASEAN Stats

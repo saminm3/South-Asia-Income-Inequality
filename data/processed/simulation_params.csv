@@ -1,0 +1,5 @@
+factor,min_value,max_value,default,weight,unit
+education_years,0,20,10,0.30,years
+digital_access,0,100,50,0.20,%
+gender,0,1,0,0.15,0=male 1=female
+urban_rural,0,1,0,0.10,0=rural 1=urban

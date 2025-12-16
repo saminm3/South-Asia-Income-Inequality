@@ -1,0 +1,283 @@
+country,country_code,year,indicator,value,source
+Bangladesh,BGD,2000,GDP_Total,53369787318.6245,World Bank
+Bangladesh,BGD,2001,GDP_Total,53991289844.3291,World Bank
+Bangladesh,BGD,2002,GDP_Total,54724081490.5102,World Bank
+Bangladesh,BGD,2003,GDP_Total,60158929188.2556,World Bank
+Bangladesh,BGD,2004,GDP_Total,65108544250.0425,World Bank
+Bangladesh,BGD,2005,GDP_Total,69476001239.419,World Bank
+Bangladesh,BGD,2006,GDP_Total,71795736172.1561,World Bank
+Bangladesh,BGD,2007,GDP_Total,79611644974.5571,World Bank
+Bangladesh,BGD,2008,GDP_Total,91636997370.9772,World Bank
+Bangladesh,BGD,2009,GDP_Total,102475158190.998,World Bank
+Bangladesh,BGD,2010,GDP_Total,115275540051.262,World Bank
+Bangladesh,BGD,2011,GDP_Total,128607482310.357,World Bank
+Bangladesh,BGD,2012,GDP_Total,133310747603.483,World Bank
+Bangladesh,BGD,2013,GDP_Total,149998957434.186,World Bank
+Bangladesh,BGD,2014,GDP_Total,172886611653.786,World Bank
+Bangladesh,BGD,2015,GDP_Total,195146608978.131,World Bank
+Bangladesh,BGD,2016,GDP_Total,265224515675.034,World Bank
+Bangladesh,BGD,2017,GDP_Total,293732446624.596,World Bank
+Bangladesh,BGD,2018,GDP_Total,321362752441.78,World Bank
+Bangladesh,BGD,2019,GDP_Total,351231654603.692,World Bank
+Bangladesh,BGD,2020,GDP_Total,373979442362.193,World Bank
+Bangladesh,BGD,2021,GDP_Total,416271647911.014,World Bank
+Bangladesh,BGD,2022,GDP_Total,460131689083.083,World Bank
+Bangladesh,BGD,2023,GDP_Total,437415333018.291,World Bank
+Bangladesh,BGD,2024,GDP_Total,450119424622.389,World Bank
+Bangladesh,BGD,2000,GINI,33.4,World Bank
+Bangladesh,BGD,2005,GINI,33.2,World Bank
+Bangladesh,BGD,2010,GINI,32.1,World Bank
+Bangladesh,BGD,2016,GINI,32.4,World Bank
+Bangladesh,BGD,2022,GINI,33.4,World Bank
+Bangladesh,BGD,2023,HDI,0.685,UNDP
+Bangladesh,BGD,2000,Labor_Force_Total,49012721.0,World Bank
+Bangladesh,BGD,2001,Labor_Force_Total,50202022.0,World Bank
+Bangladesh,BGD,2002,Labor_Force_Total,51222747.0,World Bank
+Bangladesh,BGD,2003,Labor_Force_Total,52191921.0,World Bank
+Bangladesh,BGD,2004,Labor_Force_Total,53128855.0,World Bank
+Bangladesh,BGD,2005,Labor_Force_Total,54042558.0,World Bank
+Bangladesh,BGD,2006,Labor_Force_Total,54908227.0,World Bank
+Bangladesh,BGD,2007,Labor_Force_Total,55891567.0,World Bank
+Bangladesh,BGD,2008,Labor_Force_Total,56846810.0,World Bank
+Bangladesh,BGD,2009,Labor_Force_Total,57807404.0,World Bank
+Bangladesh,BGD,2010,Labor_Force_Total,58796583.0,World Bank
+Bangladesh,BGD,2011,Labor_Force_Total,59281113.0,World Bank
+Bangladesh,BGD,2012,Labor_Force_Total,59869794.0,World Bank
+Bangladesh,BGD,2013,Labor_Force_Total,60484221.0,World Bank
+Bangladesh,BGD,2014,Labor_Force_Total,61204476.0,World Bank
+Bangladesh,BGD,2015,Labor_Force_Total,61920877.0,World Bank
+Bangladesh,BGD,2016,Labor_Force_Total,62629015.0,World Bank
+Bangladesh,BGD,2017,Labor_Force_Total,66147765.0,World Bank
+Bangladesh,BGD,2018,Labor_Force_Total,67707982.0,World Bank
+Bangladesh,BGD,2019,Labor_Force_Total,69213088.0,World Bank
+Bangladesh,BGD,2020,Labor_Force_Total,70410966.0,World Bank
+Bangladesh,BGD,2021,Labor_Force_Total,72755656.0,World Bank
+Bangladesh,BGD,2022,Labor_Force_Total,74651451.0,World Bank
+Bangladesh,BGD,2023,Labor_Force_Total,75834921.0,World Bank
+Bangladesh,BGD,2024,Labor_Force_Total,77355168.0,World Bank
+India,IND,2000,GDP_Total,468395521654.458,World Bank
+India,IND,2001,GDP_Total,485440139204.171,World Bank
+India,IND,2002,GDP_Total,514939140318.756,World Bank
+India,IND,2003,GDP_Total,607700687237.318,World Bank
+India,IND,2004,GDP_Total,709152728830.775,World Bank
+India,IND,2005,GDP_Total,820383763511.445,World Bank
+India,IND,2006,GDP_Total,940259888787.721,World Bank
+India,IND,2007,GDP_Total,1216736438834.96,World Bank
+India,IND,2008,GDP_Total,1198895139005.92,World Bank
+India,IND,2009,GDP_Total,1341888016994.9,World Bank
+India,IND,2010,GDP_Total,1675615519484.96,World Bank
+India,IND,2011,GDP_Total,1823051829894.55,World Bank
+India,IND,2012,GDP_Total,1827637590410.41,World Bank
+India,IND,2013,GDP_Total,1856721507621.58,World Bank
+India,IND,2014,GDP_Total,2039126479154.52,World Bank
+India,IND,2015,GDP_Total,2103588360044.94,World Bank
+India,IND,2016,GDP_Total,2294796885663.16,World Bank
+India,IND,2017,GDP_Total,2651474262755.45,World Bank
+India,IND,2018,GDP_Total,2702929641648.74,World Bank
+India,IND,2019,GDP_Total,2835606256558.19,World Bank
+India,IND,2020,GDP_Total,2674851578587.27,World Bank
+India,IND,2021,GDP_Total,3167270623260.47,World Bank
+India,IND,2022,GDP_Total,3346107287730.93,World Bank
+India,IND,2023,GDP_Total,3638489096033.86,World Bank
+India,IND,2024,GDP_Total,3912686168582.21,World Bank
+India,IND,2004,GINI,27.7,World Bank
+India,IND,2009,GINI,27.8,World Bank
+India,IND,2011,GINI,28.8,World Bank
+India,IND,2022,GINI,25.5,World Bank
+India,IND,2023,HDI,0.685,UNDP
+India,IND,2000,Labor_Force_Total,409617771.0,World Bank
+India,IND,2001,Labor_Force_Total,418764922.0,World Bank
+India,IND,2002,Labor_Force_Total,427829074.0,World Bank
+India,IND,2003,Labor_Force_Total,436753652.0,World Bank
+India,IND,2004,Labor_Force_Total,445825854.0,World Bank
+India,IND,2005,Labor_Force_Total,454832471.0,World Bank
+India,IND,2006,Labor_Force_Total,457611460.0,World Bank
+India,IND,2007,Labor_Force_Total,460225575.0,World Bank
+India,IND,2008,Labor_Force_Total,462536166.0,World Bank
+India,IND,2009,Labor_Force_Total,464961693.0,World Bank
+India,IND,2010,Labor_Force_Total,467561989.0,World Bank
+India,IND,2011,Labor_Force_Total,471891929.0,World Bank
+India,IND,2012,Labor_Force_Total,476101422.0,World Bank
+India,IND,2013,Labor_Force_Total,484539458.0,World Bank
+India,IND,2014,Labor_Force_Total,492791763.0,World Bank
+India,IND,2015,Labor_Force_Total,500763345.0,World Bank
+India,IND,2016,Labor_Force_Total,508796784.0,World Bank
+India,IND,2017,Labor_Force_Total,516812065.0,World Bank
+India,IND,2018,Labor_Force_Total,524342818.0,World Bank
+India,IND,2019,Labor_Force_Total,531383542.0,World Bank
+India,IND,2020,Labor_Force_Total,532528354.0,World Bank
+India,IND,2021,Labor_Force_Total,550352877.0,World Bank
+India,IND,2022,Labor_Force_Total,568900960.0,World Bank
+India,IND,2023,Labor_Force_Total,588969543.0,World Bank
+India,IND,2024,Labor_Force_Total,607691498.0,World Bank
+Nepal,NPL,2000,GDP_Total,5494252207.90502,World Bank
+Nepal,NPL,2001,GDP_Total,6007055042.17687,World Bank
+Nepal,NPL,2002,GDP_Total,6050875806.66403,World Bank
+Nepal,NPL,2003,GDP_Total,6330473096.54071,World Bank
+Nepal,NPL,2004,GDP_Total,7273938314.71988,World Bank
+Nepal,NPL,2005,GDP_Total,8130258377.90964,World Bank
+Nepal,NPL,2006,GDP_Total,9043715355.8881,World Bank
+Nepal,NPL,2007,GDP_Total,10325618017.379,World Bank
+Nepal,NPL,2008,GDP_Total,12545438605.3959,World Bank
+Nepal,NPL,2009,GDP_Total,12854985464.0764,World Bank
+Nepal,NPL,2010,GDP_Total,16002656434.4746,World Bank
+Nepal,NPL,2011,GDP_Total,21573872420.7008,World Bank
+Nepal,NPL,2012,GDP_Total,21703100877.1309,World Bank
+Nepal,NPL,2013,GDP_Total,22162204924.5726,World Bank
+Nepal,NPL,2014,GDP_Total,22731612922.1906,World Bank
+Nepal,NPL,2015,GDP_Total,24360801286.7638,World Bank
+Nepal,NPL,2016,GDP_Total,24524109483.5293,World Bank
+Nepal,NPL,2017,GDP_Total,28971588940.364,World Bank
+Nepal,NPL,2018,GDP_Total,33111525237.149,World Bank
+Nepal,NPL,2019,GDP_Total,34186180699.0255,World Bank
+Nepal,NPL,2020,GDP_Total,33433659301.2466,World Bank
+Nepal,NPL,2021,GDP_Total,36924841394.2605,World Bank
+Nepal,NPL,2022,GDP_Total,41182939600.6209,World Bank
+Nepal,NPL,2023,GDP_Total,41047772331.0994,World Bank
+Nepal,NPL,2024,GDP_Total,42914268286.7109,World Bank
+Nepal,NPL,2003,GINI,43.8,World Bank
+Nepal,NPL,2010,GINI,32.8,World Bank
+Nepal,NPL,2022,GINI,30.0,World Bank
+Nepal,NPL,2023,HDI,0.622,UNDP
+Nepal,NPL,2000,Labor_Force_Total,6005380.0,World Bank
+Nepal,NPL,2001,Labor_Force_Total,6124529.0,World Bank
+Nepal,NPL,2002,Labor_Force_Total,6247336.0,World Bank
+Nepal,NPL,2003,Labor_Force_Total,6372014.0,World Bank
+Nepal,NPL,2004,Labor_Force_Total,6494887.0,World Bank
+Nepal,NPL,2005,Labor_Force_Total,6611553.0,World Bank
+Nepal,NPL,2006,Labor_Force_Total,6720861.0,World Bank
+Nepal,NPL,2007,Labor_Force_Total,6826071.0,World Bank
+Nepal,NPL,2008,Labor_Force_Total,6935404.0,World Bank
+Nepal,NPL,2009,Labor_Force_Total,7050680.0,World Bank
+Nepal,NPL,2010,Labor_Force_Total,7170415.0,World Bank
+Nepal,NPL,2011,Labor_Force_Total,7267751.0,World Bank
+Nepal,NPL,2012,Labor_Force_Total,7325780.0,World Bank
+Nepal,NPL,2013,Labor_Force_Total,7363808.0,World Bank
+Nepal,NPL,2014,Labor_Force_Total,7411947.0,World Bank
+Nepal,NPL,2015,Labor_Force_Total,7495760.0,World Bank
+Nepal,NPL,2016,Labor_Force_Total,7567200.0,World Bank
+Nepal,NPL,2017,Labor_Force_Total,7596203.0,World Bank
+Nepal,NPL,2018,Labor_Force_Total,7630476.0,World Bank
+Nepal,NPL,2019,Labor_Force_Total,7809671.0,World Bank
+Nepal,NPL,2020,Labor_Force_Total,7984562.0,World Bank
+Nepal,NPL,2021,Labor_Force_Total,8237363.0,World Bank
+Nepal,NPL,2022,Labor_Force_Total,8404199.0,World Bank
+Nepal,NPL,2023,Labor_Force_Total,8424737.0,World Bank
+Nepal,NPL,2024,Labor_Force_Total,8435336.0,World Bank
+Pakistan,PAK,2000,GDP_Total,99484802344.5277,World Bank
+Pakistan,PAK,2001,GDP_Total,97145618479.9038,World Bank
+Pakistan,PAK,2002,GDP_Total,97923302809.3537,World Bank
+Pakistan,PAK,2003,GDP_Total,112371913740.823,World Bank
+Pakistan,PAK,2004,GDP_Total,132216048339.413,World Bank
+Pakistan,PAK,2005,GDP_Total,145208562960.767,World Bank
+Pakistan,PAK,2006,GDP_Total,161871385506.36,World Bank
+Pakistan,PAK,2007,GDP_Total,184140869997.46,World Bank
+Pakistan,PAK,2008,GDP_Total,202203748583.854,World Bank
+Pakistan,PAK,2009,GDP_Total,187337783856.466,World Bank
+Pakistan,PAK,2010,GDP_Total,196709621849.586,World Bank
+Pakistan,PAK,2011,GDP_Total,230586581059.665,World Bank
+Pakistan,PAK,2012,GDP_Total,250106966104.704,World Bank
+Pakistan,PAK,2013,GDP_Total,258657231672.412,World Bank
+Pakistan,PAK,2014,GDP_Total,271390474857.632,World Bank
+Pakistan,PAK,2015,GDP_Total,299963590534.773,World Bank
+Pakistan,PAK,2016,GDP_Total,313630000130.435,World Bank
+Pakistan,PAK,2017,GDP_Total,339205534861.1,World Bank
+Pakistan,PAK,2018,GDP_Total,356128166704.921,World Bank
+Pakistan,PAK,2019,GDP_Total,320909472770.669,World Bank
+Pakistan,PAK,2020,GDP_Total,300425609817.981,World Bank
+Pakistan,PAK,2021,GDP_Total,348516647445.148,World Bank
+Pakistan,PAK,2022,GDP_Total,374890295666.694,World Bank
+Pakistan,PAK,2023,GDP_Total,337885531778.052,World Bank
+Pakistan,PAK,2024,GDP_Total,373071855731.539,World Bank
+Pakistan,PAK,2001,GINI,28.7,World Bank
+Pakistan,PAK,2004,GINI,30.9,World Bank
+Pakistan,PAK,2005,GINI,31.3,World Bank
+Pakistan,PAK,2007,GINI,29.7,World Bank
+Pakistan,PAK,2010,GINI,28.8,World Bank
+Pakistan,PAK,2011,GINI,29.7,World Bank
+Pakistan,PAK,2013,GINI,29.5,World Bank
+Pakistan,PAK,2015,GINI,31.3,World Bank
+Pakistan,PAK,2018,GINI,29.6,World Bank
+Pakistan,PAK,2023,HDI,0.544,UNDP
+Pakistan,PAK,2000,Labor_Force_Total,44283074.0,World Bank
+Pakistan,PAK,2001,Labor_Force_Total,45850789.0,World Bank
+Pakistan,PAK,2002,Labor_Force_Total,47266464.0,World Bank
+Pakistan,PAK,2003,Labor_Force_Total,48816449.0,World Bank
+Pakistan,PAK,2004,Labor_Force_Total,50561804.0,World Bank
+Pakistan,PAK,2005,Labor_Force_Total,51855384.0,World Bank
+Pakistan,PAK,2006,Labor_Force_Total,53143744.0,World Bank
+Pakistan,PAK,2007,Labor_Force_Total,55026645.0,World Bank
+Pakistan,PAK,2008,Labor_Force_Total,56978123.0,World Bank
+Pakistan,PAK,2009,Labor_Force_Total,59305908.0,World Bank
+Pakistan,PAK,2010,Labor_Force_Total,61633684.0,World Bank
+Pakistan,PAK,2011,Labor_Force_Total,62965404.0,World Bank
+Pakistan,PAK,2012,Labor_Force_Total,64736311.0,World Bank
+Pakistan,PAK,2013,Labor_Force_Total,66307781.0,World Bank
+Pakistan,PAK,2014,Labor_Force_Total,66802824.0,World Bank
+Pakistan,PAK,2015,Labor_Force_Total,69229075.0,World Bank
+Pakistan,PAK,2016,Labor_Force_Total,69799389.0,World Bank
+Pakistan,PAK,2017,Labor_Force_Total,70494278.0,World Bank
+Pakistan,PAK,2018,Labor_Force_Total,71401725.0,World Bank
+Pakistan,PAK,2019,Labor_Force_Total,73727954.0,World Bank
+Pakistan,PAK,2020,Labor_Force_Total,75415987.0,World Bank
+Pakistan,PAK,2021,Labor_Force_Total,78814704.0,World Bank
+Pakistan,PAK,2022,Labor_Force_Total,80282511.0,World Bank
+Pakistan,PAK,2023,Labor_Force_Total,81926413.0,World Bank
+Pakistan,PAK,2024,Labor_Force_Total,83643815.0,World Bank
+Sri Lanka,LKA,2000,GDP_Total,16330814179.9766,World Bank
+Sri Lanka,LKA,2001,GDP_Total,15749753804.8344,World Bank
+Sri Lanka,LKA,2002,GDP_Total,16536535647.0834,World Bank
+Sri Lanka,LKA,2003,GDP_Total,18881765437.2151,World Bank
+Sri Lanka,LKA,2004,GDP_Total,20662525941.2985,World Bank
+Sri Lanka,LKA,2005,GDP_Total,24405791044.7761,World Bank
+Sri Lanka,LKA,2006,GDP_Total,28279802405.9138,World Bank
+Sri Lanka,LKA,2007,GDP_Total,32350238760.4239,World Bank
+Sri Lanka,LKA,2008,GDP_Total,40713826215.0093,World Bank
+Sri Lanka,LKA,2009,GDP_Total,42066224093.0065,World Bank
+Sri Lanka,LKA,2010,GDP_Total,58636161081.712,World Bank
+Sri Lanka,LKA,2011,GDP_Total,67753284043.9282,World Bank
+Sri Lanka,LKA,2012,GDP_Total,70447216891.3366,World Bank
+Sri Lanka,LKA,2013,GDP_Total,77000578167.353,World Bank
+Sri Lanka,LKA,2014,GDP_Total,82528535713.926,World Bank
+Sri Lanka,LKA,2015,GDP_Total,85090301052.0465,World Bank
+Sri Lanka,LKA,2016,GDP_Total,88000211171.5956,World Bank
+Sri Lanka,LKA,2017,GDP_Total,94369350285.5814,World Bank
+Sri Lanka,LKA,2018,GDP_Total,94450015982.8405,World Bank
+Sri Lanka,LKA,2019,GDP_Total,88998706296.5783,World Bank
+Sri Lanka,LKA,2020,GDP_Total,84335574581.5072,World Bank
+Sri Lanka,LKA,2021,GDP_Total,88556698937.7033,World Bank
+Sri Lanka,LKA,2022,GDP_Total,74143020262.8076,World Bank
+Sri Lanka,LKA,2023,GDP_Total,83716142582.1945,World Bank
+Sri Lanka,LKA,2024,GDP_Total,98963185509.6499,World Bank
+Sri Lanka,LKA,2002,GINI,40.2,World Bank
+Sri Lanka,LKA,2006,GINI,39.7,World Bank
+Sri Lanka,LKA,2009,GINI,36.1,World Bank
+Sri Lanka,LKA,2012,GINI,38.7,World Bank
+Sri Lanka,LKA,2016,GINI,39.3,World Bank
+Sri Lanka,LKA,2019,GINI,37.7,World Bank
+Sri Lanka,LKA,2023,HDI,0.776,UNDP
+Sri Lanka,LKA,2000,Labor_Force_Total,7826298.0,World Bank
+Sri Lanka,LKA,2001,Labor_Force_Total,7959198.0,World Bank
+Sri Lanka,LKA,2002,Labor_Force_Total,8042147.0,World Bank
+Sri Lanka,LKA,2003,Labor_Force_Total,8091588.0,World Bank
+Sri Lanka,LKA,2004,Labor_Force_Total,8130380.0,World Bank
+Sri Lanka,LKA,2005,Labor_Force_Total,8161482.0,World Bank
+Sri Lanka,LKA,2006,Labor_Force_Total,8192105.0,World Bank
+Sri Lanka,LKA,2007,Labor_Force_Total,8222663.0,World Bank
+Sri Lanka,LKA,2008,Labor_Force_Total,8251260.0,World Bank
+Sri Lanka,LKA,2009,Labor_Force_Total,8275626.0,World Bank
+Sri Lanka,LKA,2010,Labor_Force_Total,8298948.0,World Bank
+Sri Lanka,LKA,2011,Labor_Force_Total,8295313.0,World Bank
+Sri Lanka,LKA,2012,Labor_Force_Total,8326733.0,World Bank
+Sri Lanka,LKA,2013,Labor_Force_Total,8033442.0,World Bank
+Sri Lanka,LKA,2014,Labor_Force_Total,8054629.0,World Bank
+Sri Lanka,LKA,2015,Labor_Force_Total,8475356.0,World Bank
+Sri Lanka,LKA,2016,Labor_Force_Total,8605342.0,World Bank
+Sri Lanka,LKA,2017,Labor_Force_Total,8776309.0,World Bank
+Sri Lanka,LKA,2018,Labor_Force_Total,8523299.0,World Bank
+Sri Lanka,LKA,2019,Labor_Force_Total,8697166.0,World Bank
+Sri Lanka,LKA,2020,Labor_Force_Total,8485010.0,World Bank
+Sri Lanka,LKA,2021,Labor_Force_Total,8500316.0,World Bank
+Sri Lanka,LKA,2022,Labor_Force_Total,8527218.0,World Bank
+Sri Lanka,LKA,2023,Labor_Force_Total,8526051.0,World Bank
+Sri Lanka,LKA,2024,Labor_Force_Total,8498980.0,World Bank

@@ -1,0 +1,28 @@
+country,country_code,year,indicator,value,source
+Bangladesh,BGD,2000,GINI,33.4,World Bank
+Bangladesh,BGD,2005,GINI,33.2,World Bank
+Bangladesh,BGD,2010,GINI,32.1,World Bank
+Bangladesh,BGD,2016,GINI,32.4,World Bank
+Bangladesh,BGD,2022,GINI,33.4,World Bank
+India,IND,2004,GINI,27.7,World Bank
+India,IND,2009,GINI,27.8,World Bank
+India,IND,2011,GINI,28.8,World Bank
+India,IND,2022,GINI,25.5,World Bank
+Nepal,NPL,2003,GINI,43.8,World Bank
+Nepal,NPL,2010,GINI,32.8,World Bank
+Nepal,NPL,2022,GINI,30.0,World Bank
+Pakistan,PAK,2001,GINI,28.7,World Bank
+Pakistan,PAK,2004,GINI,30.9,World Bank
+Pakistan,PAK,2005,GINI,31.3,World Bank
+Pakistan,PAK,2007,GINI,29.7,World Bank
+Pakistan,PAK,2010,GINI,28.8,World Bank
+Pakistan,PAK,2011,GINI,29.7,World Bank
+Pakistan,PAK,2013,GINI,29.5,World Bank
+Pakistan,PAK,2015,GINI,31.3,World Bank
+Pakistan,PAK,2018,GINI,29.6,World Bank
+Sri Lanka,LKA,2002,GINI,40.2,World Bank
+Sri Lanka,LKA,2006,GINI,39.7,World Bank
+Sri Lanka,LKA,2009,GINI,36.1,World Bank
+Sri Lanka,LKA,2012,GINI,38.7,World Bank
+Sri Lanka,LKA,2016,GINI,39.3,World Bank
+Sri Lanka,LKA,2019,GINI,37.7,World Bank

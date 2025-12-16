@@ -1,0 +1,21 @@
+country,indicator,year_range,completeness,source,issues,last_updated
+Bangladesh,GDP_Total,2000-2024,104.2,World Bank,Complete or near-complete,2025-10-05
+Bangladesh,GINI,2000-2022,20.8,World Bank,Major data gaps,2025-10-05
+Bangladesh,HDI,2023-2023,4.2,UNDP,Critically incomplete,2025-10-05
+Bangladesh,Labor_Force_Total,2000-2024,104.2,World Bank,Complete or near-complete,2025-10-05
+India,GDP_Total,2000-2024,104.2,World Bank,Complete or near-complete,2025-10-05
+India,GINI,2004-2022,16.7,World Bank,Critically incomplete,2025-10-05
+India,HDI,2023-2023,4.2,UNDP,Critically incomplete,2025-10-05
+India,Labor_Force_Total,2000-2024,104.2,World Bank,Complete or near-complete,2025-10-05
+Nepal,GDP_Total,2000-2024,104.2,World Bank,Complete or near-complete,2025-10-05
+Nepal,GINI,2003-2022,12.5,World Bank,Critically incomplete,2025-10-05
+Nepal,HDI,2023-2023,4.2,UNDP,Critically incomplete,2025-10-05
+Nepal,Labor_Force_Total,2000-2024,104.2,World Bank,Complete or near-complete,2025-10-05
+Pakistan,GDP_Total,2000-2024,104.2,World Bank,Complete or near-complete,2025-10-05
+Pakistan,GINI,2001-2018,37.5,World Bank,Major data gaps,2025-10-05
+Pakistan,HDI,2023-2023,4.2,UNDP,Critically incomplete,2025-10-05
+Pakistan,Labor_Force_Total,2000-2024,104.2,World Bank,Complete or near-complete,2025-10-05
+Sri Lanka,GDP_Total,2000-2024,104.2,World Bank,Complete or near-complete,2025-10-05
+Sri Lanka,GINI,2002-2019,25.0,World Bank,Major data gaps,2025-10-05
+Sri Lanka,HDI,2023-2023,4.2,UNDP,Critically incomplete,2025-10-05
+Sri Lanka,Labor_Force_Total,2000-2024,104.2,World Bank,Complete or near-complete,2025-10-05
