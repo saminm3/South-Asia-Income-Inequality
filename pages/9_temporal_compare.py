@@ -192,22 +192,48 @@ st.divider()
 st.subheader("🔄 Ranking Shifts")
 
 if year_then in pivot.columns and year_now in pivot.columns:
-    rank_then = pivot[[' country', year_then]].copy()
-    rank_then['Rank_Then'] = rank_then[year_then].rank(ascending=True, method='min').astype(int)
+    # Reset index to make 'country' a column
+    pivot_reset = pivot.reset_index()
     
-    rank_now = pivot[['country', year_now]].copy()
-    rank_now['Rank_Now'] = rank_now[year_now].rank(ascending=True, method='min').astype(int)
+    # Remove rows with NaN values for ranking
+    rank_then = pivot_reset[['country', year_then]].copy()
+    rank_then = rank_then.dropna(subset=[year_then])  # Remove NaN values
+    if not rank_then.empty:
+        rank_then['Rank_Then'] = rank_then[year_then].rank(ascending=True, method='min').astype(int)
     
-    rank_comparison = pd.merge(rank_then, rank_now, on='country')
-    rank_comparison['Rank_Change'] = rank_comparison['Rank_Now'] - rank_comparison['Rank_Then']
-    rank_comparison['Movement'] = rank_comparison['Rank_Change'].apply(
-        lambda x: f'⬆️ Up {abs(x)} positions' if x < 0 else (f'⬇️ Down {abs(x)} positions' if x > 0 else '➡️ No change')
-    )
+    rank_now = pivot_reset[['country', year_now]].copy()
+    rank_now = rank_now.dropna(subset=[year_now])  # Remove NaN values
+    if not rank_now.empty:
+        rank_now['Rank_Now'] = rank_now[year_now].rank(ascending=True, method='min').astype(int)
     
-    rank_display = rank_comparison[['country', 'Rank_Then', 'Rank_Now', 'Movement']].copy()
-    rank_display.columns = ['Country', f'Rank ({year_then})', f'Rank ({year_now})', 'Movement']
-    
-    st.dataframe(rank_display, use_container_width=True, hide_index=True)
+    # Check if we have data for both years
+    if not rank_then.empty and not rank_now.empty:
+        # Merge and calculate changes
+        rank_comparison = pd.merge(
+            rank_then[['country', 'Rank_Then']], 
+            rank_now[['country', 'Rank_Now']], 
+            on='country',
+            how='inner'  # Only keep countries with data in both years
+        )
+        
+        if not rank_comparison.empty:
+            rank_comparison['Rank_Change'] = rank_comparison['Rank_Now'] - rank_comparison['Rank_Then']
+            rank_comparison['Movement'] = rank_comparison['Rank_Change'].apply(
+                lambda x: f'⬆️ Up {abs(x)} positions' if x < 0 else (f'⬇️ Down {abs(x)} positions' if x > 0 else '➡️ No change')
+            )
+            
+            # Display
+            rank_display = rank_comparison[['country', 'Rank_Then', 'Rank_Now', 'Movement']].copy()
+            rank_display.columns = ['Country', f'Rank ({year_then})', f'Rank ({year_now})', 'Movement']
+            
+            st.dataframe(rank_display, use_container_width=True, hide_index=True)
+        else:
+            st.warning(f"⚠️ No countries have data for both {year_then} and {year_now}")
+    else:
+        if rank_then.empty:
+            st.warning(f"⚠️ No data available for year {year_then}")
+        if rank_now.empty:
+            st.warning(f"⚠️ No data available for year {year_now}")
 
 # Key insights
 st.divider()
