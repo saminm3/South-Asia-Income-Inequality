@@ -119,7 +119,7 @@ with st.form("analysis_config_form"):
     selected_countries = st.multiselect(
         "Click inside box to see dropdown with checkboxes ↓",
         options=all_countries,
-        default=all_countries[:2] if len(all_countries) >= 2 else all_countries,
+        default=[],  # Start with NO countries selected
         help="✅ You can select MULTIPLE countries. Click inside the box, then check the boxes that appear.",
         key="country_multiselect"
     )
