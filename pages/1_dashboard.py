@@ -10,7 +10,7 @@ sys.path.append(str(Path(__file__).parent.parent))
 
 from utils.loaders import load_inequality_data
 from utils.filters import sidebar_filters
-from utils.utils import human_indicator
+from utils.utils import human_indicator, render_no_config_warning
 
 # Page config
 st.set_page_config(
@@ -26,11 +26,8 @@ try:
 except FileNotFoundError:
     pass
 
-# Check if analysis config exists
-if 'analysis_config' not in st.session_state or st.session_state.analysis_config is None:
-    st.warning("⚠️ No analysis configured. Please configure your analysis on the Home page.")
-    st.info("Click 'home' in the sidebar to configure your analysis")
-    st.stop()
+# Check configuration
+render_no_config_warning()
 
 # Get configuration
 config = st.session_state.analysis_config

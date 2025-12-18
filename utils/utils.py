@@ -1,5 +1,59 @@
 import pandas as pd
 import numpy as np
+import streamlit as st # Need Streamlit
+
+def render_no_config_warning():
+    """
+    Render a beautiful warning page when no analysis is configured.
+    Stops execution if config is missing.
+    """
+    if 'analysis_config' not in st.session_state or st.session_state.analysis_config is None:
+        st.html("""
+        <div style="
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 4rem 2rem;
+            text-align: center;
+            background: rgba(30, 37, 50, 0.65);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            margin: 2rem auto;
+            max-width: 800px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        ">
+            <div style="font-size: 5rem; margin-bottom: 1rem; animation: float 6s ease-in-out infinite;">
+                🔍
+            </div>
+            <h2 style="
+                color: #f3f4f6;
+                font-size: 2rem;
+                margin-bottom: 1rem;
+                font-weight: 700;
+            ">
+                Analysis Not Configured
+            </h2>
+            <p style="
+                color: #9ca3af;
+                font-size: 1.1rem;
+                max-width: 500px;
+                margin-bottom: 2.5rem;
+                line-height: 1.6;
+            ">
+                Please select countries, indicators, and time periods on the Home page to unlock the dashboard insights.
+            </p>
+            
+        </div>
+        """)
+        
+        col1, col2, col3 = st.columns([1, 1, 1])
+        with col2:
+            if st.button("⚙️ Configure Analysis", type="primary", use_container_width=True):
+                st.switch_page("home.py")
+        
+        st.stop()
 
 def human_indicator(indicator):
     """Convert indicator codes to human-readable names"""
