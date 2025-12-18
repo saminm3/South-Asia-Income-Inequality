@@ -57,8 +57,8 @@ if filtered_df.empty:
     st.warning("⚠️ No data available for selected filters")
     st.stop()
 
-# Tabs for different views
-tab1, tab2, tab3, tab4 = st.tabs(["📊 Overview", "📈 Trends", "🔍 Comparison", "📋 Data Table"])
+# Tabs for different views (removed redundant Comparison tab)
+tab1, tab2, tab3 = st.tabs(["📊 Overview", "📈 Trends", "📋 Data Table"])
 
 with tab1:
     st.subheader("Key Metrics Summary")
@@ -492,56 +492,8 @@ with tab2:
             use_container_width=True
         )
 
-with tab3:
-    st.subheader("Country Comparison")
-    
-    # Bar chart - latest year
-    latest_comp = filtered_df[filtered_df['year'] == filtered_df['year'].max()].sort_values('value', ascending=False)
-    
-    fig_comp = px.bar(
-        latest_comp,
-        x='country',
-        y='value',
-        color='value',
-        color_continuous_scale=config.get('color_scale', 'Reds'),
-        title=f"{human_indicator(config['indicator'])} Comparison ({latest_comp['year'].iloc[0]})",
-        labels={'value': human_indicator(config['indicator']), 'country': 'Country'}
-    )
-    
-    st.plotly_chart(fig_comp, use_container_width=True)
-    
-    # Rankings
-    st.subheader("Rankings")
-    
-    rankings = latest_comp[['country', 'value']].copy()
-    rankings['Rank'] = range(1, len(rankings) + 1)
-    rankings = rankings[['Rank', 'country', 'value']]
-    rankings.columns = ['Rank', 'Country', human_indicator(config['indicator'])]
-    
-    st.dataframe(rankings, use_container_width=True, hide_index=True)
-    
-    # Export
-    col1, col2 = st.columns(2)
-    with col1:
-        img_bytes = fig_comp.to_image(format="png", width=1200, height=600)
-        st.download_button(
-            "📥 Download Chart (PNG)",
-            data=img_bytes,
-            file_name=f"comparison_{config['indicator']}.png",
-            mime="image/png",
-            use_container_width=True
-        )
-    with col2:
-        csv = rankings.to_csv(index=False).encode('utf-8')
-        st.download_button(
-            "📥 Download Rankings (CSV)",
-            data=csv,
-            file_name=f"rankings.csv",
-            mime="text/csv",
-            use_container_width=True
-        )
 
-with tab4:
+with tab3:
     st.subheader("Complete Data Table")
     
     # Pivot table for better readability
