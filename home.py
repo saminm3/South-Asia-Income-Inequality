@@ -331,7 +331,7 @@ def app():
         with st.sidebar:
             st.html("""<style>[data-testid="stSidebarNav"] {display: none;}</style>""")
             st.title("Explorer Menu")
-            st.page_link("home.py", label="Home", icon="🏠")
+            st.page_link("Home.py", label="Home", icon="🏠")
             st.page_link("pages/1_dashboard.py", label="Dashboard", icon="📊")
             st.page_link("pages/2_map_analysis.py", label="Map Analysis", icon="🗺️")
             st.page_link("pages/3_correlations.py", label="Correlations", icon="📈")
@@ -352,7 +352,7 @@ def app():
             st.divider()
             if st.button("Reset Session", use_container_width=True):
                 st.session_state.clear()
-                st.switch_page("home.py")
+                st.switch_page("Home.py")
                 
         render_dashboard_content()
 

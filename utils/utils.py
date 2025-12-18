@@ -51,7 +51,7 @@ def render_no_config_warning():
         col1, col2, col3 = st.columns([1, 1, 1])
         with col2:
             if st.button("⚙️ Configure Analysis", type="primary", use_container_width=True):
-                st.switch_page("home.py")
+                st.switch_page("Home.py")
         
         st.stop()
 
