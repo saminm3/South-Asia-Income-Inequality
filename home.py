@@ -10,7 +10,6 @@ sys.path.append(str(Path(__file__).parent))
 
 from utils.loaders import load_inequality_data
 from utils.utils import human_indicator
-from utils.db_manager import init_db, create_user, get_user, update_user_visit
 
 # -----------------------------------------------------------------------------
 # PAGE CONFIGURATION
@@ -22,18 +21,15 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Initialize DB
-init_db()
-
 # -----------------------------------------------------------------------------
 # STATE MANAGEMENT
 # -----------------------------------------------------------------------------
 if 'page' not in st.session_state:
     st.session_state.page = 'landing' # landing, survey, dashboard
 if 'user_id' not in st.session_state:
-    st.session_state.user_id = None
+    st.session_state.user_id = "GUEST"
 if 'user_data' not in st.session_state:
-    st.session_state.user_data = None
+    st.session_state.user_data = {"occupation": "Visitor", "region": "South Asia"}
 
 # Load Custom CSS
 def load_css():
@@ -71,73 +67,6 @@ def render_landing():
     
     col1, col2, col3 = st.columns([1, 1, 1])
     with col2:
-<<<<<<< Updated upstream
-        year_range = f"{int(df['year'].min())}-{int(df['year'].max())}"
-        st.metric("Year Range", year_range)
-    
-    with col3:
-        n_indicators = df['indicator'].nunique()
-        st.metric("Indicators", n_indicators)
-    
-    with col4:
-        n_records = len(df)
-        st.metric("Data Points", f"{n_records:,}")
-
-# Analysis Configuration
-st.divider()
-st.header("⚙️ Configure Your Analysis")
-
-st.info("""
-💡 **How to select multiple countries:**
-1. Click INSIDE the "Countries" box below
-2. A dropdown will appear with checkboxes
-3. Click checkboxes to select/unselect countries
-4. Selected countries will show as pills with X buttons
-5. You can select 1-5 countries at once
-""")
-
-# Initialize session state
-if 'analysis_config' not in st.session_state:
-    st.session_state.analysis_config = None
-
-# Get available options
-all_countries = sorted(df['country'].unique())
-all_indicators = sorted(df['indicator'].unique())
-min_year = int(df['year'].min())
-max_year = int(df['year'].max())
-
-# Configuration form
-with st.form("analysis_config_form"):
-    st.subheader("Select Analysis Parameters")
-    
-    # CRITICAL: Multiselect for countries (allows multiple)
-    st.markdown("### 1️⃣ Select Countries (Multiple Allowed)")
-    selected_countries = st.multiselect(
-        "Click inside box to see dropdown with checkboxes ↓",
-        options=all_countries,
-        default=all_countries[:2] if len(all_countries) >= 2 else all_countries,
-        help="✅ You can select MULTIPLE countries. Click inside the box, then check the boxes that appear.",
-        key="country_multiselect"
-    )
-    
-    # Show what's selected
-    if selected_countries:
-        st.success(f"✅ **Selected {len(selected_countries)} countries:** {', '.join(selected_countries)}")
-    else:
-        st.warning("⚠️ Please select at least one country")
-    
-    st.divider()
-    
-    # Other selections
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        st.markdown("### 2️⃣ Select Indicator")
-        selected_indicator = st.selectbox(
-            "Indicator",
-            options=all_indicators,
-            help="Primary inequality indicator to analyze"
-=======
         st.markdown('<div class="cta-button-container animate-slide-up delay-300">', unsafe_allow_html=True)
         if st.button("🚀 Start Exploring", use_container_width=True):
             st.session_state.page = 'survey'
@@ -153,7 +82,6 @@ with st.form("analysis_config_form"):
             </div>
             """, 
             unsafe_allow_html=True
->>>>>>> Stashed changes
         )
 
 # -----------------------------------------------------------------------------
@@ -168,7 +96,7 @@ def render_survey():
         st.html("""
 <div class="glass-panel" style="max-width: 600px; margin: 0 auto;">
     <p style="text-align: center; color: var(--text-secondary); margin-bottom: 2rem;">
-        Help us improve the platform with this 30-second survey.
+        Help us customize your experience with this 30-second survey.
     </p>
         """)
         
@@ -178,10 +106,9 @@ def render_survey():
                 age = st.selectbox("Age Range *", ["Select...", "18-24", "25-34", "35-44", "45-54", "55+"])
                 occupation = st.selectbox("Occupation *", [
                     "Select...", 
-                    "Student (Undergraduate)", "Graduate Student / Researcher", 
-                    "Academic / Professor", "Policy Maker / Government",
-                    "NGO / Development Worker", "Journalist / Media",
-                    "Private Sector / Consultant", "General Public", "Other"
+                    "Student", "Researcher", 
+                    "Policy Maker", "Development Worker",
+                    "Journalist", "Private Sector", "General Public", "Other"
                 ])
             
             with c2:
@@ -204,18 +131,14 @@ def render_survey():
                 if errors:
                     st.error(errors[0])
                 else:
-                    # Save User
-                    user_info = {
+                    # Save User in Session State (Removing DB requirement)
+                    st.session_state.user_data = {
                         "age_range": age,
                         "gender": gender,
                         "occupation": occupation,
                         "region": region,
                         "email": email
                     }
-                    user_id = create_user(user_info)
-                    
-                    st.session_state.user_id = user_id
-                    st.session_state.user_data = user_info
                     st.session_state.page = 'dashboard'
                     st.balloons()
                     time.sleep(1) # Show balloons
@@ -223,14 +146,14 @@ def render_survey():
 
         if st.button("Skip for now", key="skip_btn"):
             st.session_state.user_id = "GUEST"
-            st.session_state.user_data = {"occupation": "Guest User", "region": "Global"}
+            st.session_state.user_data = {"occupation": "Guest User", "region": "Visitor"}
             st.session_state.page = 'dashboard'
             st.rerun()
             
         st.markdown("</div>", unsafe_allow_html=True)
 
 # -----------------------------------------------------------------------------
-# VIEW: DASHBOARD (Refactored Existing Logic)
+# VIEW: DASHBOARD (Home Page Analysis Config)
 # -----------------------------------------------------------------------------
 def render_dashboard_content():
     # Load Data
@@ -240,9 +163,9 @@ def render_dashboard_content():
         st.stop()
         
     # --- Custom Top Bar ---
-    user_role = st.session_state.user_data.get('occupation', 'Guest') if st.session_state.user_data else 'Guest'
-    user_loc = st.session_state.user_data.get('region', '') if st.session_state.user_data else ''
-    user_display = f"{user_role}" + (f", {user_loc}" if user_loc else "")
+    user_role = st.session_state.user_data.get('occupation', 'Visitor')
+    user_loc = st.session_state.user_data.get('region', '')
+    user_display = f"{user_role}" + (f", {user_loc}" if user_loc and user_loc != "Select..." else "")
     
     st.html(f"""
 <div class="custom-navbar">
@@ -256,14 +179,9 @@ def render_dashboard_content():
         <div class="user-pill">
             <span>👤</span> {user_display}
         </div>
-        <div class="user-pill">
-            <span>⚙️</span>
-        </div>
     </div>
 </div>
     """)
-    
-    # --- Main Dashboard Logic (From original home.py) ---
     
     # Data stats
     with st.expander("📊 Dataset Overview", expanded=False):
@@ -289,17 +207,15 @@ def render_dashboard_content():
     with st.form("analysis_config_form"):
         st.subheader("Select Analysis Parameters")
         
-        # CRITICAL: Multiselect for countries (allows multiple)
         st.markdown("### 1️⃣ Select Countries (Multiple Allowed)")
         selected_countries = st.multiselect(
             "Click inside box to see dropdown with checkboxes ↓",
             options=all_countries,
-            default=[],  # Start with NO countries selected
-            help="✅ You can select MULTIPLE countries. Click inside the box, then check the boxes that appear.",
+            default=[],
+            help="✅ You can select MULTIPLE countries.",
             key="country_multiselect"
         )
         
-        # Show what's selected
         if selected_countries:
             st.success(f"✅ **Selected {len(selected_countries)} countries:** {', '.join(selected_countries)}")
         else:
@@ -307,7 +223,6 @@ def render_dashboard_content():
         
         st.divider()
         
-        # Other selections
         col1, col2 = st.columns(2)
         
         with col1:
@@ -337,30 +252,21 @@ def render_dashboard_content():
         
         st.divider()
         
-        # Submit button
         submitted = st.form_submit_button("✅ Apply Configuration", use_container_width=True, type="primary")
         
         if submitted:
-            # Validation
             errors = []
-            
             if not selected_countries:
                 errors.append("⚠️ Please select at least one country")
-            
             if len(selected_countries) > 5:
                 errors.append("⚠️ Maximum 5 countries allowed for optimal visualization")
-            
             if year_range[0] >= year_range[1]:
                 errors.append("⚠️ Start year must be before end year")
-            
-            if year_range[1] - year_range[0] > 50:
-                errors.append("⚠️ Year range too large (maximum 50 years)")
             
             if errors:
                 for error in errors:
                     st.error(error)
             else:
-                # Save configuration
                 st.session_state.analysis_config = {
                     'countries': selected_countries,
                     'year_range': year_range,
@@ -368,38 +274,16 @@ def render_dashboard_content():
                     'color_scale': color_scale,
                     'timestamp': pd.Timestamp.now()
                 }
-                
-                st.success("✅ Configuration saved! You can now navigate to any analysis page.")
-                
-                # Display configuration
+                st.success("✅ Configuration saved!")
                 st.balloons()
-                
-                st.info(f"""
-                **✅ Active Configuration:**
-                - **Countries:** {', '.join(selected_countries)} ({len(selected_countries)} selected)
-                - **Years:** {year_range[0]}-{year_range[1]}
-                - **Indicator:** {human_indicator(selected_indicator)}
-                - **Color Scheme:** {color_scale}
-                """)
+                # Use Switch Page with correct page name
                 st.switch_page("pages/1_dashboard.py")
 
     # Quick Search Sidebar
     st.sidebar.header("🔍 Quick Search")
-    st.sidebar.markdown("Fast-track your analysis")
-
     with st.sidebar.form("quick_search"):
-        quick_country = st.selectbox(
-            "Country",
-            options=[''] + sorted(df['country'].unique()),
-            help="Select a country"
-        )
-        
-        quick_indicator = st.selectbox(
-            "Indicator",
-            options=[''] + sorted(df['indicator'].unique()),
-            help="Select an indicator"
-        )
-        
+        quick_country = st.selectbox("Country", options=[''] + sorted(df['country'].unique()))
+        quick_indicator = st.selectbox("Indicator", options=[''] + sorted(df['indicator'].unique()))
         quick_submit = st.form_submit_button("⚡ Quick Analyze")
         
         if quick_submit and quick_country and quick_indicator:
@@ -410,51 +294,29 @@ def render_dashboard_content():
                 'color_scale': 'Reds',
                 'timestamp': pd.Timestamp.now()
             }
-            st.sidebar.success(f"✅ Analyzing {quick_country} - {human_indicator(quick_indicator)}")
-            st.rerun()
-
-    # Current Configuration Display
-    if st.session_state.analysis_config is not None:
-        st.sidebar.divider()
-        st.sidebar.subheader("📋 Current Configuration")
-        config = st.session_state.analysis_config
-        st.sidebar.markdown(f"""
-        **Countries:** {', '.join(config['countries'])}  
-        **Count:** {len(config['countries'])} countries  
-        **Years:** {config['year_range'][0]}-{config['year_range'][1]}  
-        **Indicator:** {human_indicator(config['indicator'])}  
-        **Color:** {config['color_scale']}
-        """)
+            st.switch_page("pages/1_dashboard.py")
 
     # Navigation Guide
     st.divider()
     st.header("🧭 Navigation Guide")
-
     col1, col2, col3 = st.columns(3)
-
     with col1:
         st.markdown("""
         ### 📊 Core Visualizations
         - **Dashboard** - Multi-metric overview
         - **Map Analysis** - Animated choropleth
         - **Correlations** - Statistical relationships
-        - **Sunburst** - Hierarchical breakdown
         """)
-
     with col2:
         st.markdown("""
         ### 🔬 Analysis Tools
-        - **Income Simulator** - Policy scenarios
-        - **Data Quality** - Completeness check
-        - **Auto-Insights** - NLG summaries
-        - **Temporal Compare** - Then vs Now
+        - **Auto-Insights** - AI summaries
         """)
-
     with col3:
         st.markdown("""
         ### 📚 Resources
-        - **Data Sources** - Citations & methodology
-        - **Help & Glossary** - User guide
+        - **Data Quality** - Completeness check
+        - **Data Sources** - Citations
         """)
 
 # -----------------------------------------------------------------------------
@@ -466,13 +328,8 @@ def app():
     elif st.session_state.page == 'survey':
         render_survey()
     elif st.session_state.page == 'dashboard':
-        # Sidebar remains accessible in dashboard
         with st.sidebar:
-            st.html("""
-            <style>
-                [data-testid="stSidebarNav"] {display: none;}
-            </style>
-            """)
+            st.html("""<style>[data-testid="stSidebarNav"] {display: none;}</style>""")
             st.title("Explorer Menu")
             st.page_link("home.py", label="Home", icon="🏠")
             st.page_link("pages/1_dashboard.py", label="Dashboard", icon="📊")
@@ -493,7 +350,7 @@ def app():
             st.page_link("pages/10_help.py", label="Help & Docs", icon="📖")
             
             st.divider()
-            if st.button("Logout / Reset", use_container_width=True):
+            if st.button("Reset Session", use_container_width=True):
                 st.session_state.clear()
                 st.switch_page("home.py")
                 
