@@ -310,6 +310,7 @@ def render_dashboard_content():
     with col2:
         st.markdown("""
         ### 🔬 Analysis Tools
+        - **Income Simulator** - Policy scenarios
         - **Auto-Insights** - AI summaries
         """)
     with col3:
@@ -331,7 +332,7 @@ def app():
         with st.sidebar:
             st.html("""<style>[data-testid="stSidebarNav"] {display: none;}</style>""")
             st.title("Explorer Menu")
-            st.page_link("Home.py", label="Home", icon="🏠")
+            st.page_link("home.py", label="Home", icon="🏠")
             st.page_link("pages/1_dashboard.py", label="Dashboard", icon="📊")
             st.page_link("pages/2_map_analysis.py", label="Map Analysis", icon="🗺️")
             st.page_link("pages/3_correlations.py", label="Correlations", icon="📈")
@@ -341,6 +342,7 @@ def app():
             st.divider()
             st.subheader("Tools")
             st.page_link("pages/5_income_simulator.py", label="Income Simulator", icon="💸")
+            st.page_link("pages/Sankey_diagram.py", label="Sankey Diagram", icon="🌊")
             st.page_link("pages/8_auto_insights.py", label="Auto Insights", icon="🤖")
             
             st.divider()
@@ -352,7 +354,7 @@ def app():
             st.divider()
             if st.button("Reset Session", use_container_width=True):
                 st.session_state.clear()
-                st.switch_page("Home.py")
+                st.switch_page("home.py")
                 
         render_dashboard_content()
 

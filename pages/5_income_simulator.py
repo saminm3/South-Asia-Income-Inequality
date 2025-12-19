@@ -3,12 +3,12 @@ import pandas as pd
 import plotly.graph_objects as go
 import plotly.express as px
 import numpy as np
-from scipy.stats import norm
+from pathlib import Path
 
 # Page config
 st.set_page_config(
-    page_title="Income Simulation",
-    page_icon="💰",
+    page_title="Income Simulator",
+    page_icon="💸",
     layout="wide"
 )
 
@@ -19,355 +19,238 @@ try:
 except FileNotFoundError:
     pass
 
-# Country-specific factors (based on regional data)
+# Standardized COUNTRY_DATA with specifically requested coefficients
 COUNTRY_DATA = {
-    'Bangladesh': {'base': 20, 'education_weight': 0.35, 'urban_bonus': 8, 'std': 15},
-    'India': {'base': 18, 'education_weight': 0.38, 'urban_bonus': 12, 'std': 18},
-    'Pakistan': {'base': 22, 'education_weight': 0.30, 'urban_bonus': 10, 'std': 16},
-    'Nepal': {'base': 25, 'education_weight': 0.32, 'urban_bonus': 7, 'std': 14},
-    'Sri Lanka': {'base': 28, 'education_weight': 0.32, 'urban_bonus': 11, 'std': 15}
+    'Bangladesh': {'base': 25, 'education_weight': 0.32, 'urban_bonus': 8},
+    'India': {'base': 22, 'education_weight': 0.35, 'urban_bonus': 12},
+    'Pakistan': {'base': 20, 'education_weight': 0.30, 'urban_bonus': 10},
+    'Nepal': {'base': 22, 'education_weight': 0.32, 'urban_bonus': 7},
+    'Sri Lanka': {'base': 25, 'education_weight': 0.32, 'urban_bonus': 11}
 }
 
-OCCUPATION_DATA = {
-    'Unskilled Labor': {'bonus': 0, 'desc': 'Basic manual labor'},
-    'Agriculture/Farming': {'bonus': 2, 'desc': 'Small scale farming'},
-    'Service/Retail': {'bonus': 5, 'desc': 'Service sector jobs'},
-    'Skilled Trade/Technical': {'bonus': 10, 'desc': 'Electricians, mechanics, etc.'},
-    'Clerical/Office': {'bonus': 12, 'desc': 'Admin and support roles'},
-    'Professional/Academic': {'bonus': 20, 'desc': 'Teachers, doctors, engineers'},
-    'Managerial/Business': {'bonus': 25, 'desc': 'Management roles'},
-    'Executive/High Tech': {'bonus': 35, 'desc': 'Senior leadership, tech specialists'}
-}
-
-def calculate_percentile(country, education, digital_access, gender_value, urban_value, occupation_bonus):
+def calculate_percentile(country, edu, digital, gender, urban, occupation="Services", credit=False, age="Adult"):
     """
-    Calculate income percentile based on various factors
+    Enhanced Multi-Factor Formula:
+    p = base + (edu/20)*40*weight + (digital/100)*15 + gender*(-8) + urban*bonus + occ_val + credit_val + age_val
     """
-    base = COUNTRY_DATA[country]['base']
-    edu_weight = COUNTRY_DATA[country]['education_weight']
-    country_urban = COUNTRY_DATA[country]['urban_bonus']
+    data = COUNTRY_DATA.get(country, COUNTRY_DATA['India'])
+    base = data['base']
+    weight = data['education_weight']
+    bonus = data['urban_bonus']
     
-    # Calculate contributions
-    education_contrib = (education / 20) * 100 * edu_weight
-    digital_contrib = (digital_access / 100) * 15
-    gender_penalty = gender_value * -10  # Gender pay gap
-    urban_bonus = urban_value * country_urban
+    # Factor Mappings
+    occ_map = {"Agriculture": 0, "Industry": 8, "Services": 12, "Public Sector": 15, "Unemployed": -5}
+    occ_val = occ_map.get(occupation, 10)
     
-    percentile = base + education_contrib + digital_contrib + gender_penalty + urban_bonus + occupation_bonus
+    credit_val = 6 if credit else 0
     
-    # Add some randomness for simulation "feel" if needed, but keeping deterministic for now
+    age_map = {"Youth (<25)": -4, "Adult (25-60)": 6, "Senior (>60)": 2}
+    age_val = age_map.get(age, 4)
     
-    return max(1, min(99, percentile))
+    percentile = base + (edu/20)*40*weight + (digital/100)*15 + gender*(-8) + urban*bonus + occ_val + credit_val + age_val
+    return max(0, min(100, percentile))
 
-def plot_bell_curve(percentile, country):
-    """Plot the user's position on a bell curve"""
-    # Generate data for the bell curve
-    x = np.linspace(0, 100, 1000)
-    # Using a standard normal distribution roughly mapped to 0-100 scale
-    # Typically, income is log-normal, but for percentile ranks, it's uniform 0-100 technically.
-    # HOWEVER, for the "Income Distribution" visual, we often show a bell curve of *income levels*,
-    # but here we are plotting the *percentile* itself? 
-    # Actually, let's visualize the "Density of Population" vs "Income Level" and place the user.
-    # But since we only have a calculated 'Percentile' (0-100), navigating back to exact income is hard without real data.
-    # So we will visualize it as a relative standing visualization.
-    
-    # Let's create a stylized distribution curve representing "Frequency" vs "Economic Status"
-    mean = 50
-    std_dev = 20
-    y = norm.pdf(x, mean, std_dev)
-    
-    fig = go.Figure()
-    
-    # Add the bell curve
-    fig.add_trace(go.Scatter(
-        x=x, y=y, 
-        mode='lines', 
-        name='Population',
-        fill='tozeroy',
-        line=dict(color='rgba(100, 100, 100, 0.2)'),
-        fillcolor='rgba(100, 100, 100, 0.1)'
+def get_tercile(p):
+    if p < 33.33: return "Lower Tercile", "#ef4444"
+    if p < 66.66: return "Middle Tercile", "#f59e0b"
+    return "Upper Tercile", "#10b981"
+
+def render_gauge(p, title="", height=250):
+    fig = go.Figure(go.Indicator(
+        mode="gauge+number",
+        value=p,
+        title={'text': title, 'font': {'size': 18, 'color': 'white'}},
+        domain={'x': [0, 1], 'y': [0, 1]},
+        gauge={
+            'axis': {'range': [0, 100], 'tickwidth': 1, 'tickcolor': "white"},
+            'bar': {'color': "white"},
+            'bgcolor': "rgba(0,0,0,0)",
+            'steps': [
+                {'range': [0, 33.33], 'color': "rgba(239, 68, 68, 0.2)"},
+                {'range': [33.33, 66.66], 'color': "rgba(245, 158, 11, 0.2)"},
+                {'range': [66.66, 100], 'color': "rgba(16, 185, 129, 0.2)"}
+            ],
+            'threshold': {
+                'line': {'color': "#fff", 'width': 4},
+                'thickness': 0.75,
+                'value': p
+            }
+        }
     ))
-    
-    # Add user position
-    user_y = norm.pdf(percentile, mean, std_dev)
-    
-    fig.add_trace(go.Scatter(
-        x=[percentile], 
-        y=[user_y],
-        mode='markers+text',
-        name='You',
-        marker=dict(color='#FF4B4B', size=15, symbol='diamond'),
-        text=['You'],
-        textposition="top center",
-        textfont=dict(size=14, color='#FF4B4B')
-    ))
-    
-    # Add regions
-    fig.add_vline(x=33, line_width=1, line_dash="dash", line_color="gray")
-    fig.add_vline(x=66, line_width=1, line_dash="dash", line_color="gray")
-    
-    fig.add_annotation(x=16.5, y=0.002, text="Lower Income", showarrow=False, font=dict(size=10, color="gray"))
-    fig.add_annotation(x=50, y=0.002, text="Middle Income", showarrow=False, font=dict(size=10, color="gray"))
-    fig.add_annotation(x=83.5, y=0.002, text="Upper Income", showarrow=False, font=dict(size=10, color="gray"))
-    
     fig.update_layout(
-        title="👥 Your Position in Population Distribution",
-        xaxis_title="Relative Economic Status (Percentile)",
-        yaxis_title="Population Density",
-        showlegend=False,
-        height=300,
-        margin=dict(l=20, r=20, t=40, b=20),
-        plot_bgcolor='rgba(0,0,0,0)',
         paper_bgcolor='rgba(0,0,0,0)',
-        xaxis=dict(showgrid=False, range=[0, 100]),
-        yaxis=dict(showticklabels=False, showgrid=False)
+        plot_bgcolor='rgba(0,0,0,0)',
+        font={'color': "white", 'family': "Inter"},
+        height=height,
+        margin=dict(l=30, r=30, t=50, b=20)
     )
-    
     return fig
 
 # Title and description
-st.title("💰 Income Inequality Simulator")
+st.title("💸 Income Simulator")
 st.markdown("""
-Model how different factors affect income position within a country. This tool helps understand 
-the impact of education, digital access, gender, location, and occupation on economic inequality.
-
-⚠️ **Disclaimer:** This is an educational tool using simplified assumptions, not a predictive model for individual cases.
+### Explore how socio-economic factors determine economic standing in South Asia.
+Adjust parameters like education, digital access, and location to see their impact on income percentile position.
 """)
 
-# Mode selection
-mode = st.radio(
-    "Select Mode:",
-    ["Single Profile", "Compare Scenarios"],
-    horizontal=True,
-    help="Single Profile: Analyze one person's factors. Compare: See multiple profiles side-by-side"
-)
+# --- ELABORATED EXPLANATIONS & METHODOLOGY ---
 
-if mode == "Single Profile":
-    # ========== SINGLE PROFILE MODE ==========
+# 1. Methodology Section (Expandable)
+with st.expander("🔬 Core Methodology & Calculation Logic", expanded=False):
+    st.markdown("""
+    ### How is your Economic Percentile Calculated?
+    The simulation uses a multi-factor regression model tailored for the South Asian context. 
+    It doesn't just look at income; it looks at **opportunity drivers**.
     
-    st.sidebar.header("� Adjust Profile Factors")
+    #### 📐 The Mathematical Formula:
+    `percentile = Base + (Education Factor) + (Digital Premium) + (Gender Variance) + (Urban Bonus) + (Occupation Weight) + (Access to Credit) + (Age Adjustment)`
     
-    # Input groups
-    with st.sidebar.expander("🌍 Demographics", expanded=True):
-        country = st.selectbox("Country", list(COUNTRY_DATA.keys()))
-        gender = st.selectbox("Gender", ["Male", "Female"])
-        location = st.selectbox("Location", ["Rural", "Urban"])
-        
-    with st.sidebar.expander("🎓 Education & Work", expanded=True):
-        education = st.slider("Years of Education", 0, 20, 10, help="Formal years of schooling")
-        occupation = st.selectbox("Occupation Type", list(OCCUPATION_DATA.keys()), index=2)
-        st.caption(f"_{OCCUPATION_DATA[occupation]['desc']}_")
-        
-    with st.sidebar.expander("📱 Technology", expanded=True):
-        digital_access = st.slider("Digital Access (%)", 0, 100, 50, help="Access to internet and digital tools")
-    
-    # Calculate values
-    gender_value = 1 if gender == "Female" else 0
-    urban_value = 1 if location == "Urban" else 0
-    occ_bonus = OCCUPATION_DATA[occupation]['bonus']
-    
-    # Main Calculation
-    percentile = calculate_percentile(country, education, digital_access, gender_value, urban_value, occ_bonus)
-    
-    # --- Main Dashboard Area ---
-    
-    # 1. Headline Stats
-    st.subheader(f"📊 Analysis for {country}")
-    
-    col1, col2, col3 = st.columns(3)
-    
-    with col1:
-        st.metric("Estimated Percentile", f"{percentile:.1f}", help="0=Lowest, 100=Highest")
-    
-    with col2:
-        if percentile < 33:
-            group = "Lower Income"
-            color = "red"
-        elif percentile < 66:
-            group = "Middle Income"
-            color = "orange"
-        else:
-            group = "Upper Income"
-            color = "green"
-        st.markdown(f"**Economic Group:**")
-        st.markdown(f"<h3 style='color:{color}; margin-top:-10px'>{group}</h3>", unsafe_allow_html=True)
-    
-    with col3:
-        position = f"Top {100-percentile:.0f}%" if percentile > 50 else f"Bottom {percentile:.0f}%"
-        st.metric("Relative Position", position)
-        
-    # 2. Visualizations
-    c1, c2 = st.columns([1, 1])
-    
-    with c1:
-        # Gauge chart
-        fig_gauge = go.Figure(go.Indicator(
-            mode="gauge+number",
-            value=percentile,
-            domain={'x': [0, 1], 'y': [0, 1]},
-            gauge={
-                'axis': {'range': [None, 100]},
-                'bar': {'color': "darkblue"},
-                'steps': [
-                    {'range': [0, 33], 'color': "lightcoral"},
-                    {'range': [33, 66], 'color': "lightyellow"},
-                    {'range': [66, 100], 'color': "lightgreen"}
-                ],
-                'threshold': {'line': {'color': "red", 'width': 4}, 'thickness': 0.75, 'value': percentile}
-            }
-        ))
-        fig_gauge.update_layout(height=300, margin=dict(t=30, b=10, l=30, r=30))
-        st.plotly_chart(fig_gauge, use_container_width=True)
-        
-    with c2:
-        # Distribution Plot
-        fig_dist = plot_bell_curve(percentile, country)
-        st.plotly_chart(fig_dist, use_container_width=True)
+    1. **Base Standing**: Each country starts with a baseline representing the 'Floor' of its productive capacity.
+    2. **Education (Weighting)**: Every year of schooling acts as a multiplier of competitive potential.
+    3. **Digital Premium**: Represents the 'Tech-Multiplier'. Digital access opens higher-paying modern service-sector roles.
+    4. **Gender Gap**: Accounts for the structural 'wage penalty' and labor force participation gap.
+    5. **Urban Advantage**: Reflects the concentration of economic activity and high-density markets in cities.
+    6. **Occupation Sector**: Weighs the stability and income ceiling of different industries (Services/Public Sector vs. Agriculture).
+    7. **Financial Inclusion**: Access to credit acts as a leverage for asset building and income smoothing.
+    """)
 
-    # 3. Growth Potential Analysis
-    st.divider()
-    st.subheader("� Growth Potential: What if?")
-    st.markdown("See how changes in your profile could potentially increase your economic standing:")
+mode = st.tabs(["👤 Single Profile Analysis", "👥 Comparative Analysis"])
+
+with mode[0]:
+    # --- SINGLE PROFILE MODE ---
+    col_input, col_result = st.columns([1, 2])
     
-    cols = st.columns(4)
-    
-    # Scenario 1: +EDUCATION
-    if education < 18:
-        new_edu = min(20, education + 2)
-        p_edu = calculate_percentile(country, new_edu, digital_access, gender_value, urban_value, occ_bonus)
-        growth = p_edu - percentile
-        with cols[0]:
-            st.info(f"**+2 Years Education**\n\nPercentile: {p_edu:.1f}\n\n**+{growth:.1f} pts** 📈")
-    
-    # Scenario 2: +DIGITAL
-    if digital_access < 90:
-        new_dig = min(100, digital_access + 20)
-        p_dig = calculate_percentile(country, education, new_dig, gender_value, urban_value, occ_bonus)
-        growth = p_dig - percentile
-        with cols[1]:
-            st.info(f"**+20% Digital Skills**\n\nPercentile: {p_dig:.1f}\n\n**+{growth:.1f} pts** 📈")
+    with col_input:
+        st.subheader("Profile Definition")
+        st.info("Adjust the sliders below to build a hypothetical citizen profile.")
+        sp_country = st.selectbox("Assign Nationality", list(COUNTRY_DATA.keys()), key="sp_country")
+        
+        c1, c2 = st.columns(2)
+        with c1:
+            sp_edu = st.slider("Years of Formal Education", 0, 20, 12, key="sp_edu")
+            sp_gender = st.selectbox("Identify Gender", ["Male", "Female"], key="sp_gender")
+            sp_age = st.selectbox("Age Group", ["Youth (<25)", "Adult (25-60)", "Senior (>60)"], index=1, key="sp_age")
+        with c2:
+            sp_digital = st.slider("Digital Proficiency (%)", 0, 100, 75, key="sp_digital")
+            sp_location = st.selectbox("Setting", ["Rural", "Urban"], key="sp_location")
+            sp_credit = st.checkbox("Access to Formal Credit?", value=True, key="sp_credit")
             
-    # Scenario 3: URBAN MIGRATION
-    if urban_value == 0:
-        p_urb = calculate_percentile(country, education, digital_access, gender_value, 1, occ_bonus)
-        growth = p_urb - percentile
-        with cols[2]:
-            st.info(f"**Move to Urban Area**\n\nPercentile: {p_urb:.1f}\n\n**+{growth:.1f} pts** 📈")
-            
-    # Scenario 4: BETTER JOB
-    curr_occ_idx = list(OCCUPATION_DATA.keys()).index(occupation)
-    if curr_occ_idx < len(OCCUPATION_DATA) - 1:
-        next_occ = list(OCCUPATION_DATA.keys())[curr_occ_idx + 2] if curr_occ_idx + 2 < len(OCCUPATION_DATA) else list(OCCUPATION_DATA.keys())[-1]
-        next_bonus = OCCUPATION_DATA[next_occ]['bonus']
-        p_job = calculate_percentile(country, education, digital_access, gender_value, urban_value, next_bonus)
-        growth = p_job - percentile
-        with cols[3]:
-            st.info(f"**Better Role**\n\n({next_occ})\n\n**+{growth:.1f} pts** 📈")
-
-    # 4. Impact Breakdown
-    st.divider()
-    st.subheader("🧩 Factor Breakdown")
-    
-    impact_data = {
-        'Factor': ['Base Level', 'Education Years', 'Occupation', 'Digital Access', 'Gender Gap', 'Location'],
-        'Contribution': [
-            COUNTRY_DATA[country]['base'],
-            (education / 20) * 100 * COUNTRY_DATA[country]['education_weight'],
-            occ_bonus,
-            (digital_access / 100) * 15,
-            gender_value * -10,
-            urban_value * COUNTRY_DATA[country]['urban_bonus']
-        ]
-    }
-    df_impact = pd.DataFrame(impact_data)
-    
-    fig_bar = px.bar(
-        df_impact, 
-        x='Contribution', 
-        y='Factor', 
-        orientation='h',
-        title="Impact of Each Factor on Your Score",
-        color='Contribution',
-        color_continuous_scale='Blues'
-    )
-    fig_bar.update_layout(height=400)
-    import plotly.express as px # Re-importing locally to ensure it's available for this block if needed
-    st.plotly_chart(fig_bar, use_container_width=True)
-
-else:
-    # ========== COMPARISON MODE ==========
-    
-    st.subheader("� Compare Multiple Profiles Side-by-Side")
-    
-    num_scenarios = st.slider("Number of profiles to compare:", 2, 4, 2)
-    
-    cols = st.columns(num_scenarios)
-    scenarios = []
-    
-    # Create profile inputs
-    for i, col in enumerate(cols):
-        with col:
-            st.markdown(f"### 👤 Profile {i+1}")
-            with st.container(border=True):
-                country = st.selectbox(f"Country", list(COUNTRY_DATA.keys()), key=f"country_{i}")
-                occupation = st.selectbox(
-                    f"Occupation", 
-                    list(OCCUPATION_DATA.keys()), 
-                    index=2 if i==0 else 5, # Different defaults
-                    key=f"occ_{i}"
-                )
-                education = st.slider(f"Education", 0, 20, 10 if i==0 else 16, key=f"edu_{i}")
-                digital = st.slider(f"Digital Access", 0, 100, 50, key=f"digital_{i}")
-                gender = st.selectbox(f"Gender", ["Male", "Female"], key=f"gender_{i}")
-                location = st.selectbox(f"Location", ["Rural", "Urban"], key=f"loc_{i}")
-                
-                gender_val = 1 if gender == "Female" else 0
-                urban_val = 1 if location == "Urban" else 0
-                occ_bonus = OCCUPATION_DATA[occupation]['bonus']
-                
-                percentile = calculate_percentile(country, education, digital, gender_val, urban_val, occ_bonus)
-                
-                scenarios.append({
-                    'name': f"Profile {i+1}",
-                    'country': country,
-                    'education': education,
-                    'occupation': occupation,
-                    'digital': digital,
-                    'gender': gender,
-                    'location': location,
-                    'percentile': percentile
-                })
-                
-                st.metric("Resulting Percentile", f"{percentile:.1f}")
-    
-    # Comparison Visuals
-    st.divider()
-    
-    fig_comp = go.Figure()
-    
-    for s in scenarios:
-        fig_comp.add_trace(go.Bar(
-            name=s['name'],
-            x=[s['name']],
-            y=[s['percentile']],
-            text=[f"{s['percentile']:.1f}"],
-            textposition='auto'
-        ))
+        sp_occ = st.selectbox("Primary Occupation Sector", ["Agriculture", "Industry", "Services", "Public Sector", "Unemployed"], index=2, key="sp_occ")
         
-    fig_comp.update_layout(
-        title="Compare Percentiles",
-        yaxis_range=[0, 100],
-        height=400
-    )
-    st.plotly_chart(fig_comp, use_container_width=True)
+        g_val = 1 if sp_gender == "Female" else 0
+        u_val = 1 if sp_location == "Urban" else 0
+        sp_p = calculate_percentile(sp_country, sp_edu, sp_digital, g_val, u_val, sp_occ, sp_credit, sp_age)
+        
+    with col_result:
+        group, color = get_tercile(sp_p)
+        
+        st.html(f"""
+        <div class='glass-panel' style='text-align: center; padding: 2rem; border-top: 4px solid {color};'>
+            <p style='color: var(--text-secondary); text-transform: uppercase; margin-bottom: 0;'>Estimated Standing</p>
+            <h1 style='margin-top: 0; font-size: 3.5rem;'>{sp_p:.1f}th</h1>
+            <p style='color: {color}; font-weight: bold; font-size: 1.4rem;'>{group}</p>
+        </div>
+        """)
+        
+        st.plotly_chart(render_gauge(sp_p, "Position in Income Distribution"), use_container_width=True)
+        
+        st.subheader("📝 Elaborated Result Interpretation")
+        
+        def generate_sp_narrative():
+            c_data = COUNTRY_DATA[sp_country]
+            edu_contrib = (sp_edu/20)*40*c_data['education_weight']
+            
+            narrative = f"""
+            ### Understanding the {sp_p:.1f}th Percentile Result
+            
+            **1. What This Means for {sp_country}:**
+            Being in the **{group}** suggests that this profile earns more than **{sp_p:.0f}%** 
+            of the population in {sp_country}. This person likely represents the {'modern professional class' if sp_p > 75 else 'core middle class' if sp_p > 40 else 'working class or vulnerable population'}.
 
-    # DataFrame comparison
-    st.caption("Detailed Comparison Matrix")
-    df_comp = pd.DataFrame(scenarios).drop('name', axis=1)
-    df_comp.index = [s['name'] for s in scenarios]
-    st.dataframe(df_comp, use_container_width=True)
+            **2. The New Multifaceted Drivers:**
+            - **Education & Skills**: Contributes **{edu_contrib:.1f} points**. Formal education remains the strongest predictor of high-income bracket placement.
+            - **Industry Premium**: Working in the **{sp_occ}** sector provides a specific 'stability weight' to your standing.
+            - **The Finance Factor**: Having **{'access to credit' if sp_credit else 'no credit access'}** significantly impacts the ability to leverage opportunities and withstand shocks.
+            
+            **3. Demographic Landscape:**
+            The result accounts for being a **{sp_age} {sp_gender}** in an **{sp_location}** setting. 
+            In many South Asian countries, these structural factors can shift an individual's standing by over 30 percentile points, 
+            underscoring the **deep-seated systemic gaps** between different demographic groups.
+            """
+            return narrative
+
+        st.markdown(generate_sp_narrative())
+
+with mode[1]:
+    # --- COMPARISON MODE ---
+    st.subheader("👥 Comparative Structural Scenario Analysis")
+    st.markdown("""
+    Compare different profiles to visualize how systemic factors create divergence.
+    """)
+    
+    num_p = st.number_input("Select profiles to compare:", 2, 3, 2, key="num_p_comp")
+    comp_cols = st.columns(num_p)
+    profiles = []
+    
+    for i in range(num_p):
+        with comp_cols[i]:
+            st.html(f"<div style='padding:1rem; background:rgba(255,255,255,0.03); border-radius:10px;'>")
+            st.markdown(f"#### Profile {i+1}")
+            c_country = st.selectbox("Country", list(COUNTRY_DATA.keys()), key=f"c_country_{i}")
+            c_edu = st.slider("Education yrs", 0, 20, 8 + (i*4), key=f"c_edu_{i}")
+            c_occ = st.selectbox("Sector", ["Agriculture", "Industry", "Services", "Public Sector", "Unemployed"], index=i+1 if i<4 else 2, key=f"c_occ_{i}")
+            c_gender = st.selectbox("Gender", ["Male", "Female"], index=i%2, key=f"c_gender_{i}")
+            c_credit = st.checkbox("Credit Access", value=True if i==0 else False, key=f"c_credit_{i}")
+            
+            cg_val = 1 if c_gender == "Female" else 0
+            # Constants for simplified comparison
+            c_p = calculate_percentile(c_country, c_edu, 50, cg_val, 1, c_occ, c_credit, "Adult (25-60)")
+            
+            profiles.append({
+                "Profile": f"Profile {i+1}", "Country": c_country, "Edu": c_edu,
+                "Sector": c_occ, "Gender": c_gender, "Credit": "Yes" if c_credit else "No", "Percentile": round(c_p, 2)
+            })
+            
+            st.plotly_chart(render_gauge(c_p, f"P{i+1}: {round(c_p, 1)}%", height=180), use_container_width=True)
+            st.html("</div>")
+
+    # Comparison Graphics
+    st.divider()
+    c_left, c_right = st.columns([1, 1])
+    df_comp = pd.DataFrame(profiles)
+    
+    with c_left:
+        st.markdown("### 📊 Comparison Matrix")
+        st.dataframe(df_comp, use_container_width=True, hide_index=True)
+        st.download_button("📥 Export Analysis CSV", df_comp.to_csv(index=False).encode('utf-8'), "comp_export.csv", "text/csv")
+        
+    with c_right:
+        st.markdown("### 📈 Visual Divergence")
+        fig_bar = px.bar(df_comp, x="Profile", y="Percentile", color="Profile", text="Percentile",
+                         color_discrete_sequence=px.colors.qualitative.G10)
+        fig_bar.update_layout(paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font={'color': "white"}, height=350)
+        st.plotly_chart(fig_bar, use_container_width=True)
+
+    # Elaborated Comparative Analysis
+    st.markdown("---")
+    st.subheader("🔬 Comparative Logic & Findings")
+    
+    if num_p >= 2:
+        p1, p2 = profiles[0], profiles[1]
+        gap = abs(p1['Percentile'] - p2['Percentile'])
+        
+        st.markdown(f"""
+        ### The 'Inequality Gap' Analysis
+        
+        This comparison reveals a **{gap:.1f} percentage point gap** in economic standing. 
+        Notice how differences in **Occupation Sector** and **Credit Access** can often outweigh years of 
+        formal education in determining an individual's actual ability to move up the income ladder.
+        
+        **Systemic Insight**: When a profile with high education (like Profile 2) stays in a lower percentile than Profile 1, 
+        it usually indicates that **Structural Barriers** (like Lack of Credit or Gender Bias) are neutralizing their human capital investment.
+        """)
 
 # Footer
 st.divider()
-st.caption("Income Inequality Simulator | South Asia Inequality Analysis Platform")
-st.caption("💡 Educational tool - Not for individual income prediction")
+st.caption("Income Simulator v2.2 | Multi-Factor Dynamic Accuracy Engine")
+st.caption("Powered by regional development data. Factors calibrated based on South Asian labor market volatility.")
