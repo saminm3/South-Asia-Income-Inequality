@@ -511,16 +511,16 @@ with col_left2:
     # Create ranking table (Google Analytics style)
     ranked_list = latest_data.sort_values('value').reset_index(drop=True)
     
-    ranking_html = '<div style="background: rgba(15, 20, 25, 0.5); border-radius: 12px; padding: 1rem; border: 1px solid rgba(139, 92, 246, 0.2);">'
+    # Container div
+    st.markdown('<div style="background: rgba(15, 20, 25, 0.5); border-radius: 12px; padding: 1rem; border: 1px solid rgba(139, 92, 246, 0.2);">', unsafe_allow_html=True)
     
     for idx, row in ranked_list.iterrows():
         rank = idx + 1
         color = stream_colors[idx % len(stream_colors)]
-        
-        # Calculate bar width (0-100%)
         bar_width = (row['value'] / ranked_list['value'].max() * 100)
         
-        ranking_html += f'''
+        # Each ranking item as separate markdown call
+        st.markdown(f"""
         <div style="margin-bottom: 1rem;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.3rem;">
                 <div style="display: flex; align-items: center; gap: 0.5rem;">
@@ -533,10 +533,10 @@ with col_left2:
                 <div style="background: linear-gradient(90deg, {color}, {color}CC); width: {bar_width}%; height: 100%; border-radius: 3px;"></div>
             </div>
         </div>
-        '''
+        """, unsafe_allow_html=True)
     
-    ranking_html += '</div>'
-    st.markdown(ranking_html, unsafe_allow_html=True)
+    # Close container
+    st.markdown('</div>', unsafe_allow_html=True)
 
 with col_right2:
     st.markdown('<p class="section-header">Distribution Analysis</p>', unsafe_allow_html=True)
