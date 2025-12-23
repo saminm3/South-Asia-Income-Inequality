@@ -14,15 +14,141 @@ st.set_page_config(
     page_title="South Asia Inequality Analysis",
     page_icon="🌍",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="collapsed"
 )
 
-# Load custom CSS
-try:
-    with open('assets/dashboard.css') as f:
-        st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
-except FileNotFoundError:
-    pass
+# Modern dark theme CSS (matching dashboard)
+st.markdown("""
+<style>
+    /* Main dark gradient background */
+    .main {
+        background: linear-gradient(180deg, #0a0e27 0%, #1a1f3a 50%, #0f1419 100%);
+    }
+    
+    /* Remove padding */
+    .block-container {
+        padding-top: 2rem;
+        padding-bottom: 0rem;
+    }
+    
+    /* Hide Streamlit branding */
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    header {visibility: hidden;}
+    
+    /* Headers */
+    h1, h2, h3 {
+        color: #ffffff !important;
+        font-weight: 800 !important;
+    }
+    
+    /* Form styling */
+    .stForm {
+        background: linear-gradient(135deg, rgba(139, 92, 246, 0.08) 0%, rgba(236, 72, 153, 0.05) 100%);
+        border: 1px solid rgba(139, 92, 246, 0.2);
+        border-radius: 16px;
+        padding: 2rem;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    }
+    
+    /* Button styling */
+    .stButton > button {
+        background: linear-gradient(90deg, #8b5cf6 0%, #ec4899 100%);
+        color: white;
+        font-weight: 700;
+        border: none;
+        border-radius: 12px;
+        padding: 0.75rem 2rem;
+        font-size: 1rem;
+        box-shadow: 0 4px 20px rgba(139, 92, 246, 0.4);
+        transition: all 0.3s ease;
+    }
+    
+    .stButton > button:hover {
+        box-shadow: 0 6px 30px rgba(139, 92, 246, 0.6);
+        transform: translateY(-2px);
+    }
+    
+    /* Selectbox and multiselect styling */
+    .stSelectbox > div > div,
+    .stMultiSelect > div > div {
+        background: rgba(15, 20, 25, 0.6);
+        border: 1px solid rgba(139, 92, 246, 0.3);
+        border-radius: 8px;
+        color: #ffffff;
+    }
+    
+    /* Slider styling */
+    .stSlider > div > div > div {
+        background: linear-gradient(90deg, #8b5cf6 0%, #ec4899 100%);
+    }
+    
+    /* Info/success boxes */
+    .stAlert {
+        background: rgba(15, 20, 25, 0.6);
+        border: 1px solid rgba(139, 92, 246, 0.3);
+        border-radius: 12px;
+        color: #e2e8f0;
+    }
+    
+    /* Text colors */
+    p, label, .stMarkdown {
+        color: #e2e8f0 !important;
+    }
+    
+    /* Caption text */
+    .css-16huue1 {
+        color: #94a3b8 !important;
+    }
+    
+    /* Navigation cards */
+    .nav-card {
+        background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(236, 72, 153, 0.05) 100%);
+        border: 1px solid rgba(139, 92, 246, 0.3);
+        border-radius: 16px;
+        padding: 1.5rem;
+        margin: 0.5rem 0;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+    }
+    
+    .nav-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 32px rgba(139, 92, 246, 0.4);
+        border-color: rgba(139, 92, 246, 0.5);
+    }
+    
+    /* Style navigation buttons to look like cards */
+    div[data-testid="column"] > div > div > button {
+        background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(236, 72, 153, 0.05) 100%) !important;
+        border: 1px solid rgba(139, 92, 246, 0.3) !important;
+        border-radius: 16px !important;
+        padding: 2rem 1.5rem !important;
+        height: auto !important;
+        min-height: 140px !important;
+        color: #e2e8f0 !important;
+        font-size: 1rem !important;
+        font-weight: 600 !important;
+        white-space: pre-line !important;
+        text-align: center !important;
+        transition: all 0.3s ease !important;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3) !important;
+        line-height: 1.6 !important;
+    }
+    
+    div[data-testid="column"] > div > div > button:hover {
+        transform: translateY(-4px) !important;
+        box-shadow: 0 8px 32px rgba(139, 92, 246, 0.4) !important;
+        border-color: rgba(139, 92, 246, 0.5) !important;
+        background: linear-gradient(135deg, rgba(139, 92, 246, 0.15) 0%, rgba(236, 72, 153, 0.08) 100%) !important;
+    }
+    
+    div[data-testid="column"] > div > div > button:active {
+        transform: translateY(-2px) !important;
+    }
+</style>
+""", unsafe_allow_html=True)
 
 # Load data
 df = load_inequality_data()
@@ -30,27 +156,112 @@ if df.empty:
     st.error("❌ Data not found. Please ensure processed dataset exists.")
     st.stop()
 
-# Title
-st.title("South Asia Income Inequality Analysis Platform")
-st.markdown("### Interactive Data Visualization & Analysis Tool")
+# ═══════════════════════════════════════════════════════════════════
+# HERO SECTION
+# ═══════════════════════════════════════════════════════════════════
 
-# Introduction
 st.markdown("""
-Welcome to the **South Asia Income Inequality Analysis Platform** - a comprehensive web application 
-for exploring and analyzing inequality data across South Asia.
+<div style="text-align: center; margin-bottom: 3rem;">
+    <h1 style="font-size: 3.5rem; margin-bottom: 1rem; background: linear-gradient(90deg, #8b5cf6 0%, #ec4899 50%, #06b6d4 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
+        South Asia Inequality Analytics
+    </h1>
+    <p style="font-size: 1.3rem; color: #94a3b8; margin-top: 0;">
+        Professional Data Visualization & Analysis Platform
+    </p>
+    <p style="font-size: 1rem; color: #64748b; margin-top: 1rem;">
+         Advanced analytics •  AI-powered insights
+    </p>
+</div>
+""", unsafe_allow_html=True)
 
-**Features:**
-- Interactive visualizations (maps, charts, dashboards)
-- Statistical analysis with significance indicators
-- Auto-generated insights and temporal comparisons
-- Data quality monitoring and source transparency
+# ═══════════════════════════════════════════════════════════════════
+# QUICK STATS ROW
+# ═══════════════════════════════════════════════════════════════════
 
-✅ This is an **open-access platform**: Every page works immediately with sensible defaults.
-""")
+st.markdown('<p style="text-align: center; color: #94a3b8; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 1rem;">Platform Overview</p>', unsafe_allow_html=True)
 
-st.divider()
+col1, col2, col3, col4 = st.columns(4)
 
-# Initialize session state with PUBLIC DEFAULTS
+with col1:
+    st.markdown(f"""
+    <div style="text-align: center; padding: 2rem 1.5rem; background: linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(139, 92, 246, 0.05)); border: 1px solid rgba(139, 92, 246, 0.3); border-radius: 12px; height: 200px; display: flex; flex-direction: column; justify-content: center;">
+        <div style="font-size: 3rem; margin-bottom: 1rem;"></div>
+        <div style="font-size: 2.5rem; font-weight: 800; color: #8b5cf6; margin-bottom: 0.5rem;">{len(df['country'].unique())}</div>
+        <div style="color: #94a3b8; font-size: 0.9rem;">Countries</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+with col2:
+    st.markdown(f"""
+    <div style="text-align: center; padding: 2rem 1.5rem; background: linear-gradient(135deg, rgba(236, 72, 153, 0.15), rgba(236, 72, 153, 0.05)); border: 1px solid rgba(236, 72, 153, 0.3); border-radius: 12px; height: 200px; display: flex; flex-direction: column; justify-content: center;">
+        <div style="font-size: 3rem; margin-bottom: 1rem;"></div>
+        <div style="font-size: 2.5rem; font-weight: 800; color: #ec4899; margin-bottom: 0.5rem;">{len(df['indicator'].unique())}</div>
+        <div style="color: #94a3b8; font-size: 0.9rem;">Indicators</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+with col3:
+    years_span = int(df['year'].max() - df['year'].min())
+    st.markdown(f"""
+    <div style="text-align: center; padding: 2rem 1.5rem; background: linear-gradient(135deg, rgba(6, 182, 212, 0.15), rgba(6, 182, 212, 0.05)); border: 1px solid rgba(6, 182, 212, 0.3); border-radius: 12px; height: 200px; display: flex; flex-direction: column; justify-content: center;">
+        <div style="font-size: 3rem; margin-bottom: 1rem;"></div>
+        <div style="font-size: 2.5rem; font-weight: 800; color: #06b6d4; margin-bottom: 0.5rem;">{years_span}</div>
+        <div style="color: #94a3b8; font-size: 0.9rem;">Years of Data</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+with col4:
+    st.markdown(f"""
+    <div style="text-align: center; padding: 2rem 1.5rem; background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(16, 185, 129, 0.05)); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 12px; height: 200px; display: flex; flex-direction: column; justify-content: center;">
+        <div style="font-size: 3rem; margin-bottom: 1rem;"></div>
+        <div style="font-size: 2.5rem; font-weight: 800; color: #10b981; margin-bottom: 0.5rem;">{len(df):,}</div>
+        <div style="color: #94a3b8; font-size: 0.9rem;">Data Points</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+st.markdown("<br><br>", unsafe_allow_html=True)
+
+# ═══════════════════════════════════════════════════════════════════
+# NAVIGATION CARDS (Quick Access)
+# ═══════════════════════════════════════════════════════════════════
+
+st.markdown("""
+<div style="text-align: center; margin-bottom: 2rem;">
+    <h2 style="font-size: 2rem; color: #ffffff;">🚀 Quick Access</h2>
+    <p style="color: #94a3b8;">Jump directly to any analysis tool</p>
+</div>
+""", unsafe_allow_html=True)
+
+col1, col2, col3 = st.columns(3)
+
+with col1:
+    if st.button("📊\n\nDashboard\n\nReal-time KPIs & streamgraph", key="nav_dashboard", use_container_width=True):
+        st.switch_page("pages/1_dashboard.py")
+    
+    if st.button("🔗\n\nCorrelations\n\nMulti-indicator analysis", key="nav_correlations", use_container_width=True):
+        st.switch_page("pages/3_correlations.py")
+
+with col2:
+    if st.button("🗺️\n\nMap Analysis\n\nGeographic visualization", key="nav_map", use_container_width=True):
+        st.switch_page("pages/2_map_analysis.py")
+    
+    if st.button("⏱️\n\nTemporal Compare\n\nThen vs Now analysis", key="nav_temporal", use_container_width=True):
+        st.switch_page("pages/9_temporal_compare.py")
+
+with col3:
+    if st.button("💡\n\nAuto Insights\n\nAI-generated discoveries", key="nav_insights", use_container_width=True):
+        st.switch_page("pages/8_auto_insights.py")
+    
+    if st.button("🎯\n\nPolicy Simulator\n\nScenario modeling", key="nav_simulator", use_container_width=True):
+        st.switch_page("pages/5_income_simulator.py")
+
+st.markdown("<br><br>", unsafe_allow_html=True)
+
+# ═══════════════════════════════════════════════════════════════════
+# CONFIGURATION SECTION
+# ═══════════════════════════════════════════════════════════════════
+
+# Initialize session state
 if 'analysis_config' not in st.session_state:
     st.session_state.analysis_config = None
 
@@ -60,101 +271,94 @@ all_indicators = sorted(df['indicator'].unique())
 min_year = int(df['year'].min())
 max_year = int(df['year'].max())
 
-# ✅ DEFAULT PUBLIC ANALYSIS (Open-access experience)
-# Create sensible defaults so every page works immediately
+# Create defaults if none exist
 if st.session_state.analysis_config is None:
-    default_indicator = 'GINI' if 'GINI' in all_indicators else (all_indicators[0] if all_indicators else None)
-    default_year_start = max(min_year, max_year - 20)  # Last ~20 years by default
+    default_indicator = 'gini_index' if 'gini_index' in all_indicators else (all_indicators[0] if all_indicators else None)
+    default_year_start = max(min_year, max_year - 20)
     default_year_range = (default_year_start, max_year)
     
-    # Use ALL countries by default for true open access
-    default_countries = all_countries
-    
     st.session_state.analysis_config = {
-        'countries': default_countries,
+        'countries': all_countries,
         'year_range': default_year_range,
         'indicator': default_indicator,
         'color_scale': get_color_scale(default_indicator) if default_indicator else 'Viridis',
         'timestamp': pd.Timestamp.now()
     }
 
-# Helpful note for users
-st.info("💡 **Tip:** All pages work with default settings. Use this page to customize your analysis.")
+st.markdown("""
+<div style="text-align: center; margin-bottom: 2rem;">
+    <h2 style="font-size: 2rem; color: #ffffff;"> Customize Analysis</h2>
+    <p style="color: #94a3b8;">Fine-tune your analysis parameters (optional)</p>
+</div>
+""", unsafe_allow_html=True)
 
 # Configuration form
 with st.form("analysis_config_form"):
-    st.subheader("🎛️ Customize Your Analysis (Optional)")
-
-    # Multiselect for countries
-    st.markdown("### Step 1: Select Countries")
-    selected_countries = st.multiselect(
-        "Select one or more countries (no limit)",
-        options=all_countries,
-        default=st.session_state.analysis_config['countries'],
-        help="Select as many countries as you need. Click inside the box to see checkboxes.",
-        key="country_multiselect"
-    )
-
-    st.caption("""
-**How to select countries:**
-1. Click inside the selection box
-2. Check/uncheck countries from the dropdown
-3. Selected countries appear as pills with X buttons
-4. Select 1-50+ countries based on your needs
-""")
-
     col1, col2 = st.columns(2)
-
+    
     with col1:
-        st.markdown("### Step 2: Select Main Indicator")
+        st.markdown("#### 🌍 Countries")
+        selected_countries = st.multiselect(
+            "Select countries to analyze",
+            options=all_countries,
+            default=st.session_state.analysis_config['countries'][:5] if len(st.session_state.analysis_config['countries']) > 5 else st.session_state.analysis_config['countries'],
+            help="Select one or more countries. No limit!",
+            key="country_multiselect"
+        )
+        
+        st.markdown("####  Indicator")
         selected_indicator = st.selectbox(
-            "Indicator",
+            "Primary inequality metric",
             options=all_indicators,
             index=(all_indicators.index(st.session_state.analysis_config['indicator'])
                    if st.session_state.analysis_config.get('indicator') in all_indicators else 0),
-            help="Primary inequality indicator to analyze"
+            help="Main indicator for analysis"
         )
-
+    
     with col2:
-        st.markdown("### Step 3: Select Color Scheme")
-        color_options = ['Reds', 'Blues', 'Greens', 'Viridis', 'Plasma', 'YlOrRd']
+        st.markdown("#### ⏱️ Time Period")
+        year_range = st.slider(
+            "Select year range",
+            min_value=min_year,
+            max_value=max_year,
+            value=st.session_state.analysis_config['year_range'],
+            help="Choose time period for analysis"
+        )
+        
+        st.markdown("#### 🎨 Color Scheme")
+        color_options = ['Reds', 'Blues', 'Greens', 'Viridis', 'Plasma', 'YlOrRd', 'Purples']
         color_scale = st.selectbox(
-            "Color Scheme",
+            "Visual theme",
             options=color_options,
             index=(color_options.index(st.session_state.analysis_config.get('color_scale'))
                    if st.session_state.analysis_config.get('color_scale') in color_options else 0),
-            help="Visual color theme used across charts and maps"
+            help="Color palette for charts and maps"
         )
-
-    st.markdown("### Step 4: Select Time Range")
-    year_range = st.slider(
-        "Year Range",
-        min_value=min_year,
-        max_value=max_year,
-        value=st.session_state.analysis_config['year_range'],
-        help="Select time period for analysis"
-    )
-
-    st.divider()
-
+    
+    st.markdown("<br>", unsafe_allow_html=True)
+    
     # Submit button
-    submitted = st.form_submit_button("Apply Configuration", use_container_width=True, type="primary")
-
+    col1, col2, col3 = st.columns([1, 2, 1])
+    with col2:
+        submitted = st.form_submit_button(
+            "🚀 Apply Configuration",
+            use_container_width=True,
+            type="primary"
+        )
+    
     if submitted:
         # Validation
         errors = []
-
+        
         if not selected_countries:
             errors.append("❌ Please select at least one country")
-
-        # REMOVED COUNTRY LIMIT - No maximum restriction
-
+        
         if year_range[0] >= year_range[1]:
             errors.append("❌ Start year must be before end year")
-
+        
         if year_range[1] - year_range[0] > 100:
             errors.append("❌ Year range too large (maximum 100 years)")
-
+        
         if errors:
             for error in errors:
                 st.error(error)
@@ -167,62 +371,84 @@ with st.form("analysis_config_form"):
                 'color_scale': color_scale,
                 'timestamp': pd.Timestamp.now()
             }
-
-            st.success("✅ Configuration saved! Navigate to any analysis page to see your customized view.")
+            
+            st.success("✅ Configuration saved successfully!")
             st.info(f"""
 **Active Configuration:**
-- **Countries:** {', '.join(selected_countries)} ({len(selected_countries)} selected)
+- **Countries:** {', '.join(selected_countries[:3])}{'...' if len(selected_countries) > 3 else ''} ({len(selected_countries)} total)
 - **Years:** {year_range[0]}-{year_range[1]}
 - **Indicator:** {human_indicator(selected_indicator)}
 - **Color Scheme:** {color_scale}
+            
+🚀 Navigate to any analysis page to see your customized view!
 """)
             st.rerun()
 
-# Quick Search Sidebar
-st.sidebar.header("🔍 Quick Search")
-st.sidebar.markdown("Fast-track your analysis")
+# ═══════════════════════════════════════════════════════════════════
+# CURRENT CONFIGURATION DISPLAY
+# ═══════════════════════════════════════════════════════════════════
 
-with st.sidebar.form("quick_search"):
-    quick_country = st.selectbox(
-        "Country",
-        options=[''] + sorted(df['country'].unique()),
-        help="Select a country"
-    )
-
-    quick_indicator = st.selectbox(
-        "Indicator",
-        options=[''] + sorted(df['indicator'].unique()),
-        help="Select an indicator"
-    )
-
-    quick_submit = st.form_submit_button("Quick Analyze")
-
-    if quick_submit and quick_country and quick_indicator:
-        st.session_state.analysis_config = {
-            'countries': [quick_country],
-            'year_range': (min_year, max_year),
-            'indicator': quick_indicator,
-            'color_scale': get_color_scale(quick_indicator),
-            'timestamp': pd.Timestamp.now()
-        }
-        st.sidebar.success(f"✅ Analyzing {quick_country} - {human_indicator(quick_indicator)}")
-        st.rerun()
-
-# Current Configuration Display
 if st.session_state.analysis_config is not None:
-    st.sidebar.divider()
-    st.sidebar.subheader("📊 Current Configuration")
+    st.markdown("<br><br>", unsafe_allow_html=True)
+    st.markdown("""
+    <div style="text-align: center; margin-bottom: 1rem;">
+        <h3 style="font-size: 1.5rem; color: #ffffff;"> Current Configuration</h3>
+    </div>
+    """, unsafe_allow_html=True)
+    
     config = st.session_state.analysis_config
     
-    num_countries = len(config['countries'])
-    country_display = ', '.join(config['countries'][:3])
-    if num_countries > 3:
-        country_display += f" (+{num_countries - 3} more)"
+    col1, col2, col3, col4 = st.columns(4)
     
-    st.sidebar.markdown(f"""
-    **Countries:** {country_display}  
-    **Count:** {num_countries} countries  
-    **Years:** {config['year_range'][0]}-{config['year_range'][1]}  
-    **Indicator:** {human_indicator(config['indicator'])}  
-    **Color:** {config['color_scale']}
-    """)
+    with col1:
+        st.markdown(f"""
+        <div style="text-align: center; padding: 1.5rem 1rem; background: rgba(139, 92, 246, 0.1); border: 1px solid rgba(139, 92, 246, 0.3); border-radius: 12px; height: 140px; display: flex; flex-direction: column; justify-content: center;">
+            <div style="color: #8b5cf6; font-size: 0.85rem; margin-bottom: 0.5rem; font-weight: 600;">COUNTRIES</div>
+            <div style="font-size: 1.8rem; font-weight: 700; color: #ffffff; margin-bottom: 0.5rem;">{len(config['countries'])}</div>
+            <div style="color: #94a3b8; font-size: 0.75rem;">selected</div>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    with col2:
+        st.markdown(f"""
+        <div style="text-align: center; padding: 1.5rem 1rem; background: rgba(236, 72, 153, 0.1); border: 1px solid rgba(236, 72, 153, 0.3); border-radius: 12px; height: 140px; display: flex; flex-direction: column; justify-content: center;">
+            <div style="color: #ec4899; font-size: 0.85rem; margin-bottom: 0.5rem; font-weight: 600;">INDICATOR</div>
+            <div style="font-size: 1rem; font-weight: 700; color: #ffffff; margin-bottom: 0.5rem;">{config['indicator'].upper()}</div>
+            <div style="color: #94a3b8; font-size: 0.75rem;">primary metric</div>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    with col3:
+        years_span = config['year_range'][1] - config['year_range'][0]
+        st.markdown(f"""
+        <div style="text-align: center; padding: 1.5rem 1rem; background: rgba(6, 182, 212, 0.1); border: 1px solid rgba(6, 182, 212, 0.3); border-radius: 12px; height: 140px; display: flex; flex-direction: column; justify-content: center;">
+            <div style="color: #06b6d4; font-size: 0.85rem; margin-bottom: 0.5rem; font-weight: 600;">TIME SPAN</div>
+            <div style="font-size: 1.8rem; font-weight: 700; color: #ffffff; margin-bottom: 0.5rem;">{years_span}</div>
+            <div style="color: #94a3b8; font-size: 0.75rem;">years</div>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    with col4:
+        st.markdown(f"""
+        <div style="text-align: center; padding: 1.5rem 1rem; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 12px; height: 140px; display: flex; flex-direction: column; justify-content: center;">
+            <div style="color: #10b981; font-size: 0.85rem; margin-bottom: 0.5rem; font-weight: 600;">COLOR</div>
+            <div style="font-size: 1rem; font-weight: 700; color: #ffffff; margin-bottom: 0.5rem;">{config['color_scale']}</div>
+            <div style="color: #94a3b8; font-size: 0.75rem;">theme</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+# Footer
+st.markdown("<br><br>", unsafe_allow_html=True)
+st.markdown("""
+<div style="text-align: center; padding: 2rem 0; border-top: 1px solid rgba(148, 163, 184, 0.1);">
+    <p style="color: #64748b; font-size: 0.85rem; margin: 0;">
+        <strong style="color: #8b5cf6;">South Asia Inequality Analytics Platform</strong>
+    </p>
+    <p style="color: #475569; font-size: 0.75rem; margin-top: 0.5rem;">
+        Powered by Streamlit & Plotly • Data: World Bank, UNDP, ADB
+    </p>
+    <p style="color: #475569; font-size: 0.7rem; margin-top: 0.5rem;">
+        Built with  for data-driven policy making
+    </p>
+</div>
+""", unsafe_allow_html=True)
