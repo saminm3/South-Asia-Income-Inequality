@@ -1,6 +1,5 @@
 import streamlit as st
 import pandas as pd
-import plotly.graph_objects as go
 import plotly.express as px
 import numpy as np
 from scipy.stats import pearsonr
@@ -13,363 +12,360 @@ sys.path.append(str(Path(__file__).parent.parent))
 from utils.loaders import load_all_indicators
 from utils.utils import human_indicator
 
+# ----------------------------
 # Page config
+# ----------------------------
 st.set_page_config(
-    page_title="Correlation Analysis",
+    page_title="Inequality Drivers (Correlation)",
     page_icon="🔗",
     layout="wide"
 )
 
 # Load custom CSS
 try:
-    with open('assets/dashboard.css') as f:
-        st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
+    with open("assets/dashboard.css") as f:
+        st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
 except FileNotFoundError:
     pass
 
-st.title("🔗 Correlation Analysis")
-st.markdown("Explore statistical relationships between indicators (Correlation ≠ Causation).")
-st.warning("⚠️ **CORRELATION ≠ CAUSATION**: Correlation does not imply causal relationship.")
+st.title("🔗 Inequality Drivers — Visual Correlation Explorer")
+st.caption("Pick an inequality measure (Y) and a potential driver (X). The chart shows patterns across selected countries over a year range.")
 
-# Load data
+# ----------------------------
+# Home config (NO new selection)
+# ----------------------------
+config = st.session_state.get("analysis_config", None)
+home_countries = config.get("countries", []) if config else []
+home_year_range = config.get("year_range", None) if config else None
+
+# ----------------------------
+# Load + clean data
+# ----------------------------
 df = load_all_indicators()
 if df.empty:
     st.error("❌ No data available")
     st.stop()
 
-# Filter years >= 2000
-df = df[df["year"] >= 2000].copy()
+df = df.dropna(subset=["country", "year", "indicator", "value"]).copy()
+df["year"] = pd.to_numeric(df["year"], errors="coerce")
+df["value"] = pd.to_numeric(df["value"], errors="coerce")
+df = df.dropna(subset=["year", "value"]).copy()
+df["year"] = df["year"].astype(int)
 
-# Sidebar
-st.sidebar.header("Correlation Settings")
+# Apply Home selections
+if home_countries:
+    df = df[df["country"].isin(home_countries)].copy()
+
+if home_year_range:
+    df = df[(df["year"] >= int(home_year_range[0])) & (df["year"] <= int(home_year_range[1]))].copy()
+
+if df.empty:
+    st.error("❌ No data left after applying Home page filters (countries/year).")
+    st.stop()
+
+# ----------------------------
+# Indicator lists (short + focused)
+# ----------------------------
+def _norm(s: str) -> str:
+    return str(s).strip().lower()
+
+INEQ_KEYWORDS = [
+    "gini",
+    "income share held by highest",
+    "income share held by lowest",
+    "poverty headcount",
+    "unemployment",
+]
+
+DRIVER_KEYWORDS = [
+    "gdp per capita",
+    "gdp (current",
+    "inflation",
+    "hdi",
+    "mean years of schooling",
+    "expected years of schooling",
+    "completion rate",
+    "individuals using the internet",
+    "labor force",
+    "population",
+]
+
 all_indicators = sorted(df["indicator"].dropna().unique())
 
-# Use Home config indicator as default (does NOT change Home/Dashboard)
-default_inds = None
-if "analysis_config" in st.session_state and st.session_state.analysis_config:
-    cfg = st.session_state.analysis_config
-    if "indicator" in cfg and cfg["indicator"] in all_indicators:
-        default_inds = [cfg["indicator"]]
+ineq_candidates = [i for i in all_indicators if any(k in _norm(i) for k in INEQ_KEYWORDS)]
+driver_candidates = [i for i in all_indicators if any(k in _norm(i) for k in DRIVER_KEYWORDS)]
 
-if default_inds is None:
-    default_inds = all_indicators[:4] if len(all_indicators) >= 4 else all_indicators
-
-selected_indicators = st.sidebar.multiselect(
-    "Select Indicators (2+)",
-    options=all_indicators,
-    default=default_inds
-)
-
-colorscale = st.sidebar.selectbox(
-    "Heatmap Color Theme",
-    options=["RdBu (clean)", "Viridis", "Plasma", "Cividis"],
-    index=0
-)
-
-show_only_significant = st.sidebar.checkbox(
-    "Dim non-significant cells (p ≥ 0.05)",
-    value=False
-)
-
-if len(selected_indicators) < 2:
-    st.info("Select at least **2 indicators** to build a correlation matrix.")
-    st.stop()
-
-# Pivot to wide
-corr_df = df.pivot_table(
-    index=["country", "year"],
-    columns="indicator",
-    values="value"
-).reset_index()
-
-numeric_cols = [col for col in selected_indicators if col in corr_df.columns]
-if len(numeric_cols) < 2:
-    st.error("Not enough data for selected indicators.")
-    st.stop()
-
-corr_data = corr_df[numeric_cols].copy()
-
-tab1, tab2, tab3 = st.tabs(["🔥 Heatmap", "📈 Pair Scatter", "📊 Statistics"])
+# Fallback (just in case dataset naming differs)
+if not ineq_candidates:
+    ineq_candidates = all_indicators[:10]
+if not driver_candidates:
+    driver_candidates = all_indicators
 
 # ----------------------------
-# TAB 1: HEATMAP + TOP RELATIONSHIPS
+# Sidebar (ONLY what you wanted)
 # ----------------------------
-with tab1:
-    st.subheader("Correlation Matrix Heatmap")
+with st.sidebar:
+    st.subheader("⚙️ Settings")
 
-    corr_matrix = corr_data.corr(method="pearson", min_periods=10)
+    years = sorted(df["year"].unique())
+    min_year, max_year = int(min(years)), int(max(years))
 
-    # Better color mapping
-    plotly_scale = "RdBu" if colorscale.startswith("RdBu") else colorscale.lower()
-
-    # Build p-value matrix
-    pvals = pd.DataFrame(np.nan, index=corr_matrix.index, columns=corr_matrix.columns)
-    nobs = pd.DataFrame(0, index=corr_matrix.index, columns=corr_matrix.columns)
-
-    for i in corr_matrix.index:
-        for j in corr_matrix.columns:
-            if i == j:
-                pvals.loc[i, j] = 0.0
-                nobs.loc[i, j] = 0
-                continue
-            x = corr_data[i]
-            y = corr_data[j]
-            valid = x.notna() & y.notna()
-            n = int(valid.sum())
-            nobs.loc[i, j] = n
-            if n >= 3:
-                try:
-                    _, p = pearsonr(x[valid], y[valid])
-                    pvals.loc[i, j] = p
-                except:
-                    pvals.loc[i, j] = np.nan
-
-    # IMPORTANT FIX: don't set to 0 (it makes heatmap misleading/ugly)
-    # Instead: dim non-significant cells by shrinking them towards 0 (visual dim)
-    display_z = corr_matrix.copy()
-    if show_only_significant:
-        mask = (pvals >= 0.05) & pvals.notna()
-        display_z = display_z.where(~mask, other=display_z * 0.20)
-
-    # Annotations: r + p colored
-    annotations = []
-    for r_i, row_ind in enumerate(corr_matrix.index):
-        for c_j, col_ind in enumerate(corr_matrix.columns):
-            if row_ind == col_ind:
-                txt = "1.00"
-                col = "white"
-            else:
-                r = corr_matrix.loc[row_ind, col_ind]
-                p = pvals.loc[row_ind, col_ind]
-                n = nobs.loc[row_ind, col_ind]
-                if pd.isna(r) or pd.isna(p) or n < 3:
-                    txt = "N/A"
-                    col = "gray"
-                else:
-                    sig = p < 0.05
-                    col = "lime" if sig else "red"
-                    txt = f"{r:.2f}<br>p={p:.3f}"
-            annotations.append(dict(
-                x=c_j, y=r_i, text=txt, showarrow=False,
-                font=dict(size=11, color=col)
-            ))
-
-    fig = go.Figure(data=go.Heatmap(
-        z=display_z.values,
-        x=[human_indicator(c) for c in display_z.columns],
-        y=[human_indicator(r) for r in display_z.index],
-        colorscale=plotly_scale,
-        zmin=-1,
-        zmax=1,
-        zmid=0,
-        colorbar=dict(title="r"),
-        hovertemplate="%{y} vs %{x}<br>r=%{z:.3f}<extra></extra>"
-    ))
-
-    fig.update_layout(
-        height=680,
-        title="Correlation Matrix (lime = p<0.05, red = p≥0.05)",
-        annotations=annotations,
-        margin=dict(l=40, r=40, t=90, b=40)
+    year_range = st.slider(
+        "Year range",
+        min_value=min_year,
+        max_value=max_year,
+        value=(min_year, max_year)
     )
 
-    st.plotly_chart(fig, use_container_width=True)
+    # Defaults
+    default_y = "Gini index" if "Gini index" in ineq_candidates else ineq_candidates[0]
+    y_indicator = st.selectbox(
+        "Inequality indicator (Y-axis)",
+        options=ineq_candidates,
+        index=ineq_candidates.index(default_y) if default_y in ineq_candidates else 0
+    )
 
-    c1, c2 = st.columns(2)
-    with c1:
-        st.success("🟢 Lime text = statistically significant (p < 0.05)")
-    with c2:
-        st.error("🔴 Red text = not significant (p ≥ 0.05)")
+    x_options = [i for i in driver_candidates if i != y_indicator]
+    if not x_options:
+        x_options = [i for i in all_indicators if i != y_indicator]
 
-    # ✅ UNIQUE ADD: Top Relationships (Auto)
-    st.divider()
-    st.subheader("🏆 Top Relationships (Auto Spotlight)")
-
-    pairs = []
-    for i in range(len(numeric_cols)):
-        for j in range(i + 1, len(numeric_cols)):
-            a = numeric_cols[i]
-            b = numeric_cols[j]
-
-            x = corr_data[a]
-            y = corr_data[b]
-            valid = x.notna() & y.notna()
-            n = int(valid.sum())
-            if n < 3:
-                continue
-
-            try:
-                r, p = pearsonr(x[valid], y[valid])
-            except:
-                continue
-
-            pairs.append((a, b, r, p, n))
-
-    pairs = sorted(pairs, key=lambda t: abs(t[2]), reverse=True)[:8]
-
-    def strength_label(r):
-        ar = abs(r)
-        if ar >= 0.7:
-            return "Strong"
-        if ar >= 0.4:
-            return "Moderate"
-        return "Weak"
-
-    if not pairs:
-        st.info("No valid pairs found for the selected indicators.")
-    else:
-        cols = st.columns(2)
-        for idx, (a, b, r, p, n) in enumerate(pairs):
-            with cols[idx % 2]:
-                sig = "✅ Significant" if p < 0.05 else "❌ Not significant"
-                direction = "Positive 📈" if r > 0 else "Negative 📉"
-                st.markdown(f"### {idx+1}. {human_indicator(a)} ↔ {human_indicator(b)}")
-                st.metric(
-                    "Correlation (r)",
-                    f"{r:.3f}",
-                    delta=f"{strength_label(r)} | {direction}",
-                    delta_color="off"
-                )
-                st.caption(f"{sig} • p={p:.4f} • N={n}")
-                st.info(
-                    f"Meaning: **{strength_label(r)} {('positive' if r > 0 else 'negative')} association** "
-                    f"between these two indicators across the available country-year points."
-                )
-
-# ----------------------------
-# TAB 2: SCATTER
-# ----------------------------
-with tab2:
-    st.subheader("Scatter Plots (pairs)")
-    max_pairs = st.slider("Max pairs to show", 1, 30, 10)
-
-    pairs = []
-    for i in range(len(numeric_cols)):
-        for j in range(i + 1, len(numeric_cols)):
-            pairs.append((numeric_cols[i], numeric_cols[j]))
-
-    shown = 0
-    for x_var, y_var in pairs:
-        if shown >= max_pairs:
+    preferred = None
+    for cand in ["GDP per capita (current US$)", "HDI", "Inflation, consumer prices (annual %)", "Expected years of schooling"]:
+        if cand in x_options:
+            preferred = cand
             break
 
-        plot_data = corr_df[[x_var, y_var, "country", "year"]].dropna()
-        if len(plot_data) < 5:
-            continue
+    x_indicator = st.selectbox(
+        "Driver factor (X-axis)",
+        options=x_options,
+        index=x_options.index(preferred) if preferred in x_options else 0
+    )
 
-        x_vals = plot_data[x_var].values
-        y_vals = plot_data[y_var].values
+    show_trend = st.checkbox("Show trend line", value=True)
 
-        try:
-            corr_val, p_value = pearsonr(x_vals, y_vals)
-        except:
-            continue
-
-        # regression
-        z = np.polyfit(x_vals, y_vals, 1)
-        poly = np.poly1d(z)
-        x_line = np.linspace(x_vals.min(), x_vals.max(), 100)
-        y_line = poly(x_line)
-
-        sig_status = "✅ Significant" if p_value < 0.05 else "❌ Not Significant"
-
-        fig_scatter = go.Figure()
-
-        # Color by country (looks better)
-        for c in sorted(plot_data["country"].unique()):
-            sub = plot_data[plot_data["country"] == c]
-            fig_scatter.add_trace(go.Scatter(
-                x=sub[x_var],
-                y=sub[y_var],
-                mode="markers",
-                marker=dict(size=9, opacity=0.75),
-                name=c,
-                hovertemplate="Country: %{text}<br>x=%{x}<br>y=%{y}<extra></extra>",
-                text=[c] * len(sub)
-            ))
-
-        fig_scatter.add_trace(go.Scatter(
-            x=x_line, y=y_line, mode="lines",
-            line=dict(width=3),
-            name="Trend"
-        ))
-
-        fig_scatter.update_layout(
-            height=520,
-            title=f"{human_indicator(y_var)} vs {human_indicator(x_var)} | r={corr_val:.3f}, p={p_value:.4f} {sig_status}",
-            xaxis_title=human_indicator(x_var),
-            yaxis_title=human_indicator(y_var),
-            legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="left", x=0)
-        )
-
-        st.plotly_chart(fig_scatter, use_container_width=True)
-        shown += 1
-
-    if shown == 0:
-        st.info("Not enough overlapping data for the selected indicators.")
-
-# ----------------------------
-# TAB 3: STATS TABLE
-# ----------------------------
-with tab3:
-    st.subheader("Statistics Table (r, p, CI)")
-
-    stats_rows = []
-    for i in range(len(numeric_cols)):
-        for j in range(i + 1, len(numeric_cols)):
-            a = numeric_cols[i]
-            b = numeric_cols[j]
-
-            x = corr_data[a]
-            y = corr_data[b]
-            valid = x.notna() & y.notna()
-            n = int(valid.sum())
-            if n < 3:
-                continue
-
-            try:
-                r, pval = pearsonr(x[valid], y[valid])
-            except:
-                continue
-
-            # Fisher z CI
-            if abs(r) < 1 and n > 3:
-                z = np.arctanh(r)
-                se = 1 / np.sqrt(n - 3)
-                ci_low = np.tanh(z - 1.96 * se)
-                ci_high = np.tanh(z + 1.96 * se)
-            else:
-                ci_low, ci_high = np.nan, np.nan
-
-            strength = "Strong" if abs(r) > 0.7 else ("Moderate" if abs(r) > 0.4 else "Weak")
-            direction = "Positive" if r > 0 else "Negative"
-
-            stats_rows.append({
-                "Indicator 1": human_indicator(a),
-                "Indicator 2": human_indicator(b),
-                "r": round(r, 4),
-                "p": round(pval, 4),
-                "Significant (p<0.05)": "Yes" if pval < 0.05 else "No",
-                "95% CI": f"[{ci_low:.3f}, {ci_high:.3f}]" if pd.notna(ci_low) else "N/A",
-                "Strength": strength,
-                "Direction": direction,
-                "N": n
-            })
-
-    if not stats_rows:
-        st.info("No valid pairs to compute statistics.")
+    st.markdown("---")
+    if home_countries:
+        st.success("Using Home countries:\n\n" + ", ".join(home_countries))
     else:
-        stats_df = pd.DataFrame(stats_rows)
-        stats_df = stats_df.sort_values(["Significant (p<0.05)", "Strength"], ascending=[False, True])
-        st.dataframe(stats_df, use_container_width=True, hide_index=True)
+        st.info("No Home countries selected → using all countries in dataset.")
 
-        csv = stats_df.to_csv(index=False).encode("utf-8")
-        st.download_button(
-            "📥 Download Statistics (CSV)",
-            data=csv,
-            file_name="correlation_statistics.csv",
-            mime="text/csv"
-        )
+# Apply year range filter
+df = df[(df["year"] >= int(year_range[0])) & (df["year"] <= int(year_range[1]))].copy()
 
-st.divider()
-st.caption("Correlation Analysis | South Asia Inequality Analysis Platform")
+# ----------------------------
+# Pivot to align X & Y per (country,year)
+# ----------------------------
+wide = df.pivot_table(
+    index=["country", "year"],
+    columns="indicator",
+    values="value",
+    aggfunc="mean"
+).reset_index()
+
+if x_indicator not in wide.columns or y_indicator not in wide.columns:
+    st.error("❌ Selected indicators are not available together in this year range.")
+    st.stop()
+
+plot_df = wide[["country", "year", x_indicator, y_indicator]].dropna().copy()
+
+# Coverage check (explains why sometimes fewer countries appear)
+coverage = plot_df.groupby("country").size().sort_values(ascending=False)
+countries_present = list(coverage.index)
+
+if len(plot_df) < 5:
+    st.warning("⚠️ Not enough overlapping points for this pair in the selected year range. Try a wider range or different indicators.")
+    with st.expander("See why (data coverage)"):
+        st.write("A country appears only when it has **both** X and Y values in the chosen year range.")
+        st.dataframe(coverage.rename("points").reset_index(), use_container_width=True, hide_index=True)
+    st.stop()
+
+# ----------------------------
+# Correlation stats
+# ----------------------------
+x = plot_df[x_indicator].values
+y = plot_df[y_indicator].values
+
+try:
+    r, p = pearsonr(x, y)
+except Exception:
+    st.error("❌ Could not compute correlation.")
+    st.stop()
+
+def strength_label(rv: float) -> str:
+    a = abs(rv)
+    if a >= 0.7: return "Strong"
+    if a >= 0.4: return "Moderate"
+    return "Weak"
+
+strength = strength_label(r)
+direction = "Positive" if r > 0 else "Negative"
+sig = (p < 0.05)
+
+# ----------------------------
+# Inequality meaning rules (for “solid” inequality narrative)
+# ----------------------------
+y_norm = _norm(y_indicator)
+
+# Most inequality indicators: higher = worse inequality
+# Exception: “income share held by lowest 10%” higher = better (less inequality)
+higher_y_is_worse = True
+if "income share held by lowest" in y_norm:
+    higher_y_is_worse = False
+
+def inequality_label_from_rank(rank_idx: int, total: int) -> str:
+    # top third = High, middle = Moderate, bottom = Lower
+    if total <= 2:
+        return "Higher" if rank_idx == 0 else "Lower"
+    third = max(1, total // 3)
+    if rank_idx < third:
+        return "High"
+    if rank_idx < 2 * third:
+        return "Moderate"
+    return "Lower"
+
+# Country inequality snapshot: use mean of Y in selected range
+country_y = plot_df.groupby("country")[y_indicator].mean().sort_values(ascending=not higher_y_is_worse)
+# If higher is worse, we sort descending (so highest values first)
+# If higher is better (lowest 10% share), we invert meaning:
+# We'll rank by "inequality pressure" where lower lowest10share = worse
+if not higher_y_is_worse:
+    # inequality pressure = negative of lowest10share
+    country_y = plot_df.groupby("country")[y_indicator].mean().sort_values(ascending=True)
+
+ranked = country_y.reset_index()
+ranked.columns = ["Country", "Avg_Y"]
+
+# drivers list for the narrative (simple)
+def short_name(s: str) -> str:
+    return human_indicator(s)
+
+# ----------------------------
+# Layout
+# ----------------------------
+left, right = st.columns([2.2, 1])
+
+with left:
+    st.subheader("📌 Scatter view")
+    title = f"{short_name(y_indicator)} (Y) vs {short_name(x_indicator)} (X) — {year_range[0]}–{year_range[1]}"
+
+    fig = px.scatter(
+        plot_df,
+        x=x_indicator,
+        y=y_indicator,
+        color="country",
+        hover_data={"country": True, "year": True},
+        opacity=0.8,
+        title=title
+    )
+
+    if show_trend:
+        z = np.polyfit(x, y, 1)
+        line = np.poly1d(z)
+        x_line = np.linspace(np.min(x), np.max(x), 120)
+        y_line = line(x_line)
+        fig.add_scatter(x=x_line, y=y_line, mode="lines", name="Trend")
+
+    fig.update_layout(
+        height=650,
+        legend_title="Country",
+        hovermode="closest",
+        xaxis_title=short_name(x_indicator),
+        yaxis_title=short_name(y_indicator),
+    )
+    st.plotly_chart(fig, use_container_width=True)
+
+with right:
+    st.subheader("📊 Key stats")
+    st.metric("Correlation (r)", f"{r:.3f}")
+    st.metric("Strength", strength)
+    st.metric("Direction", direction)
+    st.metric("Data points", f"{len(plot_df)}")
+    st.metric("Countries shown", f"{len(countries_present)}")
+
+    # Professional significance text (small)
+    if sig:
+        st.success("Statistically reliable pattern (p < 0.05)")
+    else:
+        st.info("Pattern not statistically reliable (p ≥ 0.05)")
+
+# ----------------------------
+# Professional inequality insight (NOT messy blue box)
+# ----------------------------
+st.markdown("---")
+st.subheader("📈 Scatter View Story (What the chart shows)")
+
+# Interpret the relation in inequality words
+hx = short_name(x_indicator)
+hy = short_name(y_indicator)
+
+if r > 0:
+    rel_text = f"Across {year_range[0]}–{year_range[1]}, higher **{hx}** tends to come with higher **{hy}**."
+else:
+    rel_text = f"Across {year_range[0]}–{year_range[1]}, higher **{hx}** tends to come with lower **{hy}**."
+
+# Convert to inequality pressure
+if higher_y_is_worse:
+    if r > 0:
+        ineq_text = f"That means inequality pressure may **rise** when {hx} increases (based on {hy})."
+    else:
+        ineq_text = f"That means inequality pressure may **ease** when {hx} increases (based on {hy})."
+else:
+    # lowest 10% share: higher is good
+    if r > 0:
+        ineq_text = f"That suggests the **bottom-share improves** as {hx} increases (lower inequality pressure)."
+    else:
+        ineq_text = f"That suggests the **bottom-share shrinks** as {hx} increases (higher inequality pressure)."
+
+# Clean “one paragraph” narrative
+st.markdown(
+    f"Each point in the chart represents a country in a given year between "
+    f"**{year_range[0]}–{year_range[1]}**. "
+    f"The pattern between **{hx}** and **{hy}** is **{strength.lower()} and {direction.lower()}** "
+    f"(r = {r:.2f}). {rel_text} {ineq_text}"
+)
+
+
+
+st.caption("This chart highlights patterns observed in the data. It does not claim direct cause–effect relationships.")
+
+# ----------------------------
+# Inequality ranking (THIS is the “solid inequality” part)
+# ----------------------------
+st.markdown("---")
+st.subheader("🏷️ Inequality level snapshot (country ranking from Y)")
+
+st.caption(
+    f"This ranks the selected countries by the average of **{hy}** over {year_range[0]}–{year_range[1]}. "
+    f"It is a **signal** from the chosen inequality indicator (not a full inequality index)."
+)
+
+# Add label column
+total = len(ranked)
+labels = []
+for i in range(total):
+    labels.append(inequality_label_from_rank(i, total))
+ranked["Level"] = labels
+
+# Make numbers nicer
+ranked["Avg_Y"] = ranked["Avg_Y"].round(3)
+
+# Show as table (simple and professional)
+st.dataframe(ranked, use_container_width=True, hide_index=True)
+
+# Optional: quick sentence
+if total >= 1:
+    top_country = ranked.iloc[0]["Country"]
+    top_level = ranked.iloc[0]["Level"]
+    st.markdown(
+        f"**Quick takeaway:** In this range, **{top_country}** shows the **{top_level} inequality signal** under the selected measure (**{hy}**)."
+    )
+
+# Explain missing countries (professional)
+with st.expander("Why some selected Home countries may not appear"):
+    st.write(
+        "A country shows up only if it has **both** selected indicators (X and Y) available in the chosen year range. "
+        "If values are missing for either indicator, it will disappear from the scatter."
+    )
+    st.dataframe(coverage.rename("points").reset_index(), use_container_width=True, hide_index=True)
+
+st.caption("Inequality Drivers — Correlation Explorer | South Asia Inequality Analysis Platform")
