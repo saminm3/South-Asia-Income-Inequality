@@ -14,24 +14,29 @@ from utils.utils import human_indicator
 
 # Page config
 st.set_page_config(
-    page_title="Analytics Dashboard",
+    page_title="Inequality Analytics Dashboard",
     page_icon="📊",
     layout="wide",
     initial_sidebar_state="collapsed"
 )
 
-# Ultra-modern dark theme CSS (Google Analytics style)
+# ═══════════════════════════════════════════════════════════════════
+# GOOGLE ANALYTICS INSPIRED DARK THEME
+# ═══════════════════════════════════════════════════════════════════
+
 st.markdown("""
 <style>
-    /* Main dark gradient background */
+    /* Main background - Dark navy matching the screenshot */
     .main {
-        background: linear-gradient(180deg, #0a0e27 0%, #1a1f3a 50%, #0f1419 100%);
+        background: #1a1f3a;
     }
     
-    /* Remove padding */
+    /* Remove default padding */
     .block-container {
-        padding-top: 1rem;
-        padding-bottom: 0rem;
+        padding-top: 2rem;
+        padding-bottom: 2rem;
+        padding-left: 3rem;
+        padding-right: 3rem;
         max-width: 100%;
     }
     
@@ -40,57 +45,61 @@ st.markdown("""
     footer {visibility: hidden;}
     header {visibility: hidden;}
     
-    /* Custom metric cards with gradient */
+    /* Metric cards - matching screenshot style */
     div[data-testid="metric-container"] {
-        background: linear-gradient(135deg, rgba(139, 92, 246, 0.15) 0%, rgba(236, 72, 153, 0.1) 100%);
-        border: 1px solid rgba(139, 92, 246, 0.3);
-        border-radius: 16px;
-        padding: 24px;
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-        backdrop-filter: blur(10px);
+        background: #0f1419;
+        border: 1px solid rgba(59, 130, 246, 0.2);
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
     }
     
-    /* Metric labels */
-    div[data-testid="metric-container"] label {
+    div[data-testid="metric-container"] > label {
         color: #94a3b8 !important;
-        font-size: 0.85rem !important;
-        font-weight: 600 !important;
-        letter-spacing: 0.5px;
+        font-size: 0.875rem !important;
+        font-weight: 500 !important;
         text-transform: uppercase;
+        letter-spacing: 0.5px;
     }
     
-    /* Metric values */
-    div[data-testid="metric-container"] [data-testid="stMetricValue"] {
+    div[data-testid="metric-container"] > div {
         color: #ffffff !important;
-        font-size: 2.8rem !important;
-        font-weight: 800 !important;
-        text-shadow: 0 2px 10px rgba(139, 92, 246, 0.3);
+        font-size: 2rem !important;
+        font-weight: 700 !important;
     }
     
-    /* Delta values */
     div[data-testid="metric-container"] [data-testid="stMetricDelta"] {
-        font-size: 1rem !important;
-        font-weight: 600 !important;
+        font-size: 0.875rem !important;
     }
     
     /* Headers */
     h1, h2, h3 {
         color: #ffffff !important;
-        font-weight: 800 !important;
-        letter-spacing: -0.5px;
+        font-weight: 600 !important;
     }
     
-    /* Section headers */
-    .section-header {
+    /* Selectbox styling */
+    div[data-baseweb="select"] {
+        background: rgba(20, 25, 45, 0.6) !important;
+        border-radius: 8px !important;
+    }
+    
+    /* Text color */
+    p, span, div {
         color: #e2e8f0;
-        font-size: 1.1rem;
-        font-weight: 700;
-        margin-bottom: 1rem;
-        letter-spacing: 0.5px;
-        text-transform: uppercase;
     }
     
-    /* Scrollbar styling */
+    /* Chart containers */
+    .chart-container {
+        background: #0f1419;
+        border: 1px solid rgba(59, 130, 246, 0.2);
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+    }
+    
+    /* Scrollbar */
     ::-webkit-scrollbar {
         width: 8px;
         height: 8px;
@@ -101,12 +110,54 @@ st.markdown("""
     }
     
     ::-webkit-scrollbar-thumb {
-        background: rgba(139, 92, 246, 0.5);
+        background: rgba(100, 116, 139, 0.5);
         border-radius: 4px;
     }
     
     ::-webkit-scrollbar-thumb:hover {
-        background: rgba(139, 92, 246, 0.8);
+        background: rgba(100, 116, 139, 0.8);
+    }
+    
+    /* Custom card styles */
+    .stat-card {
+        background: #0f1419;
+        border: 1px solid rgba(59, 130, 246, 0.2);
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+        margin-bottom: 20px;
+    }
+    
+    .stat-number {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: #ffffff;
+        margin: 10px 0;
+    }
+    
+    .stat-label {
+        font-size: 0.875rem;
+        color: #94a3b8;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: 500;
+    }
+    
+    .trend-positive {
+        color: #10b981;
+    }
+    
+    .trend-negative {
+        color: #ef4444;
+    }
+    
+    .section-header {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #ffffff;
+        margin: 30px 0 15px 0;
+        padding-bottom: 10px;
+        border-bottom: 1px solid rgba(100, 116, 139, 0.2);
     }
 </style>
 """, unsafe_allow_html=True)
@@ -131,7 +182,7 @@ def ensure_public_analysis(df):
 df = load_inequality_data()
 
 if df.empty:
-    st.error("No data available")
+    st.error("⚠️ No data available")
     st.stop()
 
 ensure_public_analysis(df)
@@ -146,23 +197,42 @@ filtered_df = df[
 ].copy()
 
 if filtered_df.empty:
-    st.warning("No data available")
+    st.warning("⚠️ No data available for selected filters")
     st.stop()
 
 # ═══════════════════════════════════════════════════════════════════
-# HEADER
+# HEADER SECTION
 # ═══════════════════════════════════════════════════════════════════
 
-st.markdown("""
-<div style="margin-bottom: 2rem;">
-    <h1 style="font-size: 2.5rem; margin: 0; background: linear-gradient(90deg, #8b5cf6 0%, #ec4899 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
-        South Asia Inequality Analytics
-    </h1>
-    <p style="color: #94a3b8; font-size: 0.95rem; margin-top: 0.5rem;">Real-time inequality monitoring & insights</p>
-</div>
-""", unsafe_allow_html=True)
+col_header1, col_header2 = st.columns([3, 1])
 
-# Calculate metrics
+with col_header1:
+    st.markdown(f"""
+    <div style="margin-bottom: 1.5rem;">
+        <h1 style="font-size: 2rem; margin: 0; color: #ffffff; font-weight: 600;">
+            {human_indicator(config['indicator'])}
+        </h1>
+        <p style="color: #94a3b8; font-size: 0.9rem; margin-top: 0.5rem;">
+            {config['year_range'][0]} - {config['year_range'][1]} • {len(config['countries'])} Countries
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+
+with col_header2:
+    # Quick date range indicator
+    st.markdown(f"""
+    <div style="text-align: right; padding-top: 10px;">
+        <p style="color: #64748b; font-size: 0.85rem; margin: 0;">Data Range</p>
+        <p style="color: #e2e8f0; font-size: 1.1rem; font-weight: 600; margin: 5px 0 0 0;">
+            {config['year_range'][1] - config['year_range'][0] + 1} Years
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+
+# ═══════════════════════════════════════════════════════════════════
+# KEY METRICS ROW (Google Analytics inspired)
+# ═══════════════════════════════════════════════════════════════════
+
 latest_year = int(filtered_df['year'].max())
 latest_data = filtered_df[filtered_df['year'] == latest_year].copy()
 prev_year = latest_year - 1
@@ -177,433 +247,416 @@ else:
     yoy_change = 0
     yoy_pct = 0
 
-# ═══════════════════════════════════════════════════════════════════
-# TOP METRICS ROW (Google Analytics style)
-# ═══════════════════════════════════════════════════════════════════
+# Best and worst performers
+best_country = latest_data.loc[latest_data['value'].idxmin(), 'country'] if not latest_data.empty else "N/A"
+worst_country = latest_data.loc[latest_data['value'].idxmax(), 'country'] if not latest_data.empty else "N/A"
+data_coverage = (filtered_df.notna().sum()['value'] / len(filtered_df) * 100)
 
 col1, col2, col3, col4 = st.columns(4)
 
 with col1:
-    # Create mini sparkline for trend
-    recent_trend = filtered_df.groupby('year')['value'].mean().tail(10)
-    
-    fig_spark1 = go.Figure()
-    fig_spark1.add_trace(go.Scatter(
-        x=recent_trend.index,
-        y=recent_trend.values,
-        mode='lines',
-        fill='tozeroy',
-        line=dict(color='#8b5cf6', width=2),
-        fillcolor='rgba(139, 92, 246, 0.3)',
-        showlegend=False
-    ))
-    fig_spark1.update_layout(
-        height=80,
-        margin=dict(l=0, r=0, t=0, b=0),
-        paper_bgcolor='rgba(0,0,0,0)',
-        plot_bgcolor='rgba(0,0,0,0)',
-        xaxis=dict(visible=False),
-        yaxis=dict(visible=False)
-    )
+    # Regional Average - clean style
+    delta_color = "#10b981" if yoy_pct < 0 else "#ef4444"
+    delta_symbol = "↓" if yoy_pct < 0 else "↑"
     
     st.metric(
         label="Regional Average",
         value=f"{regional_avg:.1f}",
-        delta=f"{yoy_pct:+.1f}%"
+        delta=f"{delta_symbol} {abs(yoy_pct):.1f}%"
     )
-    st.plotly_chart(fig_spark1, use_container_width=True, config={'displayModeBar': False})
 
 with col2:
-    best_country = latest_data.loc[latest_data['value'].idxmin(), 'country']
-    best_value = latest_data['value'].min()
+    # Best Performer - clean style
+    best_value = latest_data['value'].min() if not latest_data.empty else 0
     
     st.metric(
         label="Best Performer",
         value=best_country,
-        delta=f"{best_value:.1f}"
+        delta=f"↑ {best_value:.1f}"
     )
-    st.markdown(f"""
-    <div style="height: 80px; display: flex; align-items: center; justify-content: center;">
-        <div style="font-size: 4rem; opacity: 0.3;">🏆</div>
-    </div>
-    """, unsafe_allow_html=True)
 
 with col3:
-    worst_country = latest_data.loc[latest_data['value'].idxmax(), 'country']
-    worst_value = latest_data['value'].max()
+    # Needs Attention - clean style
+    worst_value = latest_data['value'].max() if not latest_data.empty else 0
     
     st.metric(
         label="Needs Attention",
         value=worst_country,
-        delta=f"{worst_value:.1f}",
+        delta=f"↑ {worst_value:.1f}",
         delta_color="inverse"
     )
-    st.markdown(f"""
-    <div style="height: 80px; display: flex; align-items: center; justify-content: center;">
-        <div style="font-size: 4rem; opacity: 0.3;">⚠️</div>
-    </div>
-    """, unsafe_allow_html=True)
 
 with col4:
-    data_points = len(filtered_df)
-    coverage = (len(filtered_df) / (len(config['countries']) * (config['year_range'][1] - config['year_range'][0] + 1)) * 100)
-    
+    # Data Coverage - clean style
     st.metric(
         label="Data Coverage",
-        value=f"{coverage:.0f}%",
-        delta=f"{data_points} points"
+        value=f"{data_coverage:.0f}%",
+        delta=f"↑ {int(data_coverage - 50)} points" if data_coverage > 50 else f"↓ {int(50 - data_coverage)} points"
     )
-    
-    # Coverage gauge (FIXED - removed invalid font size)
-    fig_gauge = go.Figure(go.Indicator(
-        mode="gauge",  # Removed "+number" since we don't want to show it
-        value=coverage,
-        gauge={
-            'axis': {'range': [0, 100], 'visible': False},
-            'bar': {'color': "#ec4899", 'thickness': 0.3},
-            'bgcolor': "rgba(255,255,255,0.1)",
-            'borderwidth': 0
-        }
-    ))
-    fig_gauge.update_layout(
-        height=80,
-        margin=dict(l=0, r=0, t=0, b=0),
-        paper_bgcolor='rgba(0,0,0,0)'
-    )
-    st.plotly_chart(fig_gauge, use_container_width=True, config={'displayModeBar': False})
-
-st.markdown("<br>", unsafe_allow_html=True)
 
 # ═══════════════════════════════════════════════════════════════════
-# STREAMGRAPH (Main visualization - Google Analytics style)
+# MAIN VISUALIZATION SECTION
 # ═══════════════════════════════════════════════════════════════════
 
-st.markdown('<p class="section-header">Inequality Trends Over Time</p>', unsafe_allow_html=True)
+st.markdown("""
+<div style="margin: 40px 0 20px 0;">
+    <h2 style="font-size: 1rem; font-weight: 700; color: #ffffff; text-transform: uppercase; letter-spacing: 1px;">
+        Inequality Trends Over Time
+    </h2>
+</div>
+""", unsafe_allow_html=True)
 
-# Prepare streamgraph data
-stream_pivot = filtered_df.pivot_table(
+# Main area chart - Google Analytics style
+yearly_data = filtered_df.pivot_table(
+    values='value',
     index='year',
     columns='country',
-    values='value',
     aggfunc='mean'
-).fillna(method='ffill').fillna(method='bfill')
+).fillna(method='ffill')
 
-# Gradient color palette (Google Analytics style)
-stream_colors = [
-    '#8b5cf6',  # Purple
-    '#ec4899',  # Pink
-    '#06b6d4',  # Cyan
-    '#f59e0b',  # Amber
-    '#10b981',  # Emerald
-    '#6366f1',  # Indigo
-    '#f43f5e',  # Rose
-]
+fig_area = go.Figure()
 
-fig_stream = go.Figure()
+# Color palette similar to Google Analytics
+colors = ['#3b82f6', '#ec4899', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444', '#06b6d4', '#6366f1']
 
-# Add streamgraph layers
-for i, country in enumerate(stream_pivot.columns):
-    fig_stream.add_trace(go.Scatter(
-        x=stream_pivot.index,
-        y=stream_pivot[country],
-        name=country,
+for i, country in enumerate(yearly_data.columns):
+    fig_area.add_trace(go.Scatter(
+        x=yearly_data.index,
+        y=yearly_data[country],
         mode='lines',
-        line=dict(width=0, color=stream_colors[i % len(stream_colors)]),
-        fillcolor=stream_colors[i % len(stream_colors)],
+        name=country,
+        line=dict(width=2.5, color=colors[i % len(colors)]),
         fill='tonexty' if i > 0 else 'tozeroy',
+        fillcolor=f'rgba({int(colors[i % len(colors)][1:3], 16)}, {int(colors[i % len(colors)][3:5], 16)}, {int(colors[i % len(colors)][5:7], 16)}, 0.2)',
         stackgroup='one',
-        opacity=0.85,
-        hovertemplate=f'<b>{country}</b><br>Year: %{{x}}<br>Value: %{{y:.2f}}<extra></extra>'
+        hovertemplate='<b>%{fullData.name}</b><br>Year: %{x}<br>Value: %{y:.2f}<extra></extra>'
     ))
 
-fig_stream.update_layout(
-    height=280,
-    margin=dict(l=0, r=0, t=0, b=0),
+fig_area.update_layout(
+    height=400,
     paper_bgcolor='rgba(0,0,0,0)',
     plot_bgcolor='rgba(0,0,0,0)',
-    font=dict(color='#94a3b8', size=11),
+    font=dict(color='#e2e8f0', size=12),
     xaxis=dict(
         showgrid=True,
-        gridcolor='rgba(148, 163, 184, 0.1)',
-        gridwidth=1,
-        color='#94a3b8',
-        title=None,
-        showline=False
+        gridcolor='rgba(100, 116, 139, 0.2)',
+        title='',
+        color='#94a3b8'
     ),
     yaxis=dict(
         showgrid=True,
-        gridcolor='rgba(148, 163, 184, 0.1)',
-        gridwidth=1,
-        color='#94a3b8',
-        title=None,
-        showline=False
+        gridcolor='rgba(100, 116, 139, 0.2)',
+        title='',
+        color='#94a3b8'
     ),
     legend=dict(
         orientation="h",
-        yanchor="top",
-        y=-0.15,
-        xanchor="center",
-        x=0.5,
-        font=dict(color='#e2e8f0', size=10),
-        bgcolor='rgba(0,0,0,0)'
+        yanchor="bottom",
+        y=1.02,
+        xanchor="right",
+        x=1,
+        bgcolor='rgba(0,0,0,0)',
+        font=dict(color='#e2e8f0', size=11)
     ),
-    hovermode='x unified',
-    hoverlabel=dict(
-        bgcolor='rgba(15, 20, 25, 0.95)',
-        font_size=11,
-        font_color='#ffffff',
-        bordercolor='rgba(139, 92, 246, 0.5)'
-    )
+    margin=dict(l=60, r=20, t=60, b=40),
+    hovermode='x unified'
 )
 
-st.plotly_chart(fig_stream, use_container_width=True, config={'displayModeBar': False})
-
-st.markdown("<br>", unsafe_allow_html=True)
+st.plotly_chart(fig_area, use_container_width=True, config={'displayModeBar': False})
 
 # ═══════════════════════════════════════════════════════════════════
-# MIDDLE ROW: Country Rankings & Browser/Device breakdown style
+# SECONDARY VISUALIZATIONS ROW
 # ═══════════════════════════════════════════════════════════════════
 
-col_left, col_right = st.columns([3, 2])
+st.markdown('<div class="section-header">Country Comparison & Distribution</div>', unsafe_allow_html=True)
 
-with col_left:
-    st.markdown('<p class="section-header">Country by Inequality Level</p>', unsafe_allow_html=True)
+col_viz1, col_viz2 = st.columns([1.5, 1])
+
+with col_viz1:
+    # Horizontal bar chart - Browser breakdown style
+    country_avg = filtered_df.groupby('country')['value'].mean().sort_values(ascending=True)
     
-    # Create stacked horizontal bars (Desktop/Mobile style from GA)
-    ranked = latest_data.sort_values('value', ascending=False)
+    fig_bars = go.Figure()
     
-    fig_h_bars = go.Figure()
+    fig_bars.add_trace(go.Bar(
+        y=country_avg.index,
+        x=country_avg.values,
+        orientation='h',
+        marker=dict(
+            color=country_avg.values,
+            colorscale='RdYlGn_r',  # Red (bad) to Green (good) reversed
+            showscale=False,
+            line=dict(width=0)
+        ),
+        text=[f'{v:.2f}' for v in country_avg.values],
+        textposition='outside',
+        textfont=dict(color='#ffffff', size=11),
+        hovertemplate='<b>%{y}</b><br>Average: %{x:.2f}<extra></extra>'
+    ))
     
-    for idx, (_, row) in enumerate(ranked.iterrows()):
-        # Create two segments to mimic the Desktop/Mobile split
-        value = row['value']
-        segment1 = value * 0.6  # "Desktop"
-        segment2 = value * 0.4  # "Mobile"
-        
-        # Segment 1 (darker)
-        fig_h_bars.add_trace(go.Bar(
-            y=[row['country']],
-            x=[segment1],
-            orientation='h',
-            marker=dict(
-                color=stream_colors[idx % len(stream_colors)],
-                opacity=1
-            ),
-            name='Primary',
-            text=f"{segment1:.1f}",
-            textposition='inside',
-            textfont=dict(color='white', size=11),
-            hovertemplate=f"<b>{row['country']}</b><br>Primary: {segment1:.2f}<extra></extra>",
-            showlegend=False
-        ))
-        
-        # Segment 2 (lighter)
-        fig_h_bars.add_trace(go.Bar(
-            y=[row['country']],
-            x=[segment2],
-            orientation='h',
-            marker=dict(
-                color=stream_colors[idx % len(stream_colors)],
-                opacity=0.6
-            ),
-            name='Secondary',
-            text=f"{segment2:.1f}",
-            textposition='inside',
-            textfont=dict(color='white', size=11),
-            hovertemplate=f"<b>{row['country']}</b><br>Secondary: {segment2:.2f}<extra></extra>",
-            showlegend=False
-        ))
-    
-    fig_h_bars.update_layout(
-        height=300,
-        margin=dict(l=0, r=0, t=10, b=10),
+    fig_bars.update_layout(
+        height=350,
         paper_bgcolor='rgba(0,0,0,0)',
         plot_bgcolor='rgba(0,0,0,0)',
-        font=dict(color='#e2e8f0', size=11),
-        barmode='stack',
+        font=dict(color='#e2e8f0', size=12),
         xaxis=dict(
             showgrid=True,
-            gridcolor='rgba(148, 163, 184, 0.1)',
-            color='#94a3b8',
-            title=None,
-            showline=False,
-            tickformat='.0f'
+            gridcolor='rgba(100, 116, 139, 0.2)',
+            title='',
+            color='#94a3b8'
         ),
         yaxis=dict(
             showgrid=False,
-            color='#e2e8f0',
-            showline=False
+            title='',
+            color='#e2e8f0'
         ),
-        bargap=0.3
+        margin=dict(l=100, r=60, t=20, b=40),
+        title=dict(
+            text='Average by Country',
+            font=dict(size=14, color='#ffffff'),
+            x=0
+        )
     )
     
-    st.plotly_chart(fig_h_bars, use_container_width=True, config={'displayModeBar': False})
+    st.plotly_chart(fig_bars, use_container_width=True, config={'displayModeBar': False})
 
-with col_right:
-    st.markdown('<p class="section-header">Trend Status</p>', unsafe_allow_html=True)
+with col_viz2:
+    # Donut chart - Traffic source style
+    # Categorize countries by performance
+    median_val = latest_data['value'].median()
+    q1 = latest_data['value'].quantile(0.33)
+    q3 = latest_data['value'].quantile(0.67)
     
-    # Calculate trend categories
-    improving = 0
-    worsening = 0
-    stable = 0
+    categories = []
+    for val in latest_data['value']:
+        if val <= q1:
+            categories.append('Low Inequality')
+        elif val <= q3:
+            categories.append('Moderate')
+        else:
+            categories.append('High Inequality')
     
-    for country in config['countries']:
-        country_data = filtered_df[filtered_df['country'] == country].sort_values('year')
-        if len(country_data) >= 2:
-            change = country_data.iloc[-1]['value'] - country_data.iloc[0]['value']
-            if change < -0.5:
-                improving += 1
-            elif change > 0.5:
-                worsening += 1
-            else:
-                stable += 1
+    category_counts = pd.Series(categories).value_counts()
     
-    # Donut chart (Google Analytics style)
     fig_donut = go.Figure(data=[go.Pie(
-        labels=['Improving', 'Stable', 'Worsening'],
-        values=[improving, stable, worsening],
+        labels=category_counts.index,
+        values=category_counts.values,
         hole=0.6,
         marker=dict(
             colors=['#10b981', '#f59e0b', '#ef4444'],
-            line=dict(color='rgba(15, 20, 25, 1)', width=2)
+            line=dict(color='#0a0e27', width=2)
         ),
-        textfont=dict(color='#ffffff', size=13),
+        textinfo='label+percent',
         textposition='outside',
-        hovertemplate='<b>%{label}</b><br>Count: %{value}<br>%{percent}<extra></extra>'
+        textfont=dict(color='#ffffff', size=11),
+        hovertemplate='<b>%{label}</b><br>Countries: %{value}<br>%{percent}<extra></extra>'
     )])
     
     fig_donut.update_layout(
-        height=300,
-        margin=dict(l=20, r=20, t=20, b=20),
+        height=350,
         paper_bgcolor='rgba(0,0,0,0)',
+        plot_bgcolor='rgba(0,0,0,0)',
         font=dict(color='#e2e8f0'),
-        showlegend=True,
-        legend=dict(
-            orientation="v",
-            yanchor="middle",
-            y=0.5,
-            xanchor="left",
-            x=1.1,
-            font=dict(color='#e2e8f0', size=11),
-            bgcolor='rgba(0,0,0,0)'
+        margin=dict(l=20, r=20, t=40, b=20),
+        showlegend=False,
+        title=dict(
+            text='Distribution',
+            font=dict(size=14, color='#ffffff'),
+            x=0.5,
+            xanchor='center'
         ),
         annotations=[dict(
-            text=f'<b>{improving + stable + worsening}</b><br><span style="font-size:11px; color: #94a3b8;">COUNTRIES</span>',
+            text=f'<b>{len(latest_data)}</b><br>Countries',
             x=0.5, y=0.5,
-            font=dict(size=20, color='#ffffff'),
+            font=dict(size=16, color='#ffffff'),
             showarrow=False
         )]
     )
     
     st.plotly_chart(fig_donut, use_container_width=True, config={'displayModeBar': False})
 
-st.markdown("<br>", unsafe_allow_html=True)
-
 # ═══════════════════════════════════════════════════════════════════
-# BOTTOM ROW: Rankings & Distribution
+# BOTTOM SECTION: Rankings & Timeline
 # ═══════════════════════════════════════════════════════════════════
 
-col_left2, col_right2 = st.columns([2, 3])
+st.markdown('<div class="section-header">Detailed Rankings & Individual Trends</div>', unsafe_allow_html=True)
 
-with col_left2:
-    st.markdown('<p class="section-header">Latest Rankings</p>', unsafe_allow_html=True)
+col_bottom1, col_bottom2 = st.columns([1, 1.5])
+
+with col_bottom1:
+    # Rankings list with gradient bars
+    st.markdown("""
+    <div style="margin-bottom: 15px;">
+        <h3 style="font-size: 1rem; color: #ffffff; font-weight: 600; margin: 0;">
+            Current Rankings (Latest Year)
+        </h3>
+    </div>
+    """, unsafe_allow_html=True)
     
-    # Create ranking table (Google Analytics style)
-    ranked_list = latest_data.sort_values('value').reset_index(drop=True)
+    rankings = latest_data.sort_values('value').reset_index(drop=True)
     
-    # Container div
-    st.markdown('<div style="background: rgba(15, 20, 25, 0.5); border-radius: 12px; padding: 1rem; border: 1px solid rgba(139, 92, 246, 0.2);">', unsafe_allow_html=True)
-    
-    for idx, row in ranked_list.iterrows():
+    for idx, row in rankings.iterrows():
         rank = idx + 1
-        color = stream_colors[idx % len(stream_colors)]
-        bar_width = (row['value'] / ranked_list['value'].max() * 100)
+        country = row['country']
+        value = row['value']
+        pct_of_max = (value / rankings['value'].max()) * 100
         
-        # Each ranking item as separate markdown call
+        # Color based on rank
+        if rank == 1:
+            bar_color = '#10b981'  # Green
+            rank_icon = '🥇'
+        elif rank == 2:
+            bar_color = '#3b82f6'  # Blue
+            rank_icon = '🥈'
+        elif rank == 3:
+            bar_color = '#8b5cf6'  # Purple
+            rank_icon = '🥉'
+        else:
+            bar_color = '#64748b'  # Gray
+            rank_icon = f'{rank}.'
+        
         st.markdown(f"""
-        <div style="margin-bottom: 1rem;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.3rem;">
-                <div style="display: flex; align-items: center; gap: 0.5rem;">
-                    <span style="color: #64748b; font-size: 0.85rem; font-weight: 600;">#{rank}</span>
-                    <span style="color: #e2e8f0; font-weight: 600;">{row['country']}</span>
-                </div>
-                <span style="color: #ffffff; font-weight: 700; font-size: 1.1rem;">{row['value']:.1f}</span>
+        <div style="margin-bottom: 12px;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                <span style="color: #e2e8f0; font-size: 0.9rem; font-weight: 500;">
+                    {rank_icon} {country}
+                </span>
+                <span style="color: #ffffff; font-weight: 600; font-size: 0.9rem;">
+                    {value:.2f}
+                </span>
             </div>
-            <div style="background: rgba(100, 116, 139, 0.2); height: 6px; border-radius: 3px; overflow: hidden;">
-                <div style="background: linear-gradient(90deg, {color}, {color}CC); width: {bar_width}%; height: 100%; border-radius: 3px;"></div>
+            <div style="background: rgba(100, 116, 139, 0.2); border-radius: 4px; height: 6px; overflow: hidden;">
+                <div style="background: {bar_color}; height: 100%; width: {pct_of_max}%; border-radius: 4px;"></div>
             </div>
         </div>
         """, unsafe_allow_html=True)
-    
-    # Close container
-    st.markdown('</div>', unsafe_allow_html=True)
 
-with col_right2:
-    st.markdown('<p class="section-header">Distribution Analysis</p>', unsafe_allow_html=True)
+with col_bottom2:
+    # Individual country trends
+    st.markdown("""
+    <div style="margin-bottom: 15px;">
+        <h3 style="font-size: 1rem; color: #ffffff; font-weight: 600; margin: 0;">
+            Individual Country Trends
+        </h3>
+    </div>
+    """, unsafe_allow_html=True)
     
-    # Area chart distribution
-    hist_values, bins = np.histogram(latest_data['value'], bins=15)
-    bin_centers = (bins[:-1] + bins[1:]) / 2
+    fig_lines = go.Figure()
     
-    fig_area = go.Figure()
+    for i, country in enumerate(filtered_df['country'].unique()):
+        country_data = filtered_df[filtered_df['country'] == country].sort_values('year')
+        
+        fig_lines.add_trace(go.Scatter(
+            x=country_data['year'],
+            y=country_data['value'],
+            mode='lines+markers',
+            name=country,
+            line=dict(width=2.5, color=colors[i % len(colors)]),
+            marker=dict(size=6, color=colors[i % len(colors)]),
+            hovertemplate='<b>%{fullData.name}</b><br>Year: %{x}<br>Value: %{y:.2f}<extra></extra>'
+        ))
     
-    # Add area trace
-    fig_area.add_trace(go.Scatter(
-        x=bin_centers,
-        y=hist_values,
-        fill='tozeroy',
-        fillcolor='rgba(139, 92, 246, 0.4)',
-        line=dict(color='#8b5cf6', width=3),
-        mode='lines',
-        name='Distribution',
-        hovertemplate='Value: %{x:.1f}<br>Count: %{y}<extra></extra>'
-    ))
-    
-    # Add mean line
-    fig_area.add_vline(
-        x=latest_data['value'].mean(),
-        line_dash="dash",
-        line_color="#ec4899",
-        line_width=2,
-        annotation_text="Mean",
-        annotation_position="top",
-        annotation_font_color="#ec4899"
-    )
-    
-    fig_area.update_layout(
-        height=280,
-        margin=dict(l=0, r=0, t=10, b=10),
+    fig_lines.update_layout(
+        height=350,
         paper_bgcolor='rgba(0,0,0,0)',
         plot_bgcolor='rgba(0,0,0,0)',
-        font=dict(color='#94a3b8', size=11),
+        font=dict(color='#e2e8f0', size=12),
         xaxis=dict(
             showgrid=True,
-            gridcolor='rgba(148, 163, 184, 0.1)',
-            color='#94a3b8',
-            title=human_indicator(config['indicator']),
-            showline=False
+            gridcolor='rgba(100, 116, 139, 0.2)',
+            title='Year',
+            color='#94a3b8'
         ),
         yaxis=dict(
             showgrid=True,
-            gridcolor='rgba(148, 163, 184, 0.1)',
-            color='#94a3b8',
-            title="Frequency",
-            showline=False
+            gridcolor='rgba(100, 116, 139, 0.2)',
+            title=human_indicator(config['indicator']),
+            color='#94a3b8'
         ),
-        showlegend=False
+        legend=dict(
+            orientation="v",
+            yanchor="top",
+            y=1,
+            xanchor="left",
+            x=1.01,
+            bgcolor='#0f1419',
+            bordercolor='rgba(59, 130, 246, 0.3)',
+            borderwidth=1,
+            font=dict(color='#e2e8f0', size=10)
+        ),
+        margin=dict(l=60, r=120, t=20, b=40),
+        hovermode='x unified'
     )
     
-    st.plotly_chart(fig_area, use_container_width=True, config={'displayModeBar': False})
+    st.plotly_chart(fig_lines, use_container_width=True, config={'displayModeBar': False})
 
-# Footer
-st.markdown("<br><br>", unsafe_allow_html=True)
+# ═══════════════════════════════════════════════════════════════════
+# FOOTER INSIGHTS
+# ═══════════════════════════════════════════════════════════════════
+
+st.markdown('<div class="section-header">Key Insights</div>', unsafe_allow_html=True)
+
+col_insight1, col_insight2, col_insight3 = st.columns(3)
+
+with col_insight1:
+    trend_direction = "improving" if yoy_pct < 0 else "worsening"
+    trend_icon = "📉" if yoy_pct < 0 else "📈"
+    
+    st.markdown(f"""
+    <div class="stat-card">
+        <div style="font-size: 2rem; margin-bottom: 10px;">{trend_icon}</div>
+        <div style="font-size: 0.875rem; color: #94a3b8; margin-bottom: 8px;">REGIONAL TREND</div>
+        <div style="font-size: 1.1rem; color: #ffffff; font-weight: 600;">
+            Inequality is {trend_direction}
+        </div>
+        <div style="font-size: 0.85rem; color: #94a3b8; margin-top: 8px;">
+            {abs(yoy_pct):.1f}% change year-over-year
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+with col_insight2:
+    volatility = filtered_df.groupby('country')['value'].std().mean()
+    
+    st.markdown(f"""
+    <div class="stat-card">
+        <div style="font-size: 2rem; margin-bottom: 10px;">📊</div>
+        <div style="font-size: 0.875rem; color: #94a3b8; margin-bottom: 8px;">VOLATILITY</div>
+        <div style="font-size: 1.1rem; color: #ffffff; font-weight: 600;">
+            {volatility:.2f} avg std dev
+        </div>
+        <div style="font-size: 0.85rem; color: #94a3b8; margin-top: 8px;">
+            Data stability indicator
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+with col_insight3:
+    gap = latest_data['value'].max() - latest_data['value'].min()
+    
+    st.markdown(f"""
+    <div class="stat-card">
+        <div style="font-size: 2rem; margin-bottom: 10px;">📏</div>
+        <div style="font-size: 0.875rem; color: #94a3b8; margin-bottom: 8px;">REGIONAL GAP</div>
+        <div style="font-size: 1.1rem; color: #ffffff; font-weight: 600;">
+            {gap:.2f} points
+        </div>
+        <div style="font-size: 0.85rem; color: #94a3b8; margin-top: 8px;">
+            Between best and worst
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+# Footer note
 st.markdown("""
-<div style="text-align: center; padding: 2rem 0; border-top: 1px solid rgba(148, 163, 184, 0.1);">
-    <p style="color: #64748b; font-size: 0.85rem; margin: 0;">
-        <strong style="color: #8b5cf6;">South Asia Inequality Analytics</strong> • Real-time Dashboard
+<div style="margin-top: 40px; padding: 20px; background: #0f1419; border-radius: 8px; border-left: 3px solid #3b82f6;">
+    <p style="color: #94a3b8; font-size: 0.85rem; margin: 0;">
+        💡 <b style="color: #e2e8f0;">For Researchers:</b> All visualizations show real-time data based on your selected filters. 
+        Statistical significance and detailed methodologies available in the Auto Insights section.
     </p>
-    <p style="color: #475569; font-size: 0.75rem; margin-top: 0.5rem;">
-        Powered by Streamlit & Plotly • Data: World Bank, UNDP, ADB
+    <p style="color: #94a3b8; font-size: 0.85rem; margin: 10px 0 0 0;">
+        📊 <b style="color: #e2e8f0;">For Policymakers:</b> Focus on trend directions and country rankings. 
+        Lower values indicate better equality distribution.
     </p>
 </div>
 """, unsafe_allow_html=True)

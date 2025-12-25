@@ -1,175 +1,254 @@
 """
-Auto-Insights Generation Module
-Generates natural language insights from inequality data
+utils/insights.py
+
+Pure utility module (NO Streamlit UI code).
+Provides insight generation functions used by pages/8_auto_insights.py and utils/__init__.py.
+
+Fixes circular import by:
+- NOT importing from utils.insights inside this file
+- NOT importing Streamlit
 """
 
-import pandas as pd
+from __future__ import annotations
+
+from dataclasses import dataclass
+from typing import Dict, List, Tuple, Optional
+import math
 import numpy as np
+import pandas as pd
 
-def generate_insights(df, indicator, countries, year_range):
-    """
-    Generate natural language insights from filtered data
-    
-    Args:
-        df: Main dataset
-        indicator: Selected indicator
-        countries: List of countries
-        year_range: Tuple (start_year, end_year)
-    
-    Returns:
-        List of insight strings
-    """
-    
-    insights = []
-    
+
+YearRange = Tuple[int, int]
+
+
+def _to_numeric_series(df: pd.DataFrame) -> pd.DataFrame:
+    d = df.copy()
+    d["year"] = pd.to_numeric(d["year"], errors="coerce")
+    d["value"] = pd.to_numeric(d["value"], errors="coerce")
+    return d.dropna(subset=["country", "indicator", "year", "value"])
+
+
+def _filter(df: pd.DataFrame, countries: List[str], indicator: str, year_range: YearRange) -> pd.DataFrame:
+    y0, y1 = year_range
+    d = _to_numeric_series(df)
+    d = d[
+        (d["country"].isin(countries)) &
+        (d["indicator"] == indicator) &
+        (d["year"].between(int(y0), int(y1)))
+    ].copy()
+    d["year"] = d["year"].astype(int)
+    return d
+
+
+def _linear_trend_slope(years: np.ndarray, values: np.ndarray) -> Optional[float]:
+    if len(years) < 3:
+        return None
+    # simple linear regression slope via polyfit
     try:
-        # Filter data
-        filtered = df[
-            (df['indicator'] == indicator) &
-            (df['country'].isin(countries)) &
-            (df['year'] >= year_range[0]) &
-            (df['year'] <= year_range[1])
-        ].copy()
-        
-        if filtered.empty:
-            return ["⚠️ No data available for generating insights"]
-        
-        # 1. TREND ANALYSIS
-        for country in countries:
-            country_data = filtered[filtered['country'] == country].sort_values('year')
-            if len(country_data) >= 2:
-                start_val = country_data.iloc[0]['value']
-                end_val = country_data.iloc[-1]['value']
-                start_year = int(country_data.iloc[0]['year'])
-                end_year = int(country_data.iloc[-1]['year'])
-                
-                if start_val != 0:
-                    change = ((end_val - start_val) / start_val * 100)
-                    trend = "increased" if change > 0 else "decreased"
-                    insights.append(
-                        f"📈 **{country}**: {indicator} {trend} by **{abs(change):.1f}%** "
-                        f"from {start_year} ({start_val:.2f}) to {end_year} ({end_val:.2f})"
-                    )
-        
-        # 2. LATEST RANKINGS
-        latest_year = int(filtered['year'].max())
-        latest_data = filtered[filtered['year'] == latest_year].sort_values('value')
-        
-        if len(latest_data) >= 2:
-            best = latest_data.iloc[0]
-            worst = latest_data.iloc[-1]
-            insights.append(
-                f"🏆 **{latest_year} Rankings**: Lowest {indicator} is **{best['country']}** ({best['value']:.2f}), "
-                f"highest is **{worst['country']}** ({worst['value']:.2f})"
-            )
-        
-        # 3. REGIONAL AVERAGE
-        if len(latest_data) > 0:
-            avg = latest_data['value'].mean()
-            median = latest_data['value'].median()
-            insights.append(
-                f"📊 **Regional Statistics ({latest_year})**: Average = {avg:.2f}, Median = {median:.2f}"
-            )
-        
-        # 4. COMPARISON INSIGHTS
-        if len(latest_data) >= 2:
-            range_val = latest_data['value'].max() - latest_data['value'].min()
-            avg_val = latest_data['value'].mean()
-            range_pct = (range_val / avg_val * 100) if avg_val != 0 else 0
-            insights.append(
-                f"📏 **Disparity**: Range between countries is {range_val:.2f} ({range_pct:.1f}% of average)"
-            )
-        
-        # 5. VOLATILITY ANALYSIS
-        for country in countries:
-            country_data = filtered[filtered['country'] == country]
-            if len(country_data) >= 3:
-                std_dev = country_data['value'].std()
-                mean_val = country_data['value'].mean()
-                cv = (std_dev / mean_val * 100) if mean_val != 0 else 0
-                
-                if cv > 10:
-                    insights.append(
-                        f"📉 **{country}**: High variability in {indicator} (CV = {cv:.1f}%)"
-                    )
-                elif cv < 3:
-                    insights.append(
-                        f"📊 **{country}**: Stable {indicator} over time (CV = {cv:.1f}%)"
-                    )
-        
-        # 6. ANOMALY DETECTION
-        if len(filtered) >= 10:
-            overall_mean = filtered['value'].mean()
-            overall_std = filtered['value'].std()
-            
-            for country in countries:
-                country_data = filtered[filtered['country'] == country]
-                for _, row in country_data.iterrows():
-                    z_score = abs((row['value'] - overall_mean) / overall_std) if overall_std != 0 else 0
-                    if z_score > 2:
-                        insights.append(
-                            f"⚡ **Anomaly Detected**: {row['country']} had unusual {indicator} "
-                            f"value of {row['value']:.2f} in {int(row['year'])} (Z-score: {z_score:.2f})"
-                        )
-        
-        # 7. THRESHOLD ANALYSIS
-        if indicator == 'GINI':
-            for country in countries:
-                latest_country = latest_data[latest_data['country'] == country]
-                if len(latest_country) > 0:
-                    gini_val = latest_country.iloc[0]['value']
-                    if gini_val > 40:
-                        insights.append(
-                            f"🔴 **{country}**: High inequality (GINI = {gini_val:.2f}) - Above 40 threshold"
-                        )
-                    elif gini_val < 30:
-                        insights.append(
-                            f"🟢 **{country}**: Low inequality (GINI = {gini_val:.2f}) - Below 30 threshold"
-                        )
-        
-        elif indicator == 'HDI':
-            for country in countries:
-                latest_country = latest_data[latest_data['country'] == country]
-                if len(latest_country) > 0:
-                    hdi_val = latest_country.iloc[0]['value']
-                    if hdi_val >= 0.8:
-                        cat = "Very High"
-                    elif hdi_val >= 0.7:
-                        cat = "High"
-                    elif hdi_val >= 0.55:
-                        cat = "Medium"
-                    else:
-                        cat = "Low"
-                    insights.append(
-                        f"📈 **{country}**: {cat} Human Development (HDI = {hdi_val:.3f})"
-                    )
-        
-        # 8. DATA QUALITY NOTE
-        completeness = (len(filtered) / (len(countries) * (year_range[1] - year_range[0] + 1))) * 100
-        if completeness < 70:
-            insights.append(
-                f"⚠️ **Data Quality**: Only {completeness:.0f}% data completeness. "
-                f"Some years/countries may have missing data."
-            )
-        
-    except Exception as e:
-        insights.append(f"❌ Error generating insights: {str(e)}")
-    
-    # Limit to most important insights
-    return insights[:15] if len(insights) <= 15 else insights[:15] + [f"... and {len(insights)-15} more insights"]
+        slope = float(np.polyfit(years.astype(float), values.astype(float), 1)[0])
+        return slope
+    except Exception:
+        return None
 
-def format_insights_text(insights):
-    """Format insights as plain text for export"""
-    text = "AUTO-GENERATED INSIGHTS\n"
-    text += "=" * 60 + "\n\n"
+
+def _pct_change(v0: float, v1: float) -> Optional[float]:
+    if v0 is None or v1 is None:
+        return None
+    if v0 == 0:
+        return None
+    return ((v1 - v0) / abs(v0)) * 100.0
+
+
+def _zscore_anomalies(series: pd.Series, z_thresh: float = 2.5) -> List[int]:
+    if series.size < 6:
+        return []
+    vals = series.astype(float).to_numpy()
+    mu = float(np.mean(vals))
+    sd = float(np.std(vals, ddof=0))
+    if sd == 0:
+        return []
+    z = (vals - mu) / sd
+    idx = np.where(np.abs(z) >= z_thresh)[0]
+    return idx.tolist()
+
+
+def _interpret_strength(r: float) -> str:
+    ar = abs(r)
+    if ar < 0.3:
+        return "weak"
+    if ar < 0.6:
+        return "moderate"
+    return "strong"
+
+
+def generate_multimode_insights(
+    df: pd.DataFrame,
+    countries: List[str],
+    indicator: str,
+    year_range: YearRange,
+    max_insights: int = 10
+) -> Dict[str, List[str]]:
+    """
+    Returns insights grouped by category so your page can render sections.
+
+    Keys:
+    - trends
+    - ranking
+    - comparison
+    - anomalies
+    - statistics
+    - quality
+    - notes
+    """
+    out: Dict[str, List[str]] = {
+        "trends": [],
+        "ranking": [],
+        "comparison": [],
+        "anomalies": [],
+        "statistics": [],
+        "quality": [],
+        "notes": [],
+    }
+
+    if not countries or not indicator:
+        out["notes"].append("⚠️ Please select at least one country and an indicator.")
+        return out
+
+    d = _filter(df, countries, indicator, year_range)
+
+    if d.empty:
+        out["notes"].append("⚠️ No data available for the current selection.")
+        return out
+
+    y0, y1 = year_range
+    expected_years = int(y1) - int(y0) + 1
+
+    # ----- Data quality -----
+    avail_years = d.groupby("country")["year"].nunique().to_dict()
+    completeness = {c: round((avail_years.get(c, 0) / expected_years) * 100.0, 1) for c in countries}
+    avg_comp = round(float(np.mean(list(completeness.values()))), 1) if completeness else 0.0
+
+    badge = "🟢" if avg_comp >= 80 else ("🟡" if avg_comp >= 60 else "🔴")
+    out["quality"].append(f"{badge} Data completeness across selected countries: {avg_comp}% (expected {expected_years} years).")
+
+    low = [c for c, p in completeness.items() if p < 60]
+    if low:
+        out["quality"].append(f"⚠️ Low coverage (<60%) for: {', '.join(low)}. Interpret cautiously.")
+
+    # ----- Regional summary trend -----
+    regional = d.groupby("year")["value"].mean().reset_index()
+    regional = regional.sort_values("year")
+    rv0 = float(regional.iloc[0]["value"])
+    rv1 = float(regional.iloc[-1]["value"])
+    rchg = _pct_change(rv0, rv1)
+    rslope = _linear_trend_slope(regional["year"].to_numpy(), regional["value"].to_numpy())
+
+    if rchg is not None:
+        arrow = "📉" if rchg < 0 else "📈"
+        out["trends"].append(f"{arrow} Regional average {indicator} changed {rchg:.2f}% from {regional.iloc[0]['year']} to {regional.iloc[-1]['year']}.")
+
+    if rslope is not None:
+        direction = "decreasing" if rslope < 0 else "increasing"
+        out["statistics"].append(f"📏 Overall trend is {direction} (slope ≈ {rslope:.4f} per year).")
+
+    # ----- Country trends -----
+    for c in countries:
+        dc = d[d["country"] == c].sort_values("year")
+        if dc.empty:
+            out["quality"].append(f"🔴 {c}: no data in selected range.")
+            continue
+
+        v0 = float(dc.iloc[0]["value"])
+        v1 = float(dc.iloc[-1]["value"])
+        chg = _pct_change(v0, v1)
+        slope = _linear_trend_slope(dc["year"].to_numpy(), dc["value"].to_numpy())
+        vol = float(np.std(dc["value"].to_numpy(), ddof=0)) if len(dc) >= 3 else None
+
+        if chg is not None:
+            arrow = "📉" if chg < 0 else "📈"
+            out["trends"].append(f"{arrow} {c}: {indicator} changed {chg:.2f}% ({dc.iloc[0]['year']}→{dc.iloc[-1]['year']}).")
+
+        if vol is not None:
+            out["statistics"].append(f"📊 {c}: volatility σ={vol:.3f} over selected years.")
+
+        # Anomalies
+        anom_idx = _zscore_anomalies(dc["value"])
+        for i in anom_idx[:2]:  # keep it short
+            yr = int(dc.iloc[i]["year"])
+            val = float(dc.iloc[i]["value"])
+            out["anomalies"].append(f"⚠️ {c}: unusual value in {yr} (≈ {val:.3f}).")
+
+    # ----- Ranking latest year -----
+    latest_year = int(d["year"].max())
+    latest = d[d["year"] == latest_year].groupby("country")["value"].mean().reset_index()
+    latest = latest.sort_values("value", ascending=False)
+
+    if len(latest) >= 2:
+        hi_c = latest.iloc[0]["country"]
+        hi_v = float(latest.iloc[0]["value"])
+        lo_c = latest.iloc[-1]["country"]
+        lo_v = float(latest.iloc[-1]["value"])
+        out["ranking"].append(f"🏆 {latest_year} ranking: Highest {indicator} = {hi_c} ({hi_v:.3f}), Lowest = {lo_c} ({lo_v:.3f}).")
+    else:
+        out["ranking"].append(f"🏆 {latest_year}: not enough countries with data to rank.")
+
+    # ----- Comparison vs regional average (latest year) -----
+    regional_latest = float(latest["value"].mean()) if not latest.empty else None
+    if regional_latest is not None:
+        for _, row in latest.iterrows():
+            c = row["country"]
+            v = float(row["value"])
+            diff = v - regional_latest
+            sign = "above" if diff > 0 else "below"
+            out["comparison"].append(f"📌 {c} is {abs(diff):.3f} {sign} regional avg in {latest_year}.")
+
+    # Limit output volume
+    # (Dashboard/pages can still show all categories, but keep each category from exploding)
+    for k in out:
+        out[k] = out[k][:max(1, max_insights)]
     
-    for i, insight in enumerate(insights, 1):
-        # Remove markdown formatting for plain text
-        clean_insight = insight.replace('**', '').replace('`', '')
-        text += f"{i}. {clean_insight}\n\n"
-    
-    text += "=" * 60 + "\n"
-    text += "Generated by South Asia Inequality Analysis Platform\n"
-    text += "Data Sources: World Bank, UNDP\n"
-    
-    return text
+    return out
+
+
+def generate_insights(
+    df: pd.DataFrame,
+    countries: List[str],
+    indicator: str,
+    year_range: YearRange,
+    max_insights: int = 10
+) -> List[str]:
+    """
+    Flat list (backward compatible with your earlier implementation).
+    Your pages can still split by emoji.
+    """
+    grouped = generate_multimode_insights(df, countries, indicator, year_range, max_insights=max_insights)
+
+    # Flatten in a sensible order
+    order = ["trends", "ranking", "comparison", "anomalies", "statistics", "quality", "notes"]
+    flat: List[str] = []
+    for k in order:
+        flat.extend(grouped.get(k, []))
+
+    # Deduplicate while preserving order
+    seen = set()
+    dedup = []
+    for s in flat:
+        if s not in seen:
+            dedup.append(s)
+            seen.add(s)
+
+    return dedup[:max_insights]
+
+
+def format_insights_text(insights: List[str]) -> str:
+    """
+    Copy-ready block of text.
+    """
+    if not insights:
+        return "No insights available for the current selection."
+    return "\n".join(f"- {i}" for i in insights)
+
+
+# Backward-compatible alias (your broken file referenced this name)
+def format_insights_as_text(insights: List[str]) -> str:
+    return format_insights_text(insights)
