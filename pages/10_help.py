@@ -1,12 +1,11 @@
 import streamlit as st
 
-# Page config
 st.set_page_config(
-    page_title="Help & Glossary",
-    page_icon="❓",
-    layout="wide"
+    page_title="...",
+    page_icon="...",
+    layout="wide",
+    initial_sidebar_state="collapsed"  # ADD THIS LINE
 )
-
 # Load custom CSS
 try:
     with open('assets/dashboard.css') as f:

@@ -10,13 +10,12 @@ sys.path.append(str(Path(__file__).parent.parent))
 
 from utils.loaders import load_quality_audit
 
-# Page config
 st.set_page_config(
-    page_title="Data Quality",
-    page_icon="✅",
-    layout="wide"
+    page_title="...",
+    page_icon="...",
+    layout="wide",
+    initial_sidebar_state="collapsed"  # ADD THIS LINE
 )
-
 # Load custom CSS
 try:
     with open('assets/dashboard.css') as f:

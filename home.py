@@ -9,15 +9,47 @@ sys.path.append(str(Path(__file__).parent))
 from utils.loaders import load_inequality_data
 from utils.utils import human_indicator, get_color_scale
 
-# Page config - MUST BE FIRST
 st.set_page_config(
-    page_title="South Asia Inequality Analysis",
-    page_icon="🌍",
+    page_title="...",
+    page_icon="...",
     layout="wide",
-    initial_sidebar_state="collapsed"
+    initial_sidebar_state="collapsed"  # ADD THIS LINE
 )
 
-# Modern dark theme CSS (matching dashboard)
+
+
+
+
+
+
+st.markdown("""
+<style>
+    /* Hide the Streamlit sidebar navigation */
+    [data-testid="stSidebar"] {
+        display: none;
+    }
+    
+    /* Hide sidebar toggle button */
+    [data-testid="collapsedControl"] {
+        display: none;
+    }
+    
+    /* Expand main content to full width */
+    .main {
+        margin-left: 0 !important;
+    }
+    
+    /* Remove extra padding */
+    .block-container {
+        padding-left: 1rem !important;
+        padding-right: 1rem !important;
+    }
+</style>
+""", unsafe_allow_html=True)
+
+
+
+# Modern dark theme CSS 
 st.markdown("""
 <style>
     /* Main dark gradient background */

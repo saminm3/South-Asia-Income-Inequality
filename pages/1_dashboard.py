@@ -12,13 +12,22 @@ sys.path.append(str(Path(__file__).parent.parent))
 from utils.loaders import load_inequality_data
 from utils.utils import human_indicator
 
-# Page config
 st.set_page_config(
-    page_title="Inequality Analytics Dashboard",
-    page_icon="📊",
+    page_title="...",
+    page_icon="...",
     layout="wide",
-    initial_sidebar_state="collapsed"
+    initial_sidebar_state="collapsed"  # ADD THIS LINE
 )
+
+
+# ADD THIS CSS BLOCK - HIDES SIDEBAR COMPLETELY
+st.markdown("""
+<style>
+    [data-testid="stSidebar"] {display: none;}
+    [data-testid="collapsedControl"] {display: none;}
+    .main {margin-left: 0 !important;}
+</style>
+""", unsafe_allow_html=True)
 
 # ═══════════════════════════════════════════════════════════════════
 # GOOGLE ANALYTICS INSPIRED DARK THEME
@@ -647,16 +656,3 @@ with col_insight3:
     </div>
     """, unsafe_allow_html=True)
 
-# Footer note
-st.markdown("""
-<div style="margin-top: 40px; padding: 20px; background: #0f1419; border-radius: 8px; border-left: 3px solid #3b82f6;">
-    <p style="color: #94a3b8; font-size: 0.85rem; margin: 0;">
-        💡 <b style="color: #e2e8f0;">For Researchers:</b> All visualizations show real-time data based on your selected filters. 
-        Statistical significance and detailed methodologies available in the Auto Insights section.
-    </p>
-    <p style="color: #94a3b8; font-size: 0.85rem; margin: 10px 0 0 0;">
-        📊 <b style="color: #e2e8f0;">For Policymakers:</b> Focus on trend directions and country rankings. 
-        Lower values indicate better equality distribution.
-    </p>
-</div>
-""", unsafe_allow_html=True)

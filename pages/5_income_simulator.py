@@ -2,13 +2,12 @@ import streamlit as st
 import pandas as pd
 import plotly.graph_objects as go
 
-# Page config
 st.set_page_config(
-    page_title="Income Simulation",
-    page_icon="💰",
-    layout="wide"
+    page_title="...",
+    page_icon="...",
+    layout="wide",
+    initial_sidebar_state="collapsed"  # ADD THIS LINE
 )
-
 # Load custom CSS
 try:
     with open('assets/dashboard.css') as f:
