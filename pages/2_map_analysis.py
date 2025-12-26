@@ -11,11 +11,11 @@ sys.path.append(str(Path(__file__).parent.parent))
 from utils.loaders import load_inequality_data, load_geojson
 from utils.utils import human_indicator
 
-# Page config
 st.set_page_config(
-    page_title="Map Analysis",
-    page_icon="🗺️",
-    layout="wide"
+    page_title="...",
+    page_icon="...",
+    layout="wide",
+    initial_sidebar_state="collapsed"  # ADD THIS LINE
 )
 
 # Load custom CSS
