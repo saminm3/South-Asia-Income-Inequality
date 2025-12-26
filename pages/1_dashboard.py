@@ -610,7 +610,7 @@ with col_insight2:
     
     st.markdown(f"""
     <div class="stat-card">
-        <div style="font-size: 2rem; margin-bottom: 10px;">📊</div>
+        <div style="font-size: 2rem; margin-bottom: 10px;"></div>
         <div style="font-size: 0.875rem; color: #94a3b8; margin-bottom: 8px;">VOLATILITY</div>
         <div style="font-size: 1.1rem; color: #ffffff; font-weight: 600;">
             {volatility:.2f} avg std dev
@@ -626,7 +626,7 @@ with col_insight3:
     
     st.markdown(f"""
     <div class="stat-card">
-        <div style="font-size: 2rem; margin-bottom: 10px;">📏</div>
+        <div style="font-size: 2rem; margin-bottom: 10px;"></div>
         <div style="font-size: 0.875rem; color: #94a3b8; margin-bottom: 8px;">REGIONAL GAP</div>
         <div style="font-size: 1.1rem; color: #ffffff; font-weight: 600;">
             {gap:.2f} points

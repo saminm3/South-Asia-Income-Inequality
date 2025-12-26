@@ -254,7 +254,7 @@ st.markdown("<br><br>", unsafe_allow_html=True)
 
 st.markdown("""
 <div style="text-align: center; margin-bottom: 2rem;">
-    <h2 style="font-size: 2rem; color: #ffffff;">🚀 Quick Access</h2>
+    <h2 style="font-size: 2rem; color: #ffffff;"> Quick Access</h2>
     <p style="color: #94a3b8;">Jump directly to any analysis tool</p>
 </div>
 """, unsafe_allow_html=True)
@@ -262,24 +262,24 @@ st.markdown("""
 col1, col2, col3 = st.columns(3)
 
 with col1:
-    if st.button("📊\n\nDashboard\n\nReal-time KPIs & streamgraph", key="nav_dashboard", use_container_width=True):
+    if st.button("\n\nDashboard\n\nReal-time KPIs & streamgraph", key="nav_dashboard", use_container_width=True):
         st.switch_page("pages/1_dashboard.py")
     
     if st.button("🔗\n\nCorrelations\n\nMulti-indicator analysis", key="nav_correlations", use_container_width=True):
         st.switch_page("pages/3_correlations.py")
 
 with col2:
-    if st.button("🗺️\n\nMap Analysis\n\nGeographic visualization", key="nav_map", use_container_width=True):
+    if st.button("\n\nMap Analysis\n\nGeographic visualization", key="nav_map", use_container_width=True):
         st.switch_page("pages/2_map_analysis.py")
     
-    if st.button("⏱️\n\nTemporal Compare\n\nThen vs Now analysis", key="nav_temporal", use_container_width=True):
+    if st.button("\n\nTemporal Compare\n\nThen vs Now analysis", key="nav_temporal", use_container_width=True):
         st.switch_page("pages/9_temporal_compare.py")
 
 with col3:
-    if st.button("💡\n\nAuto Insights\n\nAI-generated discoveries", key="nav_insights", use_container_width=True):
+    if st.button("\n\nAuto Insights\n\nAI-generated discoveries", key="nav_insights", use_container_width=True):
         st.switch_page("pages/8_auto_insights.py")
     
-    if st.button("🎯\n\nPolicy Simulator\n\nScenario modeling", key="nav_simulator", use_container_width=True):
+    if st.button("\n\nPolicy Simulator\n\nScenario modeling", key="nav_simulator", use_container_width=True):
         st.switch_page("pages/5_income_simulator.py")
 
 st.markdown("<br><br>", unsafe_allow_html=True)
@@ -324,7 +324,7 @@ with st.form("analysis_config_form"):
     col1, col2 = st.columns(2)
     
     with col1:
-        st.markdown("#### 🌍 Countries")
+        st.markdown("####  Countries")
         selected_countries = st.multiselect(
             "Select countries to analyze",
             options=all_countries,
@@ -343,7 +343,7 @@ with st.form("analysis_config_form"):
         )
     
     with col2:
-        st.markdown("#### ⏱️ Time Period")
+        st.markdown("####  Time Period")
         year_range = st.slider(
             "Select year range",
             min_value=min_year,
