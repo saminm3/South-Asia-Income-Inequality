@@ -17,33 +17,6 @@ st.set_page_config(
 )
 
 
-st.markdown("""
-<style>
-    /* Hide the Streamlit sidebar navigation */
-    [data-testid="stSidebar"] {
-        display: none;
-    }
-    
-    /* Hide sidebar toggle button */
-    [data-testid="collapsedControl"] {
-        display: none;
-    }
-    
-    /* Expand main content to full width */
-    .main {
-        margin-left: 0 !important;
-    }
-    
-    /* Remove extra padding */
-    .block-container {
-        padding-left: 1rem !important;
-        padding-right: 1rem !important;
-    }
-</style>
-""", unsafe_allow_html=True)
-
-
-
 # Modern dark theme CSS 
 st.markdown("""
 <style>
