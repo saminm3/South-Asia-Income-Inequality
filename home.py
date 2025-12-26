@@ -17,11 +17,6 @@ st.set_page_config(
 )
 
 
-
-
-
-
-
 st.markdown("""
 <style>
     /* Hide the Streamlit sidebar navigation */
@@ -468,6 +463,31 @@ if st.session_state.analysis_config is not None:
             <div style="color: #94a3b8; font-size: 0.75rem;">theme</div>
         </div>
         """, unsafe_allow_html=True)
+
+# ═══════════════════════════════════════════════════════════════════
+# HELP & DOCUMENTATION SECTION 
+# ═══════════════════════════════════════════════════════════════════
+
+st.divider()
+
+st.markdown("""
+<div style="text-align: center; margin: 60px 0 40px 0;">
+    <h2 style="color: #ffffff; font-size: 2rem; font-weight: 600; margin-bottom: 12px;">
+        Need Help?
+    </h2>
+    <p style="color: #94a3b8; font-size: 1rem; margin-bottom: 32px;">
+        Access comprehensive documentation, metric explanations, and methodology details
+    </p>
+</div>
+""", unsafe_allow_html=True)
+
+# Centered Help Button
+col_btn1, col_btn2, col_btn3 = st.columns([1, 2, 1])
+with col_btn2:
+    if st.button("📚 Open Help & Documentation", use_container_width=True, type="primary"):
+        st.switch_page("pages/10_help.py")
+
+
 
 # Footer
 st.markdown("<br><br>", unsafe_allow_html=True)

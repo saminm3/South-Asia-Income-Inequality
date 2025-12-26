@@ -19,16 +19,6 @@ st.set_page_config(
     initial_sidebar_state="collapsed"  # ADD THIS LINE
 )
 
-
-# ADD THIS CSS BLOCK - HIDES SIDEBAR COMPLETELY
-st.markdown("""
-<style>
-    [data-testid="stSidebar"] {display: none;}
-    [data-testid="collapsedControl"] {display: none;}
-    .main {margin-left: 0 !important;}
-</style>
-""", unsafe_allow_html=True)
-
 # ═══════════════════════════════════════════════════════════════════
 # GOOGLE ANALYTICS INSPIRED DARK THEME
 # ═══════════════════════════════════════════════════════════════════
@@ -213,30 +203,16 @@ if filtered_df.empty:
 # HEADER SECTION
 # ═══════════════════════════════════════════════════════════════════
 
-col_header1, col_header2 = st.columns([3, 1])
-
-with col_header1:
-    st.markdown(f"""
-    <div style="margin-bottom: 1.5rem;">
-        <h1 style="font-size: 2rem; margin: 0; color: #ffffff; font-weight: 600;">
-            {human_indicator(config['indicator'])}
-        </h1>
-        <p style="color: #94a3b8; font-size: 0.9rem; margin-top: 0.5rem;">
-            {config['year_range'][0]} - {config['year_range'][1]} • {len(config['countries'])} Countries
-        </p>
-    </div>
-    """, unsafe_allow_html=True)
-
-with col_header2:
-    # Quick date range indicator
-    st.markdown(f"""
-    <div style="text-align: right; padding-top: 10px;">
-        <p style="color: #64748b; font-size: 0.85rem; margin: 0;">Data Range</p>
-        <p style="color: #e2e8f0; font-size: 1.1rem; font-weight: 600; margin: 5px 0 0 0;">
-            {config['year_range'][1] - config['year_range'][0] + 1} Years
-        </p>
-    </div>
-    """, unsafe_allow_html=True)
+st.markdown(f"""
+<div style="margin-bottom: 1.5rem;">
+    <h1 style="font-size: 2rem; margin: 0; color: #ffffff; font-weight: 600;">
+        {human_indicator(config['indicator'])}
+    </h1>
+    <p style="color: #94a3b8; font-size: 0.9rem; margin-top: 0.5rem;">
+        {config['year_range'][0]} - {config['year_range'][1]} • {len(config['countries'])} Countries
+    </p>
+</div>
+""", unsafe_allow_html=True)
 
 # ═══════════════════════════════════════════════════════════════════
 # KEY METRICS ROW (Google Analytics inspired)
@@ -261,7 +237,7 @@ best_country = latest_data.loc[latest_data['value'].idxmin(), 'country'] if not 
 worst_country = latest_data.loc[latest_data['value'].idxmax(), 'country'] if not latest_data.empty else "N/A"
 data_coverage = (filtered_df.notna().sum()['value'] / len(filtered_df) * 100)
 
-col1, col2, col3, col4 = st.columns(4)
+col1, col2, col3, col4, col5= st.columns(5)
 
 with col1:
     # Regional Average - clean style
@@ -303,6 +279,11 @@ with col4:
         delta=f"↑ {int(data_coverage - 50)} points" if data_coverage > 50 else f"↓ {int(50 - data_coverage)} points"
     )
 
+with col5:
+    st.metric(
+        label="Data Range",
+        value=f"{config['year_range'][1] - config['year_range'][0] + 1} Years"
+    )
 # ═══════════════════════════════════════════════════════════════════
 # MAIN VISUALIZATION SECTION
 # ═══════════════════════════════════════════════════════════════════
@@ -655,4 +636,3 @@ with col_insight3:
         </div>
     </div>
     """, unsafe_allow_html=True)
-
