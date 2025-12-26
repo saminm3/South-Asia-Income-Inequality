@@ -252,38 +252,61 @@ st.markdown("<br><br>", unsafe_allow_html=True)
 # NAVIGATION CARDS (Quick Access)
 # ═══════════════════════════════════════════════════════════════════
 
+# ═══════════════════════════════════════════════════════════════════
+# NAVIGATION CARDS (Quick Access)
+# ═══════════════════════════════════════════════════════════════════
+
 st.markdown("""
 <div style="text-align: center; margin-bottom: 2rem;">
-    <h2 style="font-size: 2rem; color: #ffffff;"> Quick Access</h2>
+    <h2 style="font-size: 2rem; color: #ffffff;">🚀 Quick Access</h2>
     <p style="color: #94a3b8;">Jump directly to any analysis tool</p>
 </div>
 """, unsafe_allow_html=True)
 
+# Define consistent button style
+button_style = """
+    height: 120px;
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(236, 72, 153, 0.15));
+    border: 1px solid rgba(139, 92, 246, 0.3);
+    border-radius: 12px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    text-align: center;
+"""
+
+# Row 1
 col1, col2, col3 = st.columns(3)
 
 with col1:
-    if st.button("\n\nDashboard\n\nReal-time KPIs & streamgraph", key="nav_dashboard", use_container_width=True):
+    if st.button("📊\n\nDashboard\n\nReal-time KPIs & streamgraph", key="nav_dashboard", use_container_width=True):
         st.switch_page("pages/1_dashboard.py")
-    
+
+with col2:
+    if st.button("🗺️\n\nMap Analysis\n\nGeographic visualization", key="nav_map", use_container_width=True):
+        st.switch_page("pages/2_map_analysis.py")
+
+with col3:
+    if st.button("✨\n\nAuto Insights\n\nAI-generated discoveries", key="nav_insights", use_container_width=True):
+        st.switch_page("pages/8_auto_insights.py")
+
+# Row 2
+col1, col2, col3 = st.columns(3)
+
+with col1:
     if st.button("🔗\n\nCorrelations\n\nMulti-indicator analysis", key="nav_correlations", use_container_width=True):
         st.switch_page("pages/3_correlations.py")
 
 with col2:
-    if st.button("\n\nMap Analysis\n\nGeographic visualization", key="nav_map", use_container_width=True):
-        st.switch_page("pages/2_map_analysis.py")
-    
-    if st.button("\n\nTemporal Compare\n\nThen vs Now analysis", key="nav_temporal", use_container_width=True):
+    if st.button("⏱️\n\nTemporal Compare\n\nThen vs Now analysis", key="nav_temporal", use_container_width=True):
         st.switch_page("pages/9_temporal_compare.py")
 
 with col3:
-    if st.button("\n\nAuto Insights\n\nAI-generated discoveries", key="nav_insights", use_container_width=True):
-        st.switch_page("pages/8_auto_insights.py")
-    
-    if st.button("\n\nPolicy Simulator\n\nScenario modeling", key="nav_simulator", use_container_width=True):
+    if st.button("🎯\n\nPolicy Simulator\n\nScenario modeling", key="nav_simulator", use_container_width=True):
         st.switch_page("pages/5_income_simulator.py")
 
 st.markdown("<br><br>", unsafe_allow_html=True)
-
 # ═══════════════════════════════════════════════════════════════════
 # CONFIGURATION SECTION
 # ═══════════════════════════════════════════════════════════════════
