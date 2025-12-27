@@ -34,7 +34,6 @@ except FileNotFoundError:
 # --------------------------------------------------
 if 'analysis_config' not in st.session_state or st.session_state.analysis_config is None:
     st.warning("⚠️ No analysis configured. Please configure your analysis on the Home page.")
-    st.info("Click **Home** in the sidebar to configure your analysis.")
     st.stop()
 
 config = st.session_state.analysis_config
@@ -300,7 +299,7 @@ else:
 # --------------------------------------------------
 # Dynamic insights
 # --------------------------------------------------
-st.subheader(f"🔑 Key Insights for {selected_year}")
+st.subheader(f"🔑 Key Findings for {selected_year}")
 insights = calculate_year_insights(filtered_df, selected_year)
 if insights:
     col1, col2, col3, col4 = st.columns(4)

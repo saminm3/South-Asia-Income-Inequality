@@ -169,7 +169,7 @@ st.markdown("""
         Professional Data Visualization & Analysis Platform
     </p>
     <p style="font-size: 1rem; color: #64748b; margin-top: 1rem;">
-         Advanced analytics •  AI-powered insights
+         Advanced analytics •  Automated insights
     </p>
 </div>
 """, unsafe_allow_html=True)
