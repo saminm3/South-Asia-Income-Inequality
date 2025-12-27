@@ -225,10 +225,6 @@ st.markdown("<br><br>", unsafe_allow_html=True)
 # NAVIGATION CARDS (Quick Access)
 # ═══════════════════════════════════════════════════════════════════
 
-# ═══════════════════════════════════════════════════════════════════
-# NAVIGATION CARDS (Quick Access)
-# ═══════════════════════════════════════════════════════════════════
-
 st.markdown("""
 <div style="text-align: center; margin-bottom: 2rem;">
     <h2 style="font-size: 2rem; color: #ffffff;">🚀 Quick Access</h2>
@@ -261,7 +257,7 @@ with col2:
         st.switch_page("pages/2_map_analysis.py")
 
 with col3:
-    if st.button("✨\n\nAuto Insights\n\nAI-generated discoveries", key="nav_insights", use_container_width=True):
+    if st.button("✨\n\nAuto Insights\n\nKey discoveries", key="nav_insights", use_container_width=True):
         st.switch_page("pages/8_auto_insights.py")
 
 # Row 2
