@@ -10,12 +10,14 @@ sys.path.append(str(Path(__file__).parent.parent))
 
 from utils.loaders import load_all_indicators
 from utils.utils import format_value
+from utils.exports import export_plot_menu
 
 # Page config
 st.set_page_config(
-    page_title="Sunburst Chart",
+    page_title="Sunburst Explorer",
     page_icon="🌟",
-    layout="wide"
+    layout="wide",
+    initial_sidebar_state="collapsed"
 )
 
 # Load custom CSS
@@ -25,8 +27,13 @@ try:
 except FileNotFoundError:
     pass
 
-st.title("🌟 Sunburst Hierarchical Breakdown")
-st.markdown("### Interactive hierarchical visualization of inequality indicators across South Asia")
+st.title("🌟 Sunburst Explorer")
+st.markdown("### Hierarchical view of indicators across South Asia (dominance view)")
+
+# ✅ Use Home config if available (NO extra country selection here)
+config = st.session_state.get("analysis_config", None)
+home_countries = config.get("countries", []) if config else []
+home_year_range = config.get("year_range", None) if config else None
 
 # Load data
 with st.spinner("Loading data..."):
@@ -36,260 +43,306 @@ if df.empty:
     st.error("❌ No data available")
     st.stop()
 
-# Sidebar controls
+# Clean basic
+df = df.dropna(subset=["country", "year", "indicator", "value"]).copy()
+df["year"] = pd.to_numeric(df["year"], errors="coerce")
+df["value"] = pd.to_numeric(df["value"], errors="coerce")
+df = df.dropna(subset=["year", "value"])
+
+# Sidebar: Year + Color only (NO country selection)
 with st.sidebar:
-    st.subheader("Sunburst Settings")
-    
-    # Year selection
-    available_years = sorted(df['year'].unique(), reverse=True)
-    
-    # Find year with most complete data
-    year_coverage = df.groupby('year').agg({'value': 'count', 'indicator': 'nunique'})
-    year_coverage['score'] = year_coverage['value'] * year_coverage['indicator']
-    best_year = int(year_coverage['score'].idxmax())
-    
+    st.subheader("⚙️ Sunburst Settings")
+
+    # year range from home (if exists)
+    if home_year_range:
+        df_yr = df[(df["year"] >= home_year_range[0]) & (df["year"] <= home_year_range[1])]
+        if not df_yr.empty:
+            df = df_yr
+
+    available_years = sorted(df["year"].unique(), reverse=True)
+    if not available_years:
+        st.error("No valid years found.")
+        st.stop()
+
+    # choose best year (most coverage)
+    year_coverage = df.groupby("year").agg(value_count=("value", "count"), ind_count=("indicator", "nunique"))
+    year_coverage["score"] = year_coverage["value_count"] * year_coverage["ind_count"]
+    best_year = int(year_coverage["score"].idxmax())
+
     selected_year = st.selectbox(
         "Select Year",
         options=available_years,
-        index=available_years.index(best_year) if best_year in available_years else 0,
-        help="Year with most complete data is pre-selected"
+        index=available_years.index(best_year) if best_year in available_years else 0
     )
-    
-    # Color scheme
+
     color_scheme = st.selectbox(
         "Color Scheme",
-        options=['Plasma', 'Viridis', 'Inferno', 'Magma', 'Cividis', 'Turbo'],
+        options=["Plasma", "Viridis", "Inferno", "Magma", "Cividis", "Turbo"],
         index=0
     )
-    
-    st.info(f"💡 Using {selected_year} - year with most complete data coverage")
 
-# Filter for selected year
-sunburst_df = df[df['year'] == selected_year][['country', 'indicator', 'value']].copy()
+    st.divider()
+    st.caption("This chart shows **indicator dominance** after normalization (0–100 per indicator).")
 
-if sunburst_df.empty:
-    st.warning(f"⚠️ No data available for year {selected_year}")
+# Filter year
+year_df = df[df["year"] == selected_year].copy()
+if year_df.empty:
+    st.warning(f"No data for year {selected_year}")
     st.stop()
 
-# Remove rows with NaN or zero values
-sunburst_df = sunburst_df.dropna(subset=['value'])
-sunburst_df = sunburst_df[sunburst_df['value'] != 0]
+# Filter to home countries if set (NO new selection)
+if home_countries:
+    year_df = year_df[year_df["country"].isin(home_countries)].copy()
 
-if sunburst_df.empty:
-    st.warning(f"⚠️ No valid data available for year {selected_year} (all values are zero or missing)")
+if year_df.empty:
+    st.warning("No data after applying Home selected countries.")
     st.stop()
 
-st.info(f"📊 Visualizing {len(sunburst_df)} data points across {sunburst_df['country'].nunique()} countries and {sunburst_df['indicator'].nunique()} indicators")
+# Normalize per indicator for fair sunburst sizing
+sunburst_df = year_df[["country", "indicator", "value"]].copy()
+sunburst_df = sunburst_df.dropna(subset=["value"])
+sunburst_df = sunburst_df[sunburst_df["value"] != 0]
 
-# CRITICAL: Normalize each indicator to 0-100 scale for fair comparison
-sunburst_df['normalized_value'] = 0.0
+sunburst_df["normalized_value"] = 0.0
+for ind in sunburst_df["indicator"].unique():
+    m = sunburst_df["indicator"] == ind
+    vals = sunburst_df.loc[m, "value"]
 
-for indicator in sunburst_df['indicator'].unique():
-    mask = sunburst_df['indicator'] == indicator
-    values = sunburst_df.loc[mask, 'value']
-    
-    # Skip if all values are NaN or zero
-    if values.isna().all() or (values == 0).all():
+    if vals.isna().all() or (vals == 0).all():
         continue
-    
-    if indicator == 'GINI':
-        # GINI is already 0-100, keep as is
-        sunburst_df.loc[mask, 'normalized_value'] = values
-    elif indicator == 'HDI':
-        # HDI is 0-1, convert to 0-100
-        sunburst_df.loc[mask, 'normalized_value'] = values * 100
+
+    # Handle special scales
+    if ind.strip().lower() in ["gini", "gini index"]:
+        # keep as-is (already comparable scale-ish)
+        sunburst_df.loc[m, "normalized_value"] = vals
+    elif ind.strip().lower() == "hdi":
+        # make it 0-100-ish
+        sunburst_df.loc[m, "normalized_value"] = vals * 100
     else:
-        # Normalize everything else to 0-100 scale within that indicator
-        min_val, max_val = values.min(), values.max()
-        if max_val > min_val and not pd.isna(max_val) and not pd.isna(min_val):
-            sunburst_df.loc[mask, 'normalized_value'] = ((values - min_val) / (max_val - min_val)) * 100
+        vmin, vmax = vals.min(), vals.max()
+        if pd.notna(vmin) and pd.notna(vmax) and vmax > vmin:
+            sunburst_df.loc[m, "normalized_value"] = ((vals - vmin) / (vmax - vmin)) * 100
         else:
-            # If all values are the same, use the value itself as normalized
-            # This prevents division by zero
-            sunburst_df.loc[mask, 'normalized_value'] = 50.0
+            sunburst_df.loc[m, "normalized_value"] = 50.0
 
-# Remove any rows where normalized_value is still 0 or NaN
-sunburst_df = sunburst_df[sunburst_df['normalized_value'] > 0]
-sunburst_df = sunburst_df.dropna(subset=['normalized_value'])
+sunburst_df = sunburst_df.dropna(subset=["normalized_value"])
+sunburst_df = sunburst_df[sunburst_df["normalized_value"] > 0]
 
-# Final check: ensure we have valid data
-if sunburst_df.empty or sunburst_df['normalized_value'].sum() == 0:
-    st.error(f"""
-    ❌ **Cannot create sunburst chart for year {selected_year}**
-    
-    **Issue:** All normalized values sum to zero. This can happen when:
-    - All values for the selected year are zero
-    - Data is incomplete or missing
-    - Normalization failed due to invalid values
-    
-    **Solution:** Try selecting a different year with more complete data.
-    """)
-    
-    # Show available years with data
-    valid_years = []
-    for year in available_years:
-        year_data = df[df['year'] == year]['value'].dropna()
-        if len(year_data) > 0 and year_data.sum() > 0:
-            valid_years.append(year)
-    
-    if valid_years:
-        st.info(f"**Years with valid data:** {', '.join(map(str, valid_years[:10]))}")
-    
+if sunburst_df.empty or sunburst_df["normalized_value"].sum() == 0:
+    st.error("❌ Sunburst cannot render because normalized values sum to 0. Try a different year.")
     st.stop()
 
-# Format actual values for display
-def format_val(val):
-    if pd.isna(val):
-        return "N/A"
-    elif val > 1e9:
-        return f"{val/1e9:.2f}B"
-    elif val > 1e6:
-        return f"{val/1e6:.2f}M"
-    elif val > 1000:
-        return f"{val:,.0f}"
-    else:
-        return f"{val:.2f}"
+# Add region
+sunburst_df["Region"] = "South Asia"
 
-sunburst_df['formatted_value'] = sunburst_df['value'].apply(format_val)
-
-# Add region for proper hierarchy: Region > Country > Indicator
-sunburst_df['Region'] = 'South Asia'
-
-# Create sunburst with NORMALIZED values
-try:
-    fig = px.sunburst(
-        sunburst_df,
-        path=['Region', 'country', 'indicator'],
-        values='normalized_value',  # Use normalized values for fair sizing
-        color='normalized_value',
-        color_continuous_scale=color_scheme,
-        title=f'Inequality Indicators Breakdown - South Asia ({selected_year})',
-        hover_data=['formatted_value']
-    )
-    
-    # Update hover template to show actual values
-    fig.update_traces(
-        textinfo="label+percent parent",
-        hovertemplate='<b>%{label}</b><br>Actual Value: %{customdata[0]}<br>Normalized: %{value:.1f}/100<extra></extra>',
-        marker=dict(line=dict(color='white', width=2))
-    )
-    
-    fig.update_layout(
-        width=1000, 
-        height=900, 
-        font=dict(size=13), 
-        title_x=0.5,
-        title_font_size=18
-    )
-    
-    # Display chart
-    st.plotly_chart(fig, use_container_width=True)
-    
-    # Instructions
-    st.info("""
-    **How to interact:**
-    - 🖱️ **Click** segments to zoom in/out
-    - 👆 **Hover** for actual values
-    - 📏 All indicators normalized to 0-100 scale for fair comparison
-    - 🔄 **Click center** to zoom back out
-    """)
-
-except Exception as e:
-    st.error(f"""
-    ❌ **Error creating sunburst chart**
-    
-    **Error:** {str(e)}
-    
-    **Possible causes:**
-    - Data quality issues for year {selected_year}
-    - All values are zero or missing
-    - Normalization failed
-    
-    **Solution:** Try selecting a different year or check your data files.
-    """)
-    st.stop()
-
-# Detailed breakdown table
-st.divider()
-st.subheader("📋 Detailed Breakdown")
-
-# Create detailed table
-detail_table = sunburst_df.copy()
-detail_table = detail_table[['country', 'indicator', 'formatted_value', 'normalized_value']].sort_values(['country', 'indicator'])
-detail_table.columns = ['Country', 'Indicator', 'Actual Value', 'Normalized (0-100)']
-detail_table['Normalized (0-100)'] = detail_table['Normalized (0-100)'].apply(lambda x: f"{x:.1f}")
-
-st.dataframe(detail_table, use_container_width=True, hide_index=True)
-
-# Summary by country
-st.divider()
-st.subheader("🌍 Country-wise Summary")
-
-for country in sorted(sunburst_df['country'].unique()):
-    with st.expander(f"📊 {country}"):
-        country_data = sunburst_df[sunburst_df['country'] == country].sort_values('indicator')
-        
-        if country_data.empty:
-            st.warning(f"No data available for {country}")
-            continue
-        
-        for _, row in country_data.iterrows():
-            col1, col2, col3 = st.columns([2, 1, 1])
-            with col1:
-                st.markdown(f"**{row['indicator']}**")
-            with col2:
-                st.metric("Value", row['formatted_value'])
-            with col3:
-                st.metric("Normalized", f"{row['normalized_value']:.1f}/100")
-
-# Export functionality
-st.divider()
-st.subheader("📥 Export Options")
-
-col1, col2 = st.columns(2)
-
-with col1:
+# Pretty value for hover
+def fmt(val):
     try:
-        # Download chart as image
-        img_bytes = fig.to_image(format="png", width=1400, height=1200)
-        st.download_button(
-            "📥 Download Chart (PNG)",
-            data=img_bytes,
-            file_name=f"sunburst_{selected_year}.png",
-            mime="image/png",
-            use_container_width=True
-        )
-    except Exception as e:
-        st.error(f"Error generating image: {str(e)}")
+        return format_value(val)
+    except:
+        return str(val)
 
-with col2:
-    # Download data as CSV
-    csv = detail_table.to_csv(index=False).encode('utf-8')
-    st.download_button(
-        "📥 Download Data (CSV)",
-        data=csv,
-        file_name=f"sunburst_data_{selected_year}.csv",
-        mime="text/csv",
-        use_container_width=True
-    )
+sunburst_df["formatted_value"] = sunburst_df["value"].apply(fmt)
 
-# Methodology note
+# ---------------- Sunburst ----------------
+fig = px.sunburst(
+    sunburst_df,
+    path=["Region", "country", "indicator"],
+    values="normalized_value",
+    color="normalized_value",
+    color_continuous_scale=color_scheme,
+    hover_data=["formatted_value"]
+)
+
+fig.update_traces(
+    textinfo="label+percent parent",
+    hovertemplate="<b>%{label}</b><br>Actual: %{customdata[0]}<br>Dominance (normalized): %{value:.1f}/100<extra></extra>",
+    marker=dict(line=dict(color="white", width=2))
+)
+
+fig.update_layout(
+    title=f"Indicator Dominance Breakdown ({selected_year})",
+    title_x=0.5,
+    height=850
+)
+
+st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
+export_plot_menu(fig, "sunburst_dominance_breakdown", key="sunburst_chart")
+
+# --- IMPORTANT clarification to avoid confusion ---
+st.info(
+    "🧠 **Important:** Sunburst slice sizes show **indicator dominance after normalization**, "
+    "not direct inequality level and not causation. We use dominance of inequality-related indicators "
+    "(Gini / income-share / unemployment / poverty) to build a simple **inequality signal**."
+)
+
+# ============================================================
+# ✅ NEW: EASY COUNTRY-WISE “VISUALIZATION STORY” (NO AVG CHART)
+# ============================================================
 st.divider()
-st.info("""
-**📌 Note on Normalization:**
+st.header("🧩 Visualization Story (Country-wise)")
 
-Different indicators have different scales:
-- **GINI**: 0-100 (already normalized)
-- **HDI**: 0-1 (multiplied by 100)
-- **GDP, Labor Force**: Very large numbers (min-max normalized to 0-100)
+countries_in_view = sorted(sunburst_df["country"].unique())
+if home_countries:
+    countries_in_view = [c for c in home_countries if c in countries_in_view]
 
-All indicators are normalized to 0-100 scale to enable fair comparison in the sunburst chart. 
-The "Actual Value" column shows the original, un-normalized values.
+# --- Build a simple inequality-signal score from dominance (NOT causation) ---
+# We score only *inequality-related* indicators when they are present.
+def norm_name(s: str) -> str:
+    return str(s).strip().lower()
 
-**Note:** Zero values and missing data are excluded from the visualization.
-""")
+INEQ_KEYWORDS = [
+    "gini", "gini index",
+    "income share held by highest 10", "income share held by highest 20",
+    "income share held by lowest 10",
+    "poverty", "unemployment"
+]
 
-# Footer
+def is_ineq_indicator(ind: str) -> bool:
+    t = norm_name(ind)
+    return any(k in t for k in INEQ_KEYWORDS)
+
+# For each country: score = sum of normalized dominance for ineq indicators (capped to be stable)
+scores = []
+drivers_map = {}
+
+for c in countries_in_view:
+    cdf = sunburst_df[sunburst_df["country"] == c].copy()
+    cdf["is_ineq"] = cdf["indicator"].apply(is_ineq_indicator)
+
+    ineq_part = cdf[cdf["is_ineq"]].copy()
+    score = float(ineq_part["normalized_value"].sum()) if not ineq_part.empty else 0.0
+
+    # top drivers (ineq-related first; fallback to overall)
+    if not ineq_part.empty:
+        top_drivers = ineq_part.sort_values("normalized_value", ascending=False).head(3)["indicator"].tolist()
+    else:
+        top_drivers = cdf.sort_values("normalized_value", ascending=False).head(3)["indicator"].tolist()
+
+    drivers_map[c] = top_drivers
+    scores.append({"country": c, "score": score})
+
+scores_df = pd.DataFrame(scores).sort_values("score", ascending=False).reset_index(drop=True)
+
+# Assign High/Moderate/Lower RELATIVE to selected countries
+# (If 1 country only -> Moderate)
+levels = {}
+if len(scores_df) <= 1:
+    for c in countries_in_view:
+        levels[c] = "Moderate"
+else:
+    # rank-based split
+    for i, row in scores_df.iterrows():
+        if i == 0:
+            levels[row["country"]] = "High"
+        elif i == len(scores_df) - 1:
+            levels[row["country"]] = "Lower"
+        else:
+            levels[row["country"]] = "Moderate"
+
+# Show a tiny summary line first (simple for non-technical)
+st.markdown(f"**For {selected_year}, among the selected countries:**")
+for c in countries_in_view:
+    lvl = levels.get(c, "Moderate")
+    emoji = "🔴" if lvl == "High" else ("🟠" if lvl == "Moderate" else "🟢")
+    st.write(f"- {emoji} **{lvl} inequality signal:** {c}")
+
+st.caption("(This is a simple indicator-dominance signal using Gini / income-share / poverty / unemployment patterns — not causation.)")
+
+# Expandable story per country (arrow click)
+for c in countries_in_view:
+    lvl = levels.get(c, "Moderate")
+    emoji = "🔴" if lvl == "High" else ("🟠" if lvl == "Moderate" else "🟢")
+
+    top_drivers = drivers_map.get(c, [])
+    driver_text = ", ".join(top_drivers) if top_drivers else "available indicators"
+
+    # one-line insight (country name included)
+    if lvl == "High":
+        one_line = f"**{c} shows a HIGH inequality signal** because inequality-related indicators dominate the visualization ({driver_text}) despite development/economic indicators being present."
+    elif lvl == "Moderate":
+        one_line = f"**{c} shows a MODERATE inequality signal** mainly due to visible concentration indicators ({driver_text}), while other welfare indicators also contribute."
+    else:
+        one_line = f"**{c} shows a LOWER inequality signal (relative)** because inequality-related dominance is weaker; the visualization is driven more by non-distribution indicators ({driver_text})."
+
+    with st.expander(f"{emoji} {c} — {lvl.upper()} inequality signal (click to read why)"):
+        st.markdown("**Why (from the sunburst dominance):**")
+        if top_drivers:
+            for d in top_drivers:
+                st.write(f"- Prominent slice: **{d}**")
+        else:
+            st.write("- No clear inequality-related indicators available for this country-year in the dataset.")
+
+        st.markdown("**One-line insight:**")
+        st.write(one_line)
+
+        st.caption("Note: dominance = what stands out after normalization; it helps explain patterns but does not prove inequality or causation by itself.")
+
+# ============================================================
+# ⭐ COUNTRY SPOTLIGHT (Story Mode)
+# ============================================================
 st.divider()
-st.caption("Sunburst Hierarchical Breakdown | South Asia Inequality Analysis Platform")
-st.caption(f"📊 Showing {len(sunburst_df)} indicators across {sunburst_df['country'].nunique()} countries for year {selected_year}")
+st.header("✨ Country Spotlight (Story Mode)")
+
+if not countries_in_view:
+    st.warning("No countries available for Spotlight.")
+    st.stop()
+
+# Session state for spotlight index
+if "spotlight_idx" not in st.session_state:
+    st.session_state.spotlight_idx = 0
+
+colA, colB, colC = st.columns([1, 2, 1])
+with colA:
+    if st.button("⬅️ Previous"):
+        st.session_state.spotlight_idx = (st.session_state.spotlight_idx - 1) % len(countries_in_view)
+with colC:
+    if st.button("Next ➡️"):
+        st.session_state.spotlight_idx = (st.session_state.spotlight_idx + 1) % len(countries_in_view)
+
+spot_country = countries_in_view[st.session_state.spotlight_idx]
+
+with colB:
+    lvl = levels.get(spot_country, "Moderate")
+    emoji = "🔴" if lvl == "High" else ("🟠" if lvl == "Moderate" else "🟢")
+    st.subheader(f"🌍 Spotlight: {spot_country} ({selected_year}) — {emoji} {lvl} signal")
+    st.caption("Use Previous/Next to explore — this uses Home selection automatically.")
+
+c_df = sunburst_df[sunburst_df["country"] == spot_country].copy()
+if c_df.empty:
+    st.warning("No data for spotlight country.")
+    st.stop()
+
+# Bubble chart: indicator bubbles sized by normalized dominance, colored by dominance
+bubble_df = c_df.sort_values("normalized_value", ascending=False).copy()
+bubble_df["indicator_short"] = bubble_df["indicator"].astype(str).str.slice(0, 45)
+
+fig_bubble = px.scatter(
+    bubble_df,
+    x="normalized_value",
+    y="indicator_short",
+    size="normalized_value",
+    color="normalized_value",
+    color_continuous_scale=color_scheme,
+    hover_data=["formatted_value"],
+    title="🫧 Indicator Bubble View (size = normalized dominance)"
+)
+fig_bubble.update_layout(height=540, xaxis_title="Normalized dominance (0–100)", yaxis_title="")
+st.plotly_chart(fig_bubble, use_container_width=True, config={'displayModeBar': False})
+export_plot_menu(fig_bubble, f"indicator_bubbles_{spot_country}", key="bubble_chart")
+
+# ✅ Explanation under bubble view (simple)
+st.info(
+    "How to read the bubble chart: **bigger bubble = more dominant indicator** for this country (after normalization). "
+    "It highlights what stands out most (e.g., income-share / Gini / unemployment), which we use to form a simple inequality signal."
+)
+
+# Underlying data (optional)
+with st.expander("📋 View underlying data (for this country)"):
+    view = c_df[["indicator", "formatted_value", "normalized_value"]].copy()
+    view.columns = ["Indicator", "Actual Value", "Dominance (0-100)"]
+    view["Dominance (0-100)"] = view["Dominance (0-100)"].round(1)
+    st.dataframe(view, use_container_width=True, hide_index=True)
+
+st.divider()
+st.caption("Sunburst Explorer | South Asia Inequality Analysis Platform")
