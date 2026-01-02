@@ -10,10 +10,10 @@ from utils.loaders import load_inequality_data
 from utils.utils import human_indicator, get_color_scale
 
 st.set_page_config(
-    page_title="...",
-    page_icon="...",
+    page_title="South Asia Inequality Analytics",
+    page_icon="🌏",
     layout="wide",
-    initial_sidebar_state="collapsed"  # ADD THIS LINE
+    initial_sidebar_state="collapsed"
 )
 
 
@@ -272,7 +272,7 @@ with col2:
         st.switch_page("pages/9_temporal_compare.py")
 
 with col3:
-    if st.button("🎯\n\nPolicy Simulator\n\nScenario modeling", key="nav_simulator", use_container_width=True):
+    if st.button("🎯\n\nIncome Simulator\n\nScenario modeling", key="nav_simulator", use_container_width=True):
         st.switch_page("pages/5_income_simulator.py")
 
 st.markdown("<br><br>", unsafe_allow_html=True)
@@ -306,102 +306,72 @@ if st.session_state.analysis_config is None:
 
 st.markdown("""
 <div style="text-align: center; margin-bottom: 2rem;">
-    <h2 style="font-size: 2rem; color: #ffffff;"> Customize Analysis</h2>
-    <p style="color: #94a3b8;">Fine-tune your analysis parameters (optional)</p>
+    <h2 style="font-size: 2rem; color: #ffffff;">Customize Analysis</h2>
+    <p style="color: #94a3b8;">Settings update automatically when you make changes</p>
 </div>
 """, unsafe_allow_html=True)
 
-# Configuration form
-with st.form("analysis_config_form"):
-    col1, col2 = st.columns(2)
+# Auto-updating configuration (no form/apply button needed)
+col1, col2 = st.columns(2)
+
+with col1:
+    st.markdown("#### Countries")
+    selected_countries = st.multiselect(
+        "Select countries to analyze",
+        options=all_countries,
+        default=st.session_state.analysis_config['countries'][:5] if len(st.session_state.analysis_config['countries']) > 5 else st.session_state.analysis_config['countries'],
+        help="Select one or more countries",
+        key="country_multiselect"
+    )
     
-    with col1:
-        st.markdown("####  Countries")
-        selected_countries = st.multiselect(
-            "Select countries to analyze",
-            options=all_countries,
-            default=st.session_state.analysis_config['countries'][:5] if len(st.session_state.analysis_config['countries']) > 5 else st.session_state.analysis_config['countries'],
-            help="Select one or more countries. No limit!",
-            key="country_multiselect"
-        )
-        
-        st.markdown("####  Indicator")
-        selected_indicator = st.selectbox(
-            "Primary inequality metric",
-            options=all_indicators,
-            index=(all_indicators.index(st.session_state.analysis_config['indicator'])
-                   if st.session_state.analysis_config.get('indicator') in all_indicators else 0),
-            help="Main indicator for analysis"
-        )
+    st.markdown("#### Indicator")
+    selected_indicator = st.selectbox(
+        "Primary inequality metric",
+        options=all_indicators,
+        index=(all_indicators.index(st.session_state.analysis_config['indicator'])
+               if st.session_state.analysis_config.get('indicator') in all_indicators else 0),
+        help="Main indicator for analysis"
+    )
+
+with col2:
+    st.markdown("#### Time Period")
+    year_range = st.slider(
+        "Select year range",
+        min_value=min_year,
+        max_value=max_year,
+        value=st.session_state.analysis_config['year_range'],
+        help="Choose time period for analysis"
+    )
     
-    with col2:
-        st.markdown("####  Time Period")
-        year_range = st.slider(
-            "Select year range",
-            min_value=min_year,
-            max_value=max_year,
-            value=st.session_state.analysis_config['year_range'],
-            help="Choose time period for analysis"
-        )
-        
-        st.markdown("#### 🎨 Color Scheme")
-        color_options = ['Reds', 'Blues', 'Greens', 'Viridis', 'Plasma', 'YlOrRd', 'Purples']
-        color_scale = st.selectbox(
-            "Visual theme",
-            options=color_options,
-            index=(color_options.index(st.session_state.analysis_config.get('color_scale'))
-                   if st.session_state.analysis_config.get('color_scale') in color_options else 0),
-            help="Color palette for charts and maps"
-        )
+    st.markdown("#### Color Scheme")
+    color_options = ['Reds', 'Blues', 'Greens', 'Viridis', 'Plasma', 'YlOrRd', 'Purples']
+    color_scale = st.selectbox(
+        "Visual theme",
+        options=color_options,
+        index=(color_options.index(st.session_state.analysis_config.get('color_scale'))
+               if st.session_state.analysis_config.get('color_scale') in color_options else 0),
+        help="Color palette for charts and maps"
+    )
+
+# Auto-save configuration when any value changes
+if selected_countries:
+    new_config = {
+        'countries': selected_countries,
+        'year_range': year_range,
+        'indicator': selected_indicator,
+        'color_scale': color_scale,
+        'timestamp': pd.Timestamp.now()
+    }
     
-    st.markdown("<br>", unsafe_allow_html=True)
-    
-    # Submit button
-    col1, col2, col3 = st.columns([1, 2, 1])
-    with col2:
-        submitted = st.form_submit_button(
-            "🚀 Apply Configuration",
-            use_container_width=True,
-            type="primary"
-        )
-    
-    if submitted:
-        # Validation
-        errors = []
+    # Only update if config changed
+    if (st.session_state.analysis_config['countries'] != selected_countries or
+        st.session_state.analysis_config['year_range'] != year_range or
+        st.session_state.analysis_config['indicator'] != selected_indicator or
+        st.session_state.analysis_config.get('color_scale') != color_scale):
         
-        if not selected_countries:
-            errors.append("❌ Please select at least one country")
-        
-        if year_range[0] >= year_range[1]:
-            errors.append("❌ Start year must be before end year")
-        
-        if year_range[1] - year_range[0] > 100:
-            errors.append("❌ Year range too large (maximum 100 years)")
-        
-        if errors:
-            for error in errors:
-                st.error(error)
-        else:
-            # Save configuration
-            st.session_state.analysis_config = {
-                'countries': selected_countries,
-                'year_range': year_range,
-                'indicator': selected_indicator,
-                'color_scale': color_scale,
-                'timestamp': pd.Timestamp.now()
-            }
-            
-            st.success("✅ Configuration saved successfully!")
-            st.info(f"""
-**Active Configuration:**
-- **Countries:** {', '.join(selected_countries[:3])}{'...' if len(selected_countries) > 3 else ''} ({len(selected_countries)} total)
-- **Years:** {year_range[0]}-{year_range[1]}
-- **Indicator:** {human_indicator(selected_indicator)}
-- **Color Scheme:** {color_scale}
-            
-🚀 Navigate to any analysis page to see your customized view!
-""")
-            st.rerun()
+        st.session_state.analysis_config = new_config
+else:
+    st.warning("⚠️ Please select at least one country")
 
 # ═══════════════════════════════════════════════════════════════════
 # CURRENT CONFIGURATION DISPLAY
