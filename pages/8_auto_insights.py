@@ -537,7 +537,7 @@ st.markdown("""
         Auto Insights Pro
     </h1>
     <p style="color: #94a3b8; font-size: 1.05rem; margin-top: 0.75rem; font-weight: 500;">
-        AI-Powered Statistical Analysis with Interactive Visualizations and Detailed Insights
+         Statistical Analysis with Interactive Visualizations and Detailed Insights
     </p>
 </div>
 """, unsafe_allow_html=True)
@@ -630,7 +630,7 @@ st.caption("Evolution of inequality over time with statistical trend lines")
 col_chart1, col_insights1 = st.columns([1.3, 1])
 
 with col_chart1:
-    st.markdown('<div class="chart-container">', unsafe_allow_html=True)
+    # Chart container removed to prevent empty box
     
     # Create enhanced streamgraph with trend lines
     fig_trends = go.Figure()
@@ -708,7 +708,7 @@ with col_chart1:
     
     st.plotly_chart(fig_trends, use_container_width=True, config={'displayModeBar': False})
     
-    st.markdown('</div>', unsafe_allow_html=True)
+    # Chart container closing div removed
     
     # Statistical summary below chart
     if settings.get('show_statistics'):
@@ -823,7 +823,7 @@ st.caption("Current inequality levels ranked from best to worst performing")
 col_chart2, col_insights2 = st.columns([1.3, 1])
 
 with col_chart2:
-    st.markdown('<div class="chart-container">', unsafe_allow_html=True)
+    # Chart container removed to prevent empty box
     
     # Get latest year data and calculate change from previous year
     latest_year = config['year_range'][1]
@@ -906,7 +906,7 @@ with col_chart2:
     
     st.plotly_chart(fig_ranking, use_container_width=True, config={'displayModeBar': False})
     
-    st.markdown('</div>', unsafe_allow_html=True)
+    # Chart container closing div removed
     
     # Ranking table with changes
     if settings.get('show_statistics'):
@@ -1010,7 +1010,7 @@ st.caption("How countries are distributed across inequality categories")
 col_chart3, col_insights3 = st.columns([1.3, 1])
 
 with col_chart3:
-    st.markdown('<div class="chart-container">', unsafe_allow_html=True)
+    # Chart container removed to prevent empty box
     
     # Categorize countries
     latest_data = filtered_df[filtered_df['year'] == latest_year].copy()
@@ -1078,7 +1078,7 @@ with col_chart3:
     
     st.plotly_chart(fig_dist, use_container_width=True, config={'displayModeBar': False})
     
-    st.markdown('</div>', unsafe_allow_html=True)
+    # Chart container closing div removed
     
     # Distribution statistics
     if settings.get('show_statistics') and len(distribution) > 0:
@@ -1099,8 +1099,7 @@ with col_chart3:
         with col_stat3:
             high_count = distribution[distribution['Category'].str.contains('High|Very High', na=False)]['Count'].sum() if len(distribution) > 0 else 0
             st.metric("High Inequality", 
-                     f"{int(high_count)} countries", 
-                     f"{high_count} countries",
+                     f"{int(high_count)} countries",
                      delta="Needs Action",
                      help="Countries with GINI > 40")
         
@@ -1390,7 +1389,7 @@ st.markdown("""
             border-radius: 12px; border-left: 4px solid #8b5cf6;">
     <h4 style="color: #8b5cf6; margin-top: 0; margin-bottom: 12px; font-size: 1.1rem;">About This Analysis</h4>
     <p style="color: #e2e8f0; font-size: 0.9rem; margin: 0; line-height: 1.7;">
-        <strong>AI-Powered Statistical Engine:</strong> Insights are automatically generated using advanced statistical 
+        <strong>Statistical Engine:</strong> Insights are automatically generated using advanced statistical 
         algorithms including linear regression, Z-score anomaly detection, coefficient of variation analysis, and 
         trend decomposition. Each insight is scored (0-25 points) based on multiple factors: statistical significance 
         (p < 0.05), magnitude of change (>20%), data quality (>80% completeness), model fit (R² > 0.7), and temporal recency.

@@ -12,7 +12,7 @@ GEO_DIR = DATA_DIR / 'geo'
 def load_inequality_data():
     """Load the main inequality dataset with validation"""
     try:
-        df = pd.read_csv(PROCESSED_DIR / "inequality_long.csv")
+        df = pd.read_csv(PROCESSED_DIR / "south_asia_indicators.csv")
         
         # Validate required columns
         required_cols = ['country', 'year', 'indicator', 'value']
@@ -50,7 +50,7 @@ def load_inequality_data():
 def load_all_indicators():
     """Load all indicators dataset"""
     try:
-        df = pd.read_csv(PROCESSED_DIR / "all_indicators_cleaned.csv")
+        df = pd.read_csv(PROCESSED_DIR / "south_asia_indicators.csv")
         
         # Ensure correct data types
         df['year'] = pd.to_numeric(df['year'], errors='coerce')
@@ -134,3 +134,7 @@ def merge_geo_data(df, geojson):
     except Exception as e:
         st.warning(f"Error merging geographic data: {str(e)}")
         return df
+    
+    
+    
+    

@@ -17,33 +17,6 @@ st.set_page_config(
 )
 
 
-st.markdown("""
-<style>
-    /* Hide the Streamlit sidebar navigation */
-    [data-testid="stSidebar"] {
-        display: none;
-    }
-    
-    /* Hide sidebar toggle button */
-    [data-testid="collapsedControl"] {
-        display: none;
-    }
-    
-    /* Expand main content to full width */
-    .main {
-        margin-left: 0 !important;
-    }
-    
-    /* Remove extra padding */
-    .block-container {
-        padding-left: 1rem !important;
-        padding-right: 1rem !important;
-    }
-</style>
-""", unsafe_allow_html=True)
-
-
-
 # Modern dark theme CSS 
 st.markdown("""
 <style>
@@ -196,7 +169,7 @@ st.markdown("""
         Professional Data Visualization & Analysis Platform
     </p>
     <p style="font-size: 1rem; color: #64748b; margin-top: 1rem;">
-         Advanced analytics •  AI-powered insights
+         Advanced analytics •  Automated insights
     </p>
 </div>
 """, unsafe_allow_html=True)
@@ -252,10 +225,6 @@ st.markdown("<br><br>", unsafe_allow_html=True)
 # NAVIGATION CARDS (Quick Access)
 # ═══════════════════════════════════════════════════════════════════
 
-# ═══════════════════════════════════════════════════════════════════
-# NAVIGATION CARDS (Quick Access)
-# ═══════════════════════════════════════════════════════════════════
-
 st.markdown("""
 <div style="text-align: center; margin-bottom: 2rem;">
     <h2 style="font-size: 2rem; color: #ffffff;">🚀 Quick Access</h2>
@@ -288,7 +257,7 @@ with col2:
         st.switch_page("pages/2_map_analysis.py")
 
 with col3:
-    if st.button("✨\n\nAuto Insights\n\nAI-generated discoveries", key="nav_insights", use_container_width=True):
+    if st.button("✨\n\nAuto Insights\n\nKey discoveries", key="nav_insights", use_container_width=True):
         st.switch_page("pages/8_auto_insights.py")
 
 # Row 2

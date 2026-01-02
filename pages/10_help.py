@@ -351,7 +351,7 @@ with tab1:
                 Navigate through different analytical views:
             </div>
             <ul class="feature-list">
-                <li class="feature-item">Auto Insights: AI-powered pattern detection</li>
+                <li class="feature-item">Auto Insights: Pattern detection</li>
                 <li class="feature-item">Dashboard: Multi-metric overview</li>
                 <li class="feature-item">Map Analysis: Geographic distributions</li>
                 <li class="feature-item">Correlations: Statistical relationships</li>
@@ -577,7 +577,7 @@ with tab3:
     <div class="help-card">
         <div class="card-title">Auto Insights Pro</div>
         <div class="card-description">
-            <strong>Purpose:</strong> AI-powered pattern detection and statistical analysis<br><br>
+            <strong>Purpose:</strong> Pattern detection and statistical analysis<br><br>
             <strong>Key Features:</strong>
         </div>
         <ul class="feature-list">
