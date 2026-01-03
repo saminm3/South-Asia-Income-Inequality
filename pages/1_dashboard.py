@@ -271,6 +271,41 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
+
+
+with st.expander("ℹ️ How to Read This Dashboard"): 
+    
+    # ← User clicks to open/close
+    col_guide1, col_guide2 = st.columns(2)
+    
+    with col_guide1:
+        st.markdown("""
+        **Understanding GINI Index**
+        - **Lower = Better** (more equality)
+        - 0-25: Excellent (Nordic countries)
+        - 25-35: Good (well-performing)
+        - 35-45: Concerning (needs action)
+        - 45+: Critical (urgent intervention)
+        
+        **Color Guide**
+        - 🟢 Green: Low inequality (good)
+        - 🔵 Blue: Moderate (acceptable)
+        - 🟠 Orange: High (concerning)
+        - 🔴 Red: Very high (critical)
+        """)
+    
+    with col_guide2:
+        st.markdown("""
+        **What Each Chart Shows**
+        1. **Stacked Area:** Trends over time
+        2. **Bar Chart:** Country rankings
+        3. **Donut:** Distribution by category
+        
+        **Download Options**
+        - **PNG:** For presentations (recommended)
+        - **HTML:** Interactive version
+        - **JSON:** For developers
+        """)
 # ═══════════════════════════════════════════════════════════════════
 # KEY METRICS ROW (Google Analytics inspired)
 # ═══════════════════════════════════════════════════════════════════
@@ -527,7 +562,7 @@ with col_viz2:
         paper_bgcolor='rgba(0,0,0,0)',
         plot_bgcolor='rgba(0,0,0,0)',
         font=dict(color='#e2e8f0'),
-        margin=dict(l=20, r=20, t=40, b=20),
+        margin=dict(l=20, r=20, t=40, b=60),
         showlegend=False,
         title=dict(
             text=f'Distribution by Category ({latest_year})',
