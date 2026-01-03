@@ -1,300 +1,298 @@
+
 import streamlit as st
 import pandas as pd
-import plotly.graph_objects as go
 import plotly.express as px
+from scipy.stats import ttest_rel
 import sys
 from pathlib import Path
 
-# Add utils to path
+# --------------------------------------------------
+# Path setup
+# --------------------------------------------------
 sys.path.append(str(Path(__file__).parent.parent))
+from utils.loaders import load_inequality_data, load_geojson
+from utils.utils import (
+    human_indicator,
+    get_color_scale,
+    handle_missing_data,
+    validate_dataframe,
+    format_value,
+    safe_divide
+)
 
-from utils.loaders import load_inequality_data
-from utils.utils import human_indicator
-
-# Page config
+# --------------------------------------------------
+# Page configuration
+# --------------------------------------------------
 st.set_page_config(
     page_title="Temporal Comparison",
-    page_icon="📊",
     layout="wide"
 )
 
-# Load custom CSS
-try:
-    with open('assets/dashboard.css') as f:
-        st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
-except FileNotFoundError:
-    pass
+st.title("🕰️ Temporal Comparison")
+st.caption("Temporal, spatial, and statistical comparison of inequality indicators")
 
-st.title("📊 Temporal Comparison: Then vs Now")
-st.markdown("### Compare inequality indicators across two time periods")
+# --------------------------------------------------
+# Detect theme
+# --------------------------------------------------
+theme_base = st.get_option("theme.base") or "light"
+IS_DARK = theme_base.lower() == "dark"
 
-# Check if analysis config exists
-if 'analysis_config' not in st.session_state or st.session_state.analysis_config is None:
-    st.warning("⚠️ No analysis configured. Please configure your analysis on the Home page.")
-    st.info("Click 'home' in the sidebar to configure your analysis")
+# --------------------------------------------------
+# Load & validate data
+# --------------------------------------------------
+df = handle_missing_data(load_inequality_data())
+geojson = load_geojson()
+
+ok, msg = validate_dataframe(
+    df,
+    ["country", "country_code", "year", "indicator", "value"]
+)
+
+if not ok or geojson is None:
+    st.error("❌ Data loading error.")
     st.stop()
 
-# Get configuration
-config = st.session_state.analysis_config
+# --------------------------------------------------
+# Indicator selection
+# --------------------------------------------------
+indicator = st.selectbox(
+    "Select Indicator",
+    sorted(df["indicator"].unique()),
+    format_func=human_indicator
+)
 
-# Load data
-df = load_inequality_data()
+idf = df[df["indicator"] == indicator].copy()
+years = sorted(idf["year"].unique())
 
-if df.empty:
-    st.error("❌ No data available")
+if len(years) < 2:
+    st.warning("Not enough years for temporal comparison.")
     st.stop()
 
-# Filter for selected countries and indicator
-filtered = df[
-    (df['country'].isin(config['countries'])) &
-    (df['indicator'] == config['indicator'])
-].copy()
+# --------------------------------------------------
+# Color Mode Selector
+# --------------------------------------------------
+color_mode = st.radio(
+    "Choose color scheme",
+    [
+        "Semantic (Default)",
+        "Sequential",
+        "Diverging",
+        "Grayscale",
+        "Vision-Accessible (Perceptually Uniform)"
+    ],
+    horizontal=True
+)
 
-if filtered.empty:
-    st.warning("⚠️ No data available for selected filters")
-    st.stop()
+if color_mode == "Semantic (Default)":
+    color_scale = get_color_scale(indicator)
+elif color_mode == "Sequential":
+    color_scale = "Viridis" if not IS_DARK else "Plasma"
+elif color_mode == "Diverging":
+    color_scale = "RdBu" if not IS_DARK else "PuOr"
+elif color_mode == "Grayscale":
+    color_scale = "Greys"
+else:
+    color_scale = "Cividis"
 
-# Year selection
-st.subheader("📅 Select Time Periods to Compare")
+# --------------------------------------------------
+# Comparison Mode
+# --------------------------------------------------
+mode = st.radio(
+    "Comparison Mode",
+    ["Point-to-Point (Then vs Now)", "Range-to-Range (Averaged)"],
+    horizontal=True
+)
 
-col1, col2 = st.columns(2)
-
-available_years = sorted(filtered['year'].unique())
-
-with col1:
-    year_then = st.selectbox(
-        "Then (Earlier Year)",
-        options=available_years,
-        index=0,
-        help="Select the earlier time period"
+if mode.startswith("Point"):
+    then_year, now_year = st.select_slider(
+        "Select THEN and NOW years",
+        options=years,
+        value=(years[0], years[-1])
     )
+    if then_year >= now_year:
+        st.error("❌ THEN year must be earlier than NOW year.")
+        st.stop()
 
-with col2:
-    year_now = st.selectbox(
-        "Now (Recent Year)",
-        options=available_years,
-        index=len(available_years)-1,
-        help="Select the more recent time period"
+    df_then = idf[idf["year"] == then_year].copy()
+    df_now = idf[idf["year"] == now_year].copy()
+else:
+    early_range = st.select_slider(
+        "Early Period",
+        options=years,
+        value=(years[0], years[len(years)//3])
     )
+    late_range = st.select_slider(
+        "Later Period",
+        options=years,
+        value=(years[len(years)//2], years[-1])
+    )
+    df_then = idf[idf["year"].between(*early_range)].groupby(
+        ["country", "country_code"], as_index=False
+    )["value"].mean()
+    df_now = idf[idf["year"].between(*late_range)].groupby(
+        ["country", "country_code"], as_index=False
+    )["value"].mean()
+    then_year = f"{early_range[0]}–{early_range[1]}"
+    now_year = f"{late_range[0]}–{late_range[1]}"
 
-if year_then >= year_now:
-    st.error("⚠️ 'Then' year must be earlier than 'Now' year")
+# --------------------------------------------------
+# Keep common countries
+# --------------------------------------------------
+common = set(df_then["country_code"]) & set(df_now["country_code"])
+df_then = df_then[df_then["country_code"].isin(common)].copy()
+df_now = df_now[df_now["country_code"].isin(common)].copy()
+
+if df_then.empty or df_now.empty:
+    st.warning("No overlapping countries available.")
     st.stop()
 
-# Filter data for selected years
-comparison_data = filtered[filtered['year'].isin([year_then, year_now])].copy()
+# --------------------------------------------------
+# Ranking
+# --------------------------------------------------
+LOWER_IS_BETTER = ["gini", "poverty", "unemployment"]
+ascending = any(x in indicator.lower() for x in LOWER_IS_BETTER)
+df_then["rank_then"] = df_then["value"].rank(ascending=ascending)
+df_now["rank_now"] = df_now["value"].rank(ascending=ascending)
 
-if comparison_data.empty:
-    st.warning(f"⚠️ No data available for years {year_then} and {year_now}")
-    st.stop()
+# --------------------------------------------------
+# Merge & compute changes
+# --------------------------------------------------
+cmp = df_then.merge(df_now, on=["country", "country_code"], suffixes=("_then", "_now"))
+cmp["abs_change"] = cmp["value_now"] - cmp["value_then"]
+cmp["pct_change"] = cmp.apply(
+    lambda r: safe_divide(r["abs_change"], r["value_then"]) * 100 if r["value_then"] != 0 else None,
+    axis=1
+)
+cmp["rank_change"] = cmp["rank_then"] - cmp["rank_now"]
 
-# Pivot for comparison
-pivot = comparison_data.pivot_table(
-    index='country',
-    columns='year',
-    values='value'
-).reset_index()
+# Statistical test
+t_stat, p_value = ttest_rel(cmp["value_then"], cmp["value_now"])
 
-# Calculate change
-if year_then in pivot.columns and year_now in pivot.columns:
-    pivot['Change'] = pivot[year_now] - pivot[year_then]
-    pivot['Change %'] = ((pivot[year_now] - pivot[year_then]) / pivot[year_then] * 100).round(1)
-    pivot['Direction'] = pivot['Change'].apply(lambda x: '📈 Increased' if x > 0 else ('📉 Decreased' if x < 0 else '➡️ No Change'))
+# --------------------------------------------------
+# Visualization selector
+# --------------------------------------------------
+viz_option = st.selectbox(
+    "Select Visualization Tool",
+    ["Choropleth Map", "Bar Chart", "Scatter Plot", "Ranking Shift", "Country Table"]
+)
 
-st.divider()
+vmin = min(cmp["value_then"].min(), cmp["value_now"].min())
+vmax = max(cmp["value_then"].max(), cmp["value_now"].max())
 
-# Side-by-side comparison
-st.subheader("📊 Side-by-Side Comparison")
+# --------------------------------------------------
+# Side-by-side visualizations
+# --------------------------------------------------
+c1, c2 = st.columns(2)
 
-col1, col2 = st.columns(2)
-
-with col1:
-    st.markdown(f"### 📅 {year_then}")
-    
-    if year_then in pivot.columns:
-        then_data = pivot[['country', year_then]].copy()
-        then_data.columns = ['Country', human_indicator(config['indicator'])]
-        then_data = then_data.sort_values(human_indicator(config['indicator']), ascending=False)
-        then_data['Rank'] = range(1, len(then_data) + 1)
-        then_data = then_data[['Rank', 'Country', human_indicator(config['indicator'])]]
-        
-        st.dataframe(then_data, use_container_width=True, hide_index=True)
-        
-        # Bar chart
-        fig_then = px.bar(
-            then_data,
-            x='Country',
-            y=human_indicator(config['indicator']),
-            title=f"{human_indicator(config['indicator'])} - {year_then}",
-            color=human_indicator(config['indicator']),
-            color_continuous_scale='Reds'
+if viz_option == "Choropleth Map":
+    with c1:
+        fig_then = px.choropleth(
+            df_then,
+            geojson=geojson,
+            locations="country_code",
+            featureidkey="properties.ISO_A3",
+            color="value",
+            range_color=[vmin, vmax],
+            color_continuous_scale=color_scale,
+            title=f"{human_indicator(indicator)} — THEN ({then_year})"
         )
+        fig_then.update_geos(fitbounds="locations", visible=False)
         st.plotly_chart(fig_then, use_container_width=True)
 
-with col2:
-    st.markdown(f"### 📅 {year_now}")
-    
-    if year_now in pivot.columns:
-        now_data = pivot[['country', year_now]].copy()
-        now_data.columns = ['Country', human_indicator(config['indicator'])]
-        now_data = now_data.sort_values(human_indicator(config['indicator']), ascending=False)
-        now_data['Rank'] = range(1, len(now_data) + 1)
-        now_data = now_data[['Rank', 'Country', human_indicator(config['indicator'])]]
-        
-        st.dataframe(now_data, use_container_width=True, hide_index=True)
-        
-        # Bar chart
-        fig_now = px.bar(
-            now_data,
-            x='Country',
-            y=human_indicator(config['indicator']),
-            title=f"{human_indicator(config['indicator'])} - {year_now}",
-            color=human_indicator(config['indicator']),
-            color_continuous_scale='Reds'
+    with c2:
+        fig_now = px.choropleth(
+            df_now,
+            geojson=geojson,
+            locations="country_code",
+            featureidkey="properties.ISO_A3",
+            color="value",
+            range_color=[vmin, vmax],
+            color_continuous_scale=color_scale,
+            title=f"{human_indicator(indicator)} — NOW ({now_year})"
         )
+        fig_now.update_geos(fitbounds="locations", visible=False)
         st.plotly_chart(fig_now, use_container_width=True)
 
-# Change analysis
-st.divider()
-st.subheader("📈 Change Analysis")
+elif viz_option == "Bar Chart":
+    with c1:
+        fig_then = px.bar(df_then.sort_values("value", ascending=ascending),
+                          x="country", y="value", color="value",
+                          color_continuous_scale=color_scale)
+        st.plotly_chart(fig_then, use_container_width=True)
+    with c2:
+        fig_now = px.bar(df_now.sort_values("value", ascending=ascending),
+                         x="country", y="value", color="value",
+                         color_continuous_scale=color_scale)
+        st.plotly_chart(fig_now, use_container_width=True)
 
-if 'Change' in pivot.columns:
-    change_display = pivot[['country', year_then, year_now, 'Change', 'Change %', 'Direction']].copy()
-    change_display.columns = ['Country', f'{year_then}', f'{year_now}', 'Absolute Change', 'Percentage Change', 'Direction']
-    change_display = change_display.sort_values('Absolute Change', ascending=False)
-    
-    st.dataframe(change_display, use_container_width=True, hide_index=True)
-    
-    # Change visualization
-    fig_change = go.Figure()
-    
-    for _, row in change_display.iterrows():
-        color = 'red' if row['Absolute Change'] > 0 else 'green'
-        fig_change.add_trace(go.Bar(
-            x=[row['Country']],
-            y=[row['Absolute Change']],
-            name=row['Country'],
-            marker_color=color,
-            showlegend=False
-        ))
-    
-    fig_change.update_layout(
-        title=f"Change in {human_indicator(config['indicator'])} ({year_then} → {year_now})",
-        xaxis_title="Country",
-        yaxis_title="Change",
-        height=400
+elif viz_option == "Scatter Plot":
+    fig_scatter = px.scatter(
+        cmp, x="value_then", y="value_now", text="country", color="abs_change",
+        color_continuous_scale=color_scale, range_color=[vmin, vmax]
     )
-    
-    st.plotly_chart(fig_change, use_container_width=True)
+    fig_scatter.add_shape(
+        type="line", x0=vmin, y0=vmin, x1=vmax, y1=vmax,
+        line=dict(color="red", dash="dash")
+    )
+    st.plotly_chart(fig_scatter, use_container_width=True)
 
-# Ranking shifts
-st.divider()
-st.subheader("🔄 Ranking Shifts")
+elif viz_option == "Ranking Shift":
+    fig_rank = px.scatter(
+        cmp, x="rank_then", y="rank_now", text="country", color="abs_change",
+        color_continuous_scale=color_scale
+    )
+    fig_rank.add_shape(
+        type="line",
+        x0=cmp["rank_then"].min(), y0=cmp["rank_then"].min(),
+        x1=cmp["rank_then"].max(), y1=cmp["rank_then"].max(),
+        line=dict(color="black", dash="dash")
+    )
+    st.plotly_chart(fig_rank, use_container_width=True)
 
-if year_then in pivot.columns and year_now in pivot.columns:
-    # Reset index to make 'country' a column
-    pivot_reset = pivot.reset_index()
-    
-    # Remove rows with NaN values for ranking
-    rank_then = pivot_reset[['country', year_then]].copy()
-    rank_then = rank_then.dropna(subset=[year_then])  # Remove NaN values
-    if not rank_then.empty:
-        rank_then['Rank_Then'] = rank_then[year_then].rank(ascending=True, method='min').astype(int)
-    
-    rank_now = pivot_reset[['country', year_now]].copy()
-    rank_now = rank_now.dropna(subset=[year_now])  # Remove NaN values
-    if not rank_now.empty:
-        rank_now['Rank_Now'] = rank_now[year_now].rank(ascending=True, method='min').astype(int)
-    
-    # Check if we have data for both years
-    if not rank_then.empty and not rank_now.empty:
-        # Merge and calculate changes
-        rank_comparison = pd.merge(
-            rank_then[['country', 'Rank_Then']], 
-            rank_now[['country', 'Rank_Now']], 
-            on='country',
-            how='inner'  # Only keep countries with data in both years
-        )
-        
-        if not rank_comparison.empty:
-            rank_comparison['Rank_Change'] = rank_comparison['Rank_Now'] - rank_comparison['Rank_Then']
-            rank_comparison['Movement'] = rank_comparison['Rank_Change'].apply(
-                lambda x: f'⬆️ Up {abs(x)} positions' if x < 0 else (f'⬇️ Down {abs(x)} positions' if x > 0 else '➡️ No change')
-            )
-            
-            # Display
-            rank_display = rank_comparison[['country', 'Rank_Then', 'Rank_Now', 'Movement']].copy()
-            rank_display.columns = ['Country', f'Rank ({year_then})', f'Rank ({year_now})', 'Movement']
-            
-            st.dataframe(rank_display, use_container_width=True, hide_index=True)
-        else:
-            st.warning(f"⚠️ No countries have data for both {year_then} and {year_now}")
-    else:
-        if rank_then.empty:
-            st.warning(f"⚠️ No data available for year {year_then}")
-        if rank_now.empty:
-            st.warning(f"⚠️ No data available for year {year_now}")
+elif viz_option == "Country Table":
+    tbl = cmp.copy()
+    tbl["value_then"] = tbl["value_then"].apply(format_value)
+    tbl["value_now"] = tbl["value_now"].apply(format_value)
+    tbl["abs_change"] = tbl["abs_change"].apply(format_value)
+    tbl["pct_change"] = tbl["pct_change"].apply(lambda x: f"{x:.1f}%" if x is not None else "—")
+    def change_icon(x):
+        if x > 0: return "📈"
+        elif x < 0: return "📉"
+        else: return "➡️"
+    tbl["trend"] = cmp["abs_change"].apply(change_icon)
+    st.dataframe(
+        tbl[["country", "value_then", "value_now", "abs_change", "pct_change", "rank_change", "trend"]],
+        use_container_width=True
+    )
 
-# Key insights
-st.divider()
-st.subheader("🔑 Key Insights")
+# --------------------------------------------------
+# Insights
+# --------------------------------------------------
+st.subheader("Summary")
+trend = "improved" if cmp["abs_change"].mean() < 0 else "deteriorated"
+sig = "statistically significant" if p_value < 0.05 else "not statistically significant"
 
-if 'Change %' in pivot.columns:
-    col1, col2, col3 = st.columns(3)
-    
-    with col1:
-        biggest_increase = pivot.loc[pivot['Change %'].idxmax()]
-        st.metric(
-            "Biggest Increase",
-            f"{biggest_increase['country']}",
-            f"+{biggest_increase['Change %']:.1f}%"
-        )
-    
-    with col2:
-        biggest_decrease = pivot.loc[pivot['Change %'].idxmin()]
-        st.metric(
-            "Biggest Decrease",
-            f"{biggest_decrease['country']}",
-            f"{biggest_decrease['Change %']:.1f}%"
-        )
-    
-    with col3:
-        avg_change = pivot['Change %'].mean()
-        st.metric(
-            "Average Change",
-            f"{avg_change:.1f}%",
-            delta_color="off"
-        )
+biggest_increase = cmp.loc[cmp["abs_change"].idxmax()]
+biggest_decrease = cmp.loc[cmp["abs_change"].idxmin()]
 
+st.markdown(f"""
+**Overall Trend:**
+Between **{then_year}** and **{now_year}**,
+**{human_indicator(indicator)}** has **{trend}** across South Asia.
+
+**Statistical Test:**
+Paired t-test: **p = {p_value:.4f}**, indicating the change is **{sig}**.
+
+**Biggest Improver:** {biggest_increase['country']} ({format_value(biggest_increase['abs_change'])})
+**Biggest Decliner:** {biggest_decrease['country']} ({format_value(biggest_decrease['abs_change'])})
+""")
+
+# --------------------------------------------------
 # Export
-st.divider()
-st.subheader("📥 Export Comparison")
-
-col1, col2 = st.columns(2)
-
-with col1:
-    if 'Change' in pivot.columns:
-        csv = change_display.to_csv(index=False).encode('utf-8')
-        st.download_button(
-            "📥 Download Comparison (CSV)",
-            data=csv,
-            file_name=f"temporal_comparison_{year_then}_vs_{year_now}.csv",
-            mime="text/csv",
-            use_container_width=True
-        )
-
-with col2:
-    if 'fig_change' in locals():
-        img_bytes = fig_change.to_image(format="png", width=1200, height=600)
-        st.download_button(
-            "📥 Download Change Chart (PNG)",
-            data=img_bytes,
-            file_name=f"change_chart_{year_then}_vs_{year_now}.png",
-            mime="image/png",
-            use_container_width=True
-        )
-
-# Footer
-st.divider()
-st.caption("Temporal Comparison | South Asia Inequality Analysis Platform")
-st.caption(f"📊 Comparing {human_indicator(config['indicator'])} between {year_then} and {year_now}")
+# --------------------------------------------------
+st.download_button(
+    "📥 Download Temporal Comparison Results (CSV)",
+    cmp.to_csv(index=False),
+    file_name="Temporal_Comparison.csv",
+    mime="text/csv"
+)
