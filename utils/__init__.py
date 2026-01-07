@@ -3,8 +3,8 @@ Utils package initialization
 Exports commonly used functions for easy importing
 """
 
-from .loaders import load_inequality_data
-from .utils import human_indicator
+from .loaders import load_inequality_data, load_geojson, load_all_indicators
+from .utils import human_indicator, format_value, get_color_scale
 
 
 from .insights import (
@@ -19,7 +19,11 @@ format_insights_text = format_insights_as_text
 
 __all__ = [
     'load_inequality_data',
+    'load_geojson',
+    'load_all_indicators',
     'human_indicator',
+    'format_value',
+    'get_color_scale',
     'generate_ranked_insights',
     'generate_insights',           # Alias for backwards compatibility
     'format_insights_as_text',

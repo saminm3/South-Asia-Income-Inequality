@@ -5,14 +5,15 @@ import plotly.express as px
 import sys
 from pathlib import Path
 import numpy as np
-import io
 from datetime import datetime
+import io
 
 # Add utils to path
 sys.path.append(str(Path(__file__).parent.parent))
 
 from utils.loaders import load_inequality_data
 from utils.utils import human_indicator, format_value
+from utils.exports import export_data_menu
 
 st.set_page_config(
     page_title="Dashboard",
@@ -157,54 +158,6 @@ st.markdown("""
 # ═══════════════════════════════════════════════════════════════════
 # INLINE EXPORT FUNCTION FOR PLOTS (REPLACING export_plot_menu)
 # ═══════════════════════════════════════════════════════════════════
-
-def export_plot_inline(fig, filename_base, key):
-    """Inline plot export functionality - creates download buttons for each chart"""
-    st.markdown(f'<p style="color: #94a3b8; font-size: 0.85rem; margin-top: 0.5rem; margin-bottom: 0.25rem;">Download:</p>', unsafe_allow_html=True)
-    
-    col1, col2, col3, col_spacer = st.columns([0.8, 0.8, 0.8, 4.6])
-    
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    
-    with col1:
-        # PNG export
-        try:
-            img_bytes = fig.to_image(format="png", width=1200, height=800)
-            st.download_button(
-                label="PNG",
-                data=img_bytes,
-                file_name=f"{filename_base}_{timestamp}.png",
-                mime="image/png",
-                key=f"{key}_png",
-                use_container_width=True
-            )
-        except:
-            st.button("PNG", disabled=True, use_container_width=True, 
-                     help="Install kaleido: pip install kaleido", key=f"{key}_png")
-    
-    with col2:
-        # HTML export
-        html_str = fig.to_html(include_plotlyjs='cdn')
-        st.download_button(
-            label="HTML",
-            data=html_str,
-            file_name=f"{filename_base}_{timestamp}.html",
-            mime="text/html",
-            key=f"{key}_html",
-            use_container_width=True
-        )
-    
-    with col3:
-        # JSON export
-        json_str = fig.to_json()
-        st.download_button(
-            label="JSON",
-            data=json_str,
-            file_name=f"{filename_base}_{timestamp}.json",
-            mime="application/json",
-            key=f"{key}_json",
-            use_container_width=True
-        )
 
 def ensure_public_analysis(df):
     """Create default config if none exists"""
@@ -373,13 +326,7 @@ with col5:
 # MAIN VISUALIZATION SECTION
 # ═══════════════════════════════════════════════════════════════════
 
-st.markdown("""
-<div style="margin: 40px 0 20px 0;">
-    <h2 style="font-size: 1rem; font-weight: 700; color: #ffffff; text-transform: uppercase; letter-spacing: 1px;">
-        Inequality Trends Over Time
-    </h2>
-</div>
-""", unsafe_allow_html=True)
+st.markdown('<div class="section-header">Inequality Trends Over Time</div>', unsafe_allow_html=True)
 
 # Main area chart - Google Analytics style
 yearly_data = filtered_df.pivot_table(
@@ -455,10 +402,38 @@ fig_area.update_layout(
     )
 )
 
-st.plotly_chart(fig_area, use_container_width=True, config={'displayModeBar': False})
+# Download options in top-right corner
+col_spacer, col_downloads = st.columns([10, 1])
+with col_downloads:
+    with st.popover("⬇️", help="Download in multiple formats"):
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        
+        # HTML
+        st.download_button("🌐 HTML", fig_area.to_html(include_plotlyjs='cdn'), f"temporal_trends_{timestamp}.html", "text/html", key="area_html", use_container_width=True)
+        
+        # JSON
+        st.download_button("📊 JSON", fig_area.to_json(), f"temporal_trends_{timestamp}.json", "application/json", key="area_json", use_container_width=True)
+        
+        # SVG
+        try:
+            svg_bytes = fig_area.to_image(format="svg", width=1400, height=1000)
+            st.download_button("🎨 SVG", svg_bytes, f"temporal_trends_{timestamp}.svg", "image/svg+xml", key="area_svg", use_container_width=True)
+        except:
+            st.button("🎨 SVG", disabled=True, key="area_svg", use_container_width=True)
 
-# CHART 1 EXPORT BUTTONS
-export_plot_inline(fig_area, f"temporal_trends_{config['indicator']}", "area_chart")
+
+st.plotly_chart(fig_area, use_container_width=True, config={
+    'displayModeBar': 'hover',
+    'displaylogo': False,
+    'modeBarButtonsToRemove': ['select2d', 'lasso2d', 'autoScale2d'],
+    'toImageButtonOptions': {
+        'format': 'png',
+        'filename': f'temporal_trends_{config["indicator"]}',
+        'height': 1000,
+        'width': 1400,
+        'scale': 2
+    }
+})
 
 # ═══════════════════════════════════════════════════════════════════
 # SECONDARY VISUALIZATIONS ROW
@@ -513,7 +488,7 @@ with col_viz1:
             ),
             color='#e2e8f0'
         ),
-        margin=dict(l=100, r=60, t=40, b=50),
+        margin=dict(l=100, r=120, t=40, b=50),  # Increased right margin for values
         title=dict(
             text=f'Average by Country ({config["year_range"][0]}-{config["year_range"][1]})',
             font=dict(size=14, color='#ffffff'),
@@ -521,10 +496,33 @@ with col_viz1:
         )
     )
     
-    st.plotly_chart(fig_bars, use_container_width=True, config={'displayModeBar': False})
+    # Download options
+    col_spacer2, col_downloads2 = st.columns([10, 1])
+    with col_downloads2:
+        with st.popover("⬇️", help="Download in multiple formats"):
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            
+            st.download_button("🌐 HTML", fig_bars.to_html(include_plotlyjs='cdn'), f"country_avg_{timestamp}.html", "text/html", key="bar_html", use_container_width=True)
+            st.download_button("📊 JSON", fig_bars.to_json(), f"country_avg_{timestamp}.json", "application/json", key="bar_json", use_container_width=True)
+            
+            try:
+                svg_bytes = fig_bars.to_image(format="svg", width=1400, height=1000)
+                st.download_button("🎨 SVG", svg_bytes, f"country_avg_{timestamp}.svg", "image/svg+xml", key="bar_svg", use_container_width=True)
+            except:
+                st.button("🎨 SVG", disabled=True, key="bar_svg", use_container_width=True)
     
-    # CHART 2 EXPORT BUTTONS
-    export_plot_inline(fig_bars, f"average_by_country_{config['indicator']}", "bar_chart")
+    st.plotly_chart(fig_bars, use_container_width=True, config={
+        'displayModeBar': 'hover',
+        'displaylogo': False,
+        'modeBarButtonsToRemove': ['select2d', 'lasso2d', 'autoScale2d'],
+        'toImageButtonOptions': {
+            'format': 'png',
+            'filename': f'average_by_country_{config["indicator"]}',
+            'height': 1000,
+            'width': 1400,
+            'scale': 2
+        }
+    })
 
 with col_viz2:
     # Donut chart
@@ -543,12 +541,24 @@ with col_viz2:
     
     category_counts = pd.Series(categories).value_counts()
     
+    # Define consistent color mapping (green=good, red=bad)
+    color_map = {
+        'Low Inequality': '#10b981',    # Green (GOOD)
+        'Moderate': '#f59e0b',          # Yellow/Orange (OK)
+        'High Inequality': '#ef4444'    # Red (BAD)
+    }
+    
+    # Ensure consistent order and colors
+    ordered_categories = ['Low Inequality', 'Moderate', 'High Inequality']
+    ordered_values = [category_counts.get(cat, 0) for cat in ordered_categories]
+    ordered_colors = [color_map[cat] for cat in ordered_categories]
+    
     fig_donut = go.Figure(data=[go.Pie(
-        labels=category_counts.index,
-        values=category_counts.values,
+        labels=ordered_categories,
+        values=ordered_values,
         hole=0.6,
         marker=dict(
-            colors=['#10b981', '#f59e0b', '#ef4444'],
+            colors=ordered_colors,
             line=dict(color='#0a0e27', width=2)
         ),
         textinfo='label+percent',
@@ -578,33 +588,281 @@ with col_viz2:
         )]
     )
     
-    st.plotly_chart(fig_donut, use_container_width=True, config={'displayModeBar': False})
+    # Download options
+    col_spacer3, col_downloads3 = st.columns([10, 1])
+    with col_downloads3:
+        with st.popover("⬇️", help="Download in multiple formats"):
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            
+            st.download_button("🌐 HTML", fig_donut.to_html(include_plotlyjs='cdn'), f"distribution_{timestamp}.html", "text/html", key="donut_html", use_container_width=True)
+            st.download_button("📊 JSON", fig_donut.to_json(), f"distribution_{timestamp}.json", "application/json", key="donut_json", use_container_width=True)
+            
+            try:
+                svg_bytes = fig_donut.to_image(format="svg", width=1400, height=1000)
+                st.download_button("🎨 SVG", svg_bytes, f"distribution_{timestamp}.svg", "image/svg+xml", key="donut_svg", use_container_width=True)
+            except:
+                st.button("🎨 SVG", disabled=True, key="donut_svg", use_container_width=True)
     
-    # CHART 3 EXPORT BUTTONS (inside column with compact layout)
-    st.markdown('<p style="color: #94a3b8; font-size: 0.85rem; margin-top: 0.3rem; margin-bottom: 0.2rem;">Download:</p>', unsafe_allow_html=True)
-    col_d1, col_d2, col_d3 = st.columns(3)
-    
-    timestamp_donut = datetime.now().strftime("%Y%m%d_%H%M%S")
-    
-    with col_d1:
+    st.plotly_chart(fig_donut, use_container_width=True, config={
+        'displayModeBar': 'hover',
+        'displaylogo': False,
+        'modeBarButtonsToRemove': ['select2d', 'lasso2d', 'autoScale2d'],
+        'toImageButtonOptions': {
+            'format': 'png',
+            'filename': 'distribution_breakdown',
+            'height': 1000,
+            'width': 1400,
+            'scale': 2
+        }
+    })
+
+# Color scheme legend for both charts
+st.markdown("""
+<div style="background: rgba(59, 130, 246, 0.05); padding: 12px; border-radius: 8px; margin-top: 1rem; border-left: 3px solid #3b82f6;">
+    <div style="display: flex; justify-content: center; gap: 2rem; align-items: center; flex-wrap: wrap;">
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <div style="width: 20px; height: 20px; background: #10b981; border-radius: 4px;"></div>
+            <span style="color: #e2e8f0; font-size: 0.9rem;"><strong>Green</strong> = Low Inequality (Good)</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <div style="width: 20px; height: 20px; background: #f59e0b; border-radius: 4px;"></div>
+            <span style="color: #e2e8f0; font-size: 0.9rem;"><strong>Yellow</strong> = Moderate Inequality</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <div style="width: 20px; height: 20px; background: #ef4444; border-radius: 4px;"></div>
+            <span style="color: #e2e8f0; font-size: 0.9rem;"><strong>Red</strong> = High Inequality (Needs Attention)</span>
+        </div>
+    </div>
+</div>
+""", unsafe_allow_html=True)
+
+# ═══════════════════════════════════════════════════════════════════
+# GEOGRAPHIC ARC MAP - COUNTRY CONNECTIONS
+# ═══════════════════════════════════════════════════════════════════
+
+st.markdown("---")
+st.markdown('<div class="section-header">Country Relationship Network</div>', unsafe_allow_html=True)
+
+st.markdown("""
+<div style="background: rgba(59, 130, 246, 0.05); padding: 15px; border-radius: 8px; border-left: 3px solid #3b82f6; margin-bottom: 20px;">
+    <p style="color: #8b98a5; font-size: 0.9rem; margin: 0;">
+        <b style="color: #e2e8f0;">Geographic Connection Map:</b> This map shows correlation relationships between South Asian countries. 
+        Curved arcs connect countries with similar inequality patterns - thicker arcs indicate stronger correlations.
+    </p>
+</div>
+""", unsafe_allow_html=True)
+
+# Calculate correlation matrix
+country_trends = filtered_df.pivot_table(values='value', index='year', columns='country')
+correlation_matrix = country_trends.corr()
+
+# Country coordinates (latitude, longitude) for South Asia
+country_coords = {
+    'Afghanistan': (33.9391, 67.7100),
+    'Bangladesh': (23.6850, 90.3563),
+    'Bhutan': (27.5142, 90.4336),
+    'India': (20.5937, 78.9629),
+    'Maldives': (3.2028, 73.2207),
+    'Nepal': (28.3949, 84.1240),
+    'Pakistan': (30.3753, 69.3451),
+    'Sri Lanka': (7.8731, 80.7718)
+}
+
+# Get countries in dataset
+countries_in_data = list(correlation_matrix.columns)
+
+# Calculate average GINI for colors
+avg_gini = {country: country_trends[country].mean() for country in countries_in_data if country in country_coords}
+
+# Create base map
+fig_arc_map = go.Figure()
+
+# Add country markers with GINI-based colors
+for country in countries_in_data:
+    if country in country_coords:
+        lat, lon = country_coords[country]
+        gini_val = avg_gini[country]
+        
+        # Determine color based on GINI
+        if gini_val < 30:
+            color = '#10b981'  # Green
+        elif gini_val < 35:
+            color = '#34d399'  # Light green
+        elif gini_val < 40:
+            color = '#f59e0b'  # Yellow
+        else:
+            color = '#ef4444'  # Red
+        
+        # Add marker
+        fig_arc_map.add_trace(go.Scattergeo(
+            lon=[lon],
+            lat=[lat],
+            mode='markers+text',
+            marker=dict(size=15, color=color, line=dict(width=2, color='#1e293b')),
+            text=country,
+            textposition='top center',
+            textfont=dict(size=11, color='#ffffff', family='Arial Black'),
+            name=country,
+            hovertemplate=f'<b>{country}</b><br>Avg GINI: {gini_val:.2f}<br>Lat: {lat:.2f}, Lon: {lon:.2f}<extra></extra>',
+            showlegend=False
+        ))
+
+# Add arcs for strong correlations
+threshold = 0.7
+arc_count = 0
+
+for i, country1 in enumerate(countries_in_data):
+    for j, country2 in enumerate(countries_in_data):
+        if i < j and country1 in country_coords and country2 in country_coords:
+            corr_value = correlation_matrix.loc[country1, country2]
+            
+            if abs(corr_value) > threshold:
+                lat1, lon1 = country_coords[country1]
+                lat2, lon2 = country_coords[country2]
+                
+                # Create arc using great circle approximation
+                num_points = 50
+                lats = []
+                lons = []
+                
+                for k in range(num_points + 1):
+                    t = k / num_points
+                    # Simple arc (could be improved with proper great circle calculation)
+                    lat = lat1 + t * (lat2 - lat1)
+                    lon = lon1 + t * (lon2 - lon1)
+                    
+                    # Add curvature (push midpoint up/down based on position)
+                    if 0.2 < t < 0.8:
+                        curve_height = 5 * (1 - abs(2*t - 1))  # Peak at midpoint
+                        lat += curve_height
+                    
+                    lats.append(lat)
+                    lons.append(lon)
+                
+                # Line color and width based on correlation
+                if corr_value > 0:
+                    line_color = f'rgba(16, 185, 129, {abs(corr_value) * 0.7})'
+                else:
+                    line_color = f'rgba(239, 68, 68, {abs(corr_value) * 0.7})'
+                
+                line_width = abs(corr_value) * 3
+                
+                fig_arc_map.add_trace(go.Scattergeo(
+                    lon=lons,
+                    lat=lats,
+                    mode='lines',
+                    line=dict(width=line_width, color=line_color),
+                    hovertemplate=f'<b>{country1} ↔ {country2}</b><br>Correlation: {corr_value:.3f}<extra></extra>',
+                    showlegend=False
+                ))
+                arc_count += 1
+
+# Update map layout
+fig_arc_map.update_geos(
+    projection_type='natural earth',
+    showcountries=True,
+    countrycolor='rgba(100, 116, 139, 0.3)',
+    showland=True,
+    landcolor='#0a0e27',
+    showocean=True,
+    oceancolor='#050810',
+    showlakes=True,
+    lakecolor='#050810',
+    coastlinecolor='rgba(100, 116, 139, 0.5)',
+    coastlinewidth=1,
+    center=dict(lat=20, lon=78),  # Center on South Asia
+    lataxis_range=[0, 40],
+    lonaxis_range=[60, 100],
+    bgcolor='rgba(0,0,0,0)'
+)
+
+fig_arc_map.update_layout(
+    height=600,
+    paper_bgcolor='rgba(0,0,0,0)',
+    plot_bgcolor='rgba(0,0,0,0)',
+    font=dict(color='#ffffff'),
+    margin=dict(l=0, r=0, t=40, b=0),
+    title=dict(
+        text=f'Geographic Connection Map - {arc_count} Strong Correlations',
+        font=dict(size=16, color='#ffffff'),
+        x=0.5,
+        xanchor='center'
+    )
+)
+
+# Download options
+col_spacer_arc, col_downloads_arc = st.columns([10, 1])
+with col_downloads_arc:
+    with st.popover("⬇️", help="Download in multiple formats"):
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        
+        st.download_button("🌐 HTML", fig_arc_map.to_html(include_plotlyjs='cdn'), f"arc_map_{timestamp}.html", "text/html", key="arc_html", use_container_width=True)
+        st.download_button("📊 JSON", fig_arc_map.to_json(), f"arc_map_{timestamp}.json", "application/json", key="arc_json", use_container_width=True)
+        
         try:
-            img_bytes = fig_donut.to_image(format="png", width=1200, height=800)
-            st.download_button("PNG", img_bytes, f"distribution_{timestamp_donut}.png", "image/png", key="donut_png", use_container_width=True)
+            svg_bytes = fig_arc_map.to_image(format="svg", width=1400, height=1000)
+            st.download_button("🎨 SVG", svg_bytes, f"arc_map_{timestamp}.svg", "image/svg+xml", key="arc_svg", use_container_width=True)
         except:
-            st.button("PNG", disabled=True, use_container_width=True, help="Install kaleido", key="donut_png")
-    
-    with col_d2:
-        html_str = fig_donut.to_html(include_plotlyjs='cdn')
-        st.download_button("HTML", html_str, f"distribution_{timestamp_donut}.html", "text/html", key="donut_html", use_container_width=True)
-    
-    with col_d3:
-        json_str = fig_donut.to_json()
-        st.download_button("JSON", json_str, f"distribution_{timestamp_donut}.json", "application/json", key="donut_json", use_container_width=True)
+            st.button("🎨 SVG", disabled=True, key="arc_svg", use_container_width=True)
+
+st.plotly_chart(fig_arc_map, use_container_width=True, config={
+    'displayModeBar': 'hover',
+    'displaylogo': False,
+    'modeBarButtonsToRemove': ['select2d', 'lasso2d'],
+    'toImageButtonOptions': {
+        'format': 'png',
+        'filename': 'arc_map',
+        'height': 1000,
+        'width': 1400,
+        'scale': 2
+    }
+})
+
+# Legend for arc map
+col_arc1, col_arc2, col_arc3 = st.columns(3)
+
+with col_arc1:
+    st.markdown("""
+    <div style="background: #0f1419; padding: 1rem; border-radius: 8px; border: 1px solid rgba(16, 185, 129, 0.3);">
+        <div style="color: #10b981; font-weight: 600; margin-bottom: 0.5rem;">🟢 Country Markers</div>
+        <div style="color: #94a3b8; font-size: 0.85rem;">Green = Low inequality<br>Yellow = Moderate<br>Red = High inequality</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+with col_arc2:
+    st.markdown("""
+    <div style="background: #0f1419; padding: 1rem; border-radius: 8px; border: 1px solid rgba(16, 185, 129, 0.3);">
+        <div style="color: #10b981; font-weight: 600; margin-bottom: 0.5rem;">━━ Green Arcs</div>
+        <div style="color: #94a3b8; font-size: 0.85rem;">Positive correlation<br>Similar patterns</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+with col_arc3:
+    st.markdown("""
+    <div style="background: #0f1419; padding: 1rem; border-radius: 8px; border: 1px solid rgba(239, 68, 68, 0.3);">
+        <div style="color: #ef4444; font-weight: 600; margin-bottom: 0.5rem;">━━ Red Arcs</div>
+        <div style="color: #94a3b8; font-size: 0.85rem;">Negative correlation<br>Opposite trends</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+st.markdown("""
+<div style="background: rgba(59, 130, 246, 0.1); padding: 1rem; border-radius: 8px; margin-top: 1rem; border-left: 3px solid #3b82f6;">
+    <div style="color: #e2e8f0; font-size: 0.9rem;">
+        <strong style="color: #60a5fa;">💡 Key Insights:</strong><br>
+        • <strong>Arc thickness</strong> shows correlation strength - thicker arcs mean stronger relationships<br>
+        • <strong>Geographic proximity</strong> can be compared with correlation patterns<br>
+        • <strong>Green arcs</strong> connect countries with similar inequality trends over time<br>
+        • <strong>Red arcs</strong> show countries moving in opposite directions<br>
+        • Hover over arcs or markers to see detailed statistics
+    </div>
+</div>
+""", unsafe_allow_html=True)
 
 # ═══════════════════════════════════════════════════════════════════
 # BOTTOM SECTION: Rankings & Timeline
 # ═══════════════════════════════════════════════════════════════════
 
+st.markdown("---")
 st.markdown('<div class="section-header">Detailed Rankings & Individual Trends</div>', unsafe_allow_html=True)
 
 col_bottom1, col_bottom2 = st.columns([1, 1.5])
@@ -725,15 +983,255 @@ with col_bottom2:
         )
     )
     
-    st.plotly_chart(fig_lines, use_container_width=True, config={'displayModeBar': False})
+    # Download options
+    col_spacer4, col_downloads4 = st.columns([10, 1])
+    with col_downloads4:
+        with st.popover("⬇️", help="Download in multiple formats"):
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            
+            st.download_button("🌐 HTML", fig_lines.to_html(include_plotlyjs='cdn'), f"individual_trends_{timestamp}.html", "text/html", key="line_html", use_container_width=True)
+            st.download_button("📊 JSON", fig_lines.to_json(), f"individual_trends_{timestamp}.json", "application/json", key="line_json", use_container_width=True)
+            
+            try:
+                svg_bytes = fig_lines.to_image(format="svg", width=1400, height=1000)
+                st.download_button("🎨 SVG", svg_bytes, f"individual_trends_{timestamp}.svg", "image/svg+xml", key="line_svg", use_container_width=True)
+            except:
+                st.button("🎨 SVG", disabled=True, key="line_svg", use_container_width=True)
     
-    # CHART 4 EXPORT BUTTONS
-    export_plot_inline(fig_lines, "individual_trends", "line_chart")
+    st.plotly_chart(fig_lines, use_container_width=True, config={
+        'displayModeBar': 'hover',
+        'displaylogo': False,
+        'modeBarButtonsToRemove': ['select2d', 'lasso2d', 'autoScale2d'],
+        'toImageButtonOptions': {
+            'format': 'png',
+            'filename': 'individual_trends',
+            'height': 1000,
+            'width': 1400,
+            'scale': 2
+        }
+    })
+
+# ═══════════════════════════════════════════════════════════════════
+# HIERARCHICAL EDGE BUNDLING - COUNTRY SIMILARITY NETWORK
+# ═══════════════════════════════════════════════════════════════════
+
+st.markdown("---")
+st.markdown('<div class="section-header">Country Relationship Network</div>', unsafe_allow_html=True)
+
+st.markdown("""
+<div style="background: rgba(59, 130, 246, 0.05); padding: 15px; border-radius: 8px; border-left: 3px solid #3b82f6; margin-bottom: 20px;">
+    <p style="color: #8b98a5; font-size: 0.9rem; margin: 0;">
+        <b style="color: #e2e8f0;">Network Visualization:</b> This chart shows similarity relationships between countries 
+        based on their inequality patterns. Thicker lines indicate stronger correlation in trends. Hover over connections to see details.
+    </p>
+</div>
+""", unsafe_allow_html=True)
+
+# Calculate correlation matrix between countries
+country_trends = filtered_df.pivot_table(values='value', index='year', columns='country')
+correlation_matrix = country_trends.corr()
+
+# Create hierarchical edge bundling visualization
+# We'll use a circular layout with countries as nodes and correlations as edges
+
+countries = list(correlation_matrix.columns)
+n_countries = len(countries)
+
+# Create circular layout coordinates with better spacing
+angles = np.linspace(0, 2*np.pi, n_countries, endpoint=False)
+radius = 1.2  # Slightly larger radius for better spacing
+node_x = radius * np.cos(angles)
+node_y = radius * np.sin(angles)
+
+# Create edge traces for correlations above threshold
+edge_traces = []
+threshold = 0.65  # Lowered threshold to show more connections
+
+# Separate edges by strength for layering
+strong_edges = []
+medium_edges = []
+
+for i, country1 in enumerate(countries):
+    for j, country2 in enumerate(countries):
+        if i < j:  # Avoid duplicates
+            corr_value = correlation_matrix.loc[country1, country2]
+            if abs(corr_value) > threshold:
+                # Create curved edge using bezier curve through center
+                x0, y0 = node_x[i], node_y[i]
+                x1, y1 = node_x[j], node_y[j]
+                
+                # Calculate bundling strength - pull more towards center for bundling effect
+                bundle_strength = abs(corr_value)  # Stronger correlations pull more to center
+                
+                # Control point - scale by bundling strength
+                cx = 0 * bundle_strength  # Center point
+                cy = 0 * bundle_strength
+                
+                # Create smooth bezier curve with multiple control points for better bundling
+                t = np.linspace(0, 1, 100)
+                
+                # Quadratic bezier curve through center
+                curve_x = (1-t)**2 * x0 + 2*(1-t)*t * cx + t**2 * x1
+                curve_y = (1-t)**2 * y0 + 2*(1-t)*t * cy + t**2 * y1
+                
+                # Line width based on correlation strength (thicker for stronger)
+                line_width = abs(corr_value) * 4
+                
+                # Color based on positive/negative correlation with better opacity
+                if corr_value > 0:
+                    line_color = f'rgba(16, 185, 129, {abs(corr_value) * 0.5})'  # Green for positive
+                else:
+                    line_color = f'rgba(239, 68, 68, {abs(corr_value) * 0.5})'  # Red for negative
+                
+                edge_trace = go.Scatter(
+                    x=curve_x,
+                    y=curve_y,
+                    mode='lines',
+                    line=dict(width=line_width, color=line_color, shape='spline', smoothing=1.3),
+                    hoverinfo='text',
+                    text=f'<b>{country1} ↔ {country2}</b><br>Correlation: {corr_value:.3f}<br>Strength: {"Strong" if abs(corr_value) > 0.8 else "Moderate"}',
+                    showlegend=False
+                )
+                
+                if abs(corr_value) > 0.8:
+                    strong_edges.append(edge_trace)
+                else:
+                    medium_edges.append(edge_trace)
+
+# Combine edges (draw weaker ones first, then stronger on top)
+edge_traces = medium_edges + strong_edges
+
+# Calculate average GINI for each country for color mapping
+avg_gini = [country_trends[country].mean() for country in countries]
+min_gini = min(avg_gini)
+max_gini = max(avg_gini)
+
+# Create node trace with GINI-based colors
+node_trace = go.Scatter(
+    x=node_x,
+    y=node_y,
+    mode='markers+text',
+    marker=dict(
+        size=35,
+        color=avg_gini,  # Color by GINI value
+        colorscale='RdYlGn_r',  # Red (high) -> Yellow -> Green (low)
+        showscale=True,
+        colorbar=dict(
+            title=dict(
+                text='<b>Avg GINI</b>',
+                font=dict(color='#ffffff', size=12)
+            ),
+            tickfont=dict(color='#ffffff'),
+            thickness=15,
+            len=0.7,
+            x=1.02
+        ),
+        line=dict(width=3, color='#1e293b'),
+        opacity=0.95,
+        cmin=min_gini,
+        cmax=max_gini
+    ),
+    text=countries,
+    textposition='top center',
+    textfont=dict(size=12, color='#ffffff', family='Arial Black'),
+    hoverinfo='text',
+    hovertext=[f'<b>{country}</b><br>Avg GINI: {country_trends[country].mean():.2f}<br>Connections: {sum(abs(correlation_matrix.loc[country]) > threshold) - 1}<br>Status: {"Low" if country_trends[country].mean() < 35 else "Moderate" if country_trends[country].mean() < 40 else "High"} Inequality' for country in countries],
+    showlegend=False
+)
+
+# Create figure with better layering
+fig_network = go.Figure(data=edge_traces + [node_trace])
+
+fig_network.update_layout(
+    height=650,
+    paper_bgcolor='rgba(0,0,0,0)',
+    plot_bgcolor='rgba(0,0,0,0)',
+    xaxis=dict(showgrid=False, zeroline=False, showticklabels=False, range=[-1.8, 1.8]),
+    yaxis=dict(showgrid=False, zeroline=False, showticklabels=False, range=[-1.8, 1.8]),
+    margin=dict(l=40, r=40, t=60, b=40),
+    title=dict(
+        text='Country Similarity Network Based on Inequality Patterns',
+        font=dict(size=16, color='#ffffff'),
+        x=0.5,
+        xanchor='center'
+    ),
+    hovermode='closest'
+)
+
+# Download options for network chart
+col_spacer5, col_downloads5 = st.columns([10, 1])
+with col_downloads5:
+    with st.popover("⬇️", help="Download in multiple formats"):
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        
+        st.download_button("🌐 HTML", fig_network.to_html(include_plotlyjs='cdn'), f"network_{timestamp}.html", "text/html", key="network_html", use_container_width=True)
+        st.download_button("📊 JSON", fig_network.to_json(), f"network_{timestamp}.json", "application/json", key="network_json", use_container_width=True)
+        
+        try:
+            svg_bytes = fig_network.to_image(format="svg", width=1400, height=1000)
+            st.download_button("🎨 SVG", svg_bytes, f"network_{timestamp}.svg", "image/svg+xml", key="network_svg", use_container_width=True)
+        except:
+            st.button("🎨 SVG", disabled=True, key="network_svg", use_container_width=True)
+
+st.plotly_chart(fig_network, use_container_width=True, config={
+    'displayModeBar': 'hover',
+    'displaylogo': False,
+    'modeBarButtonsToRemove': ['select2d', 'lasso2d', 'autoScale2d'],
+    'toImageButtonOptions': {
+        'format': 'png',
+        'filename': 'country_network',
+        'height': 1000,
+        'width': 1400,
+        'scale': 2
+    }
+})
+
+# Add legend explaining the visualization
+st.markdown('<div style="margin-top: 1.5rem; margin-bottom: 1rem; color: #94a3b8; font-size: 0.95rem; font-weight: 600;">📖 How to Read This Network:</div>', unsafe_allow_html=True)
+
+col_leg1, col_leg2, col_leg3 = st.columns(3)
+
+with col_leg1:
+    st.markdown("""
+    <div style="background: #0f1419; padding: 1rem; border-radius: 8px; border: 1px solid rgba(16, 185, 129, 0.3);">
+        <div style="color: #10b981; font-weight: 600; margin-bottom: 0.5rem;">🟢 Node Colors</div>
+        <div style="color: #94a3b8; font-size: 0.85rem;">Green = Low inequality<br>Yellow = Moderate<br>Red = High inequality</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+with col_leg2:
+    st.markdown("""
+    <div style="background: #0f1419; padding: 1rem; border-radius: 8px; border: 1px solid rgba(16, 185, 129, 0.3);">
+        <div style="color: #10b981; font-weight: 600; margin-bottom: 0.5rem;">━━ Green Lines</div>
+        <div style="color: #94a3b8; font-size: 0.85rem;">Positive correlation<br>Similar trends</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+with col_leg3:
+    st.markdown("""
+    <div style="background: #0f1419; padding: 1rem; border-radius: 8px; border: 1px solid rgba(239, 68, 68, 0.3);">
+        <div style="color: #ef4444; font-weight: 600; margin-bottom: 0.5rem;">━━ Red Lines</div>
+        <div style="color: #94a3b8; font-size: 0.85rem;">Negative correlation<br>Opposite trends</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+st.markdown("""
+<div style="background: rgba(59, 130, 246, 0.1); padding: 1rem; border-radius: 8px; margin-top: 1rem; border-left: 3px solid #3b82f6;">
+    <div style="color: #e2e8f0; font-size: 0.9rem;">
+        <strong style="color: #60a5fa;">💡 Key Insights:</strong><br>
+        • <strong>Node color</strong> shows average inequality level (green = better)<br>
+        • <strong>Line thickness</strong> shows correlation strength (thicker = stronger)<br>
+        • <strong>Line color</strong> shows correlation type (green = similar, red = opposite)<br>
+        • Countries with thick green connections share similar inequality patterns over time
+    </div>
+</div>
+""", unsafe_allow_html=True)
 
 # ═══════════════════════════════════════════════════════════════════
 # FOOTER INSIGHTS (NO EMOJIS)
 # ═══════════════════════════════════════════════════════════════════
 
+st.markdown("---")
 st.markdown('<div class="section-header">Key Insights & Raw Data</div>', unsafe_allow_html=True)
 
 col_insight1, col_insight2, col_insight3 = st.columns(3)
@@ -789,55 +1287,7 @@ with col_insight3:
 
 with st.expander("View Raw Data & Export Options"):
     st.dataframe(filtered_df, use_container_width=True, hide_index=True)
-    
-    st.markdown("### Export Data")
-    col_exp1, col_exp2, col_exp3, col_exp4 = st.columns(4)
-    
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    
-    with col_exp1:
-        csv_data = filtered_df.to_csv(index=False)
-        st.download_button(
-            label="CSV",
-            data=csv_data,
-            file_name=f"dashboard_{config['indicator']}_{timestamp}.csv",
-            mime="text/csv",
-            use_container_width=True,
-            key="data_csv"
-        )
-    
-    with col_exp2:
-        buffer = io.BytesIO()
-        with pd.ExcelWriter(buffer, engine='openpyxl') as writer:
-            filtered_df.to_excel(writer, index=False, sheet_name='Data')
-        st.download_button(
-            label="Excel",
-            data=buffer.getvalue(),
-            file_name=f"dashboard_{config['indicator']}_{timestamp}.xlsx",
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            use_container_width=True,
-            key="data_excel"
-        )
-    
-    with col_exp3:
-        json_data = filtered_df.to_json(orient='records', indent=2)
-        st.download_button(
-            label="JSON",
-            data=json_data,
-            file_name=f"dashboard_{config['indicator']}_{timestamp}.json",
-            mime="application/json",
-            use_container_width=True,
-            key="data_json"
-        )
-    
-    with col_exp4:
-        st.button(
-            "PDF",
-            disabled=True,
-            use_container_width=True,
-            help="PDF export available with reportlab: pip install reportlab",
-            key="data_pdf"
-        )
+    export_data_menu(filtered_df, "dashboard_data_export", key="dashboard_data")
 
 st.markdown("---")
 st.caption("Dashboard | South Asia Inequality Analysis Platform")
