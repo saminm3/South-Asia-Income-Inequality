@@ -25,7 +25,7 @@ try:
 except FileNotFoundError:
     pass
 
-st.title("🌟 Sunburst Explorer")
+st.title("Sunburst Explorer")
 st.markdown("### Hierarchical view of indicators across South Asia (dominance view)")
 
 # ✅ Use Home config if available (NO extra country selection here)
@@ -38,7 +38,7 @@ with st.spinner("Loading data..."):
     df = load_all_indicators()
 
 if df.empty:
-    st.error("❌ No data available")
+    st.error("No data available")
     st.stop()
 
 # Clean basic
@@ -127,7 +127,7 @@ sunburst_df = sunburst_df.dropna(subset=["normalized_value"])
 sunburst_df = sunburst_df[sunburst_df["normalized_value"] > 0]
 
 if sunburst_df.empty or sunburst_df["normalized_value"].sum() == 0:
-    st.error("❌ Sunburst cannot render because normalized values sum to 0. Try a different year.")
+    st.error("Sunburst cannot render because normalized values sum to 0. Try a different year.")
     st.stop()
 
 # Add region
@@ -168,7 +168,7 @@ st.plotly_chart(fig, use_container_width=True)
 
 # --- IMPORTANT clarification to avoid confusion ---
 st.info(
-    "🧠 **Important:** Sunburst slice sizes show **indicator dominance after normalization**, "
+    " **Important:** Sunburst slice sizes show **indicator dominance after normalization**, "
     "not direct inequality level and not causation. We use dominance of inequality-related indicators "
     "(Gini / income-share / unemployment / poverty) to build a simple **inequality signal**."
 )
@@ -177,7 +177,7 @@ st.info(
 # ✅ NEW: EASY COUNTRY-WISE “VISUALIZATION STORY” (NO AVG CHART)
 # ============================================================
 st.divider()
-st.header("🧩 Visualization Story (Country-wise)")
+st.header("Visualization Story (Country-wise)")
 
 countries_in_view = sorted(sunburst_df["country"].unique())
 if home_countries:
@@ -279,7 +279,7 @@ for c in countries_in_view:
 # ⭐ COUNTRY SPOTLIGHT (Story Mode)
 # ============================================================
 st.divider()
-st.header("✨ Country Spotlight (Story Mode)")
+st.header("Country Spotlight (Story Mode)")
 
 if not countries_in_view:
     st.warning("No countries available for Spotlight.")
@@ -302,7 +302,7 @@ spot_country = countries_in_view[st.session_state.spotlight_idx]
 with colB:
     lvl = levels.get(spot_country, "Moderate")
     emoji = "🔴" if lvl == "High" else ("🟠" if lvl == "Moderate" else "🟢")
-    st.subheader(f"🌍 Spotlight: {spot_country} ({selected_year}) — {emoji} {lvl} signal")
+    st.subheader(f"Spotlight: {spot_country} ({selected_year}) — {emoji} {lvl} signal")
     st.caption("Use Previous/Next to explore — this uses Home selection automatically.")
 
 c_df = sunburst_df[sunburst_df["country"] == spot_country].copy()
@@ -334,7 +334,7 @@ st.info(
 )
 
 # Underlying data (optional)
-with st.expander("📋 View underlying data (for this country)"):
+with st.expander("View underlying data (for this country)"):
     view = c_df[["indicator", "formatted_value", "normalized_value"]].copy()
     view.columns = ["Indicator", "Actual Value", "Dominance (0-100)"]
     view["Dominance (0-100)"] = view["Dominance (0-100)"].round(1)
