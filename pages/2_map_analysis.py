@@ -12,6 +12,7 @@ sys.path.append(str(Path(__file__).parent.parent))
 
 from utils.loaders import load_inequality_data, load_geojson
 from utils.utils import human_indicator
+from utils.help_system import render_help_button
 
 # --------------------------------------------------
 # Page config
@@ -22,7 +23,7 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="collapsed"  # ADD THIS LINE
 )
-
+render_help_button("map")
 # Load custom CSS
 try:
     with open('assets/dashboard.css') as f:

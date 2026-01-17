@@ -9,14 +9,19 @@ sys.path.append(str(Path(__file__).parent))
 from utils.loaders import load_inequality_data
 from utils.utils import human_indicator, get_color_scale
 
+from utils.help_system import render_help_button
+
+
+
 st.set_page_config(
     page_title="South Asia Inequality Analytics",
     page_icon="🌏",
     layout="wide",
     initial_sidebar_state="collapsed"
+
 )
 
-
+render_help_button("home")
 # Modern dark theme CSS 
 st.markdown("""
 <style>
@@ -447,7 +452,7 @@ st.markdown("""
 col_btn1, col_btn2, col_btn3 = st.columns([1, 2, 1])
 with col_btn2:
     if st.button("📚 Open Help & Documentation", use_container_width=True, type="primary"):
-        st.switch_page("pages/10_help.py")
+        st.switch_page("pages/9_help.py")
 
 
 

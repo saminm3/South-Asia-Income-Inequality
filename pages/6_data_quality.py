@@ -10,6 +10,7 @@ import numpy as np
 sys.path.append(str(Path(__file__).parent.parent))
 
 from utils.loaders import load_quality_audit
+from utils.help_system import render_help_button
 
 st.set_page_config(
     page_title="Data Quality",
@@ -17,6 +18,7 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="collapsed"
 )
+render_help_button("quality")
 # Load custom CSS
 try:
     with open('assets/dashboard.css') as f:

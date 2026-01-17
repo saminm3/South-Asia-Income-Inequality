@@ -10,12 +10,14 @@ sys.path.append(str(Path(__file__).parent.parent))
 
 from utils.loaders import load_all_indicators
 from utils.utils import format_value
+from utils.help_system import render_help_button
 
 st.set_page_config(
     page_title="Sunburst Explorer",
     page_icon="🌟",
     layout="wide"
 )
+render_help_button("sunburst")
 # Load custom CSS
 try:
     with open('assets/dashboard.css') as f:

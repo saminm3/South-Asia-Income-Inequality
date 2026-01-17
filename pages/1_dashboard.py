@@ -14,6 +14,7 @@ sys.path.append(str(Path(__file__).parent.parent))
 from utils.loaders import load_inequality_data
 from utils.utils import human_indicator, format_value
 from utils.exports import export_data_menu
+from utils.help_system import render_help_button
 
 st.set_page_config(
     page_title="Dashboard",
@@ -21,7 +22,7 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="collapsed"
 )
-
+render_help_button("dashboard")
 # ═══════════════════════════════════════════════════════════════════
 # GOOGLE ANALYTICS INSPIRED DARK THEME + SUPERVISOR FIXES
 # ═══════════════════════════════════════════════════════════════════

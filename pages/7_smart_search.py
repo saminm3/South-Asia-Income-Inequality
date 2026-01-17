@@ -9,6 +9,7 @@ sys.path.append(str(Path(__file__).parent.parent))
 
 from utils.loaders import load_inequality_data, load_all_indicators
 from utils.utils import human_indicator, format_value
+from utils.help_system import render_help_button
 
 # --------------------------------------------------
 # Page Configuration
@@ -18,7 +19,7 @@ st.set_page_config(
     page_icon="🔍",
     layout="wide"
 )
-
+render_help_button("search")
 # Load custom CSS
 try:
     with open('assets/dashboard.css') as f:

@@ -10,6 +10,7 @@ from pathlib import Path
 # Path setup
 # --------------------------------------------------
 sys.path.append(str(Path(__file__).parent.parent))
+from utils.help_system import render_help_button
 from utils.loaders import load_inequality_data, load_geojson
 from utils.utils import (
     human_indicator,
@@ -27,7 +28,7 @@ st.set_page_config(
     page_title="Temporal Comparison",
     layout="wide"
 )
-
+render_help_button("temporal")
 st.title("🕰️ Temporal Comparison")
 st.caption("Temporal, spatial, and statistical comparison of inequality indicators")
 

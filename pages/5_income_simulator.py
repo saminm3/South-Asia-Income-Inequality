@@ -4,6 +4,7 @@ import plotly.graph_objects as go
 import plotly.express as px
 import numpy as np
 from pathlib import Path
+from utils.help_system import render_help_button
 
 st.set_page_config(
     page_title="Income Simulator",
@@ -11,6 +12,7 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="collapsed"
 )
+render_help_button("simulator")
 # Load custom CSS
 try:
     with open('assets/dashboard.css') as f:
