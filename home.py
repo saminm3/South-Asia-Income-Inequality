@@ -17,17 +17,69 @@ st.set_page_config(
     page_title="South Asia Inequality Analytics",
     page_icon="🌏",
     layout="wide",
-    initial_sidebar_state="collapsed"
-
+    initial_sidebar_state="expanded"  # Changed to expanded so sidebar is visible
 )
 
 render_help_button("home")
-# Modern dark theme CSS 
+
+# Enhanced dark theme CSS with SIDEBAR STYLING
 st.markdown("""
 <style>
     /* Main dark gradient background */
     .main {
         background: linear-gradient(180deg, #0a0e27 0%, #1a1f3a 50%, #0f1419 100%);
+    }
+    
+    /* SIDEBAR STYLING - Beautiful Modern Design */
+    section[data-testid="stSidebar"] {
+        background: linear-gradient(180deg, #1a1f3a 0%, #0f1419 100%);
+        border-right: 1px solid rgba(139, 92, 246, 0.2);
+    }
+    
+    /* Sidebar header */
+    section[data-testid="stSidebar"] > div:first-child {
+        background: linear-gradient(135deg, rgba(139, 92, 246, 0.2) 0%, rgba(236, 72, 153, 0.1) 100%);
+        padding: 1.5rem 1rem;
+        border-bottom: 2px solid rgba(139, 92, 246, 0.3);
+    }
+    
+    /* Sidebar navigation items */
+    section[data-testid="stSidebar"] .css-17lntkn,
+    section[data-testid="stSidebar"] [data-testid="stSidebarNav"] {
+        padding-top: 2rem;
+    }
+    
+    /* Sidebar nav links */
+    section[data-testid="stSidebar"] [data-testid="stSidebarNav"] a {
+        background: linear-gradient(135deg, rgba(139, 92, 246, 0.08) 0%, rgba(236, 72, 153, 0.04) 100%);
+        border: 1px solid rgba(139, 92, 246, 0.2);
+        border-radius: 12px;
+        margin: 0.3rem 0.5rem;
+        padding: 0.75rem 1rem;
+        color: #e2e8f0 !important;
+        font-weight: 500;
+        transition: all 0.3s ease;
+    }
+    
+    section[data-testid="stSidebar"] [data-testid="stSidebarNav"] a:hover {
+        background: linear-gradient(135deg, rgba(139, 92, 246, 0.15) 0%, rgba(236, 72, 153, 0.08) 100%);
+        border-color: rgba(139, 92, 246, 0.4);
+        transform: translateX(5px);
+        box-shadow: 0 4px 12px rgba(139, 92, 246, 0.2);
+    }
+    
+    /* Active/selected page in sidebar */
+    section[data-testid="stSidebar"] [data-testid="stSidebarNav"] a[aria-current="page"] {
+        background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
+        border-color: rgba(255, 255, 255, 0.3);
+        color: #ffffff !important;
+        font-weight: 700;
+        box-shadow: 0 6px 20px rgba(139, 92, 246, 0.4);
+    }
+    
+    /* Sidebar collapse button */
+    section[data-testid="stSidebar"] button[kind="header"] {
+        color: #8b5cf6;
     }
     
     /* Remove padding */
@@ -105,66 +157,16 @@ st.markdown("""
     .css-16huue1 {
         color: #94a3b8 !important;
     }
-    
-    /* Navigation cards */
-    .nav-card {
-        background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(236, 72, 153, 0.05) 100%);
-        border: 1px solid rgba(139, 92, 246, 0.3);
-        border-radius: 16px;
-        padding: 1.5rem;
-        margin: 0.5rem 0;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
-    }
-    
-    .nav-card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 8px 32px rgba(139, 92, 246, 0.4);
-        border-color: rgba(139, 92, 246, 0.5);
-    }
-    
-    /* Style navigation buttons to look like cards */
-    div[data-testid="column"] > div > div > button {
-        background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(236, 72, 153, 0.05) 100%) !important;
-        border: 1px solid rgba(139, 92, 246, 0.3) !important;
-        border-radius: 16px !important;
-        padding: 2rem 1.5rem !important;
-        height: auto !important;
-        min-height: 140px !important;
-        color: #e2e8f0 !important;
-        font-size: 1rem !important;
-        font-weight: 600 !important;
-        white-space: pre-line !important;
-        text-align: center !important;
-        transition: all 0.3s ease !important;
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3) !important;
-        line-height: 1.6 !important;
-    }
-    
-    div[data-testid="column"] > div > div > button:hover {
-        transform: translateY(-4px) !important;
-        box-shadow: 0 8px 32px rgba(139, 92, 246, 0.4) !important;
-        border-color: rgba(139, 92, 246, 0.5) !important;
-        background: linear-gradient(135deg, rgba(139, 92, 246, 0.15) 0%, rgba(236, 72, 153, 0.08) 100%) !important;
-    }
-    
-    div[data-testid="column"] > div > div > button:active {
-        transform: translateY(-2px) !important;
-    }
 </style>
 """, unsafe_allow_html=True)
 
 # Load data
 df = load_inequality_data()
 if df.empty:
-    st.error("❌ Data not found. Please ensure processed dataset exists.")
+    st.error("Data not found. Please ensure processed dataset exists.")
     st.stop()
 
-# ═══════════════════════════════════════════════════════════════════
 # HERO SECTION
-# ═══════════════════════════════════════════════════════════════════
-
 st.markdown("""
 <div style="text-align: center; margin-bottom: 3rem;">
     <h1 style="font-size: 3.5rem; margin-bottom: 1rem; background: linear-gradient(90deg, #8b5cf6 0%, #ec4899 50%, #06b6d4 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
@@ -179,10 +181,7 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# ═══════════════════════════════════════════════════════════════════
 # QUICK STATS ROW
-# ═══════════════════════════════════════════════════════════════════
-
 st.markdown('<p style="text-align: center; color: #94a3b8; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 1rem;">Platform Overview</p>', unsafe_allow_html=True)
 
 col1, col2, col3, col4 = st.columns(4)
@@ -206,11 +205,11 @@ with col2:
     """, unsafe_allow_html=True)
 
 with col3:
-    years_span = int(df['year'].max() - df['year'].min())
+    year_span = int(df['year'].max() - df['year'].min())
     st.markdown(f"""
     <div style="text-align: center; padding: 2rem 1.5rem; background: linear-gradient(135deg, rgba(6, 182, 212, 0.15), rgba(6, 182, 212, 0.05)); border: 1px solid rgba(6, 182, 212, 0.3); border-radius: 12px; height: 200px; display: flex; flex-direction: column; justify-content: center;">
         <div style="font-size: 3rem; margin-bottom: 1rem;"></div>
-        <div style="font-size: 2.5rem; font-weight: 800; color: #06b6d4; margin-bottom: 0.5rem;">{years_span}</div>
+        <div style="font-size: 2.5rem; font-weight: 800; color: #06b6d4; margin-bottom: 0.5rem;">{year_span}</div>
         <div style="color: #94a3b8; font-size: 0.9rem;">Years of Data</div>
     </div>
     """, unsafe_allow_html=True)
@@ -226,64 +225,7 @@ with col4:
 
 st.markdown("<br><br>", unsafe_allow_html=True)
 
-# ═══════════════════════════════════════════════════════════════════
-# NAVIGATION CARDS (Quick Access)
-# ═══════════════════════════════════════════════════════════════════
-
-st.markdown("""
-<div style="text-align: center; margin-bottom: 2rem;">
-    <h2 style="font-size: 2rem; color: #ffffff;">🚀 Quick Access</h2>
-    <p style="color: #94a3b8;">Jump directly to any analysis tool</p>
-</div>
-""", unsafe_allow_html=True)
-
-# Define consistent button style
-button_style = """
-    height: 120px;
-    background: linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(236, 72, 153, 0.15));
-    border: 1px solid rgba(139, 92, 246, 0.3);
-    border-radius: 12px;
-    padding: 20px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    text-align: center;
-"""
-
-# Row 1
-col1, col2, col3 = st.columns(3)
-
-with col1:
-    if st.button("📊\n\nDashboard\n\nReal-time KPIs & streamgraph", key="nav_dashboard", use_container_width=True):
-        st.switch_page("pages/1_dashboard.py")
-
-with col2:
-    if st.button("🗺️\n\nMap Analysis\n\nGeographic visualization", key="nav_map", use_container_width=True):
-        st.switch_page("pages/2_map_analysis.py")
-
-with col3:
-    if st.button("✨\n\nAuto Insights\n\nKey discoveries", key="nav_insights", use_container_width=True):
-        st.switch_page("pages/8_auto_insights.py")
-
-# Row 2
-col1, col2, col3 = st.columns(3)
-
-with col1:
-    if st.button("🔗\n\nCorrelations\n\nMulti-indicator analysis", key="nav_correlations", use_container_width=True):
-        st.switch_page("pages/3_correlations.py")
-
-with col2:
-    if st.button("⏱️\n\nTemporal Compare\n\nThen vs Now analysis", key="nav_temporal", use_container_width=True):
-        st.switch_page("pages/9_temporal_compare.py")
-
-with col3:
-    if st.button("🎯\n\nIncome Simulator\n\nScenario modeling", key="nav_simulator", use_container_width=True):
-        st.switch_page("pages/5_income_simulator.py")
-
-st.markdown("<br><br>", unsafe_allow_html=True)
-# ═══════════════════════════════════════════════════════════════════
 # CONFIGURATION SECTION
-# ═══════════════════════════════════════════════════════════════════
 
 # Initialize session state
 if 'analysis_config' not in st.session_state:
@@ -376,11 +318,9 @@ if selected_countries:
         
         st.session_state.analysis_config = new_config
 else:
-    st.warning("⚠️ Please select at least one country")
+    st.warning("Please select at least one country")
 
-# ═══════════════════════════════════════════════════════════════════
 # CURRENT CONFIGURATION DISPLAY
-# ═══════════════════════════════════════════════════════════════════
 
 if st.session_state.analysis_config is not None:
     st.markdown("<br><br>", unsafe_allow_html=True)
@@ -431,9 +371,7 @@ if st.session_state.analysis_config is not None:
         </div>
         """, unsafe_allow_html=True)
 
-# ═══════════════════════════════════════════════════════════════════
 # HELP & DOCUMENTATION SECTION 
-# ═══════════════════════════════════════════════════════════════════
 
 st.divider()
 
@@ -451,7 +389,7 @@ st.markdown("""
 # Centered Help Button
 col_btn1, col_btn2, col_btn3 = st.columns([1, 2, 1])
 with col_btn2:
-    if st.button("📚 Open Help & Documentation", use_container_width=True, type="primary"):
+    if st.button("Open Help & Documentation", use_container_width=True, type="primary"):
         st.switch_page("pages/9_help.py")
 
 
