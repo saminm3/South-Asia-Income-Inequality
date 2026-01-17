@@ -5,7 +5,7 @@ import plotly.express as px
 import numpy as np
 from pathlib import Path
 from utils.help_system import render_help_button
-
+from utils.sidebar import apply_all_styles
 st.set_page_config(
     page_title="Income Simulator",
     page_icon="💸",
@@ -13,6 +13,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 render_help_button("simulator")
+apply_all_styles()
 # Load custom CSS
 try:
     with open('assets/dashboard.css') as f:

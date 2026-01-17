@@ -15,6 +15,8 @@ from utils.loaders import load_inequality_data
 from utils.utils import human_indicator, format_value
 from utils.exports import export_data_menu
 from utils.help_system import render_help_button
+from utils.sidebar import apply_all_styles
+
 
 st.set_page_config(
     page_title="Dashboard",
@@ -23,6 +25,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 render_help_button("dashboard")
+apply_all_styles()
 # ═══════════════════════════════════════════════════════════════════
 
 st.markdown("""
@@ -977,224 +980,9 @@ with col_bottom2:
         }
     })
 
-# ═══════════════════════════════════════════════════════════════════
-# HIERARCHICAL EDGE BUNDLING - COUNTRY SIMILARITY NETWORK
-# ═══════════════════════════════════════════════════════════════════
-
-st.markdown("---")
-st.markdown('<div class="section-header">Country Relationship Network</div>', unsafe_allow_html=True)
-
-st.markdown("""
-<div style="background: rgba(59, 130, 246, 0.05); padding: 15px; border-radius: 8px; border-left: 3px solid #3b82f6; margin-bottom: 20px;">
-    <p style="color: #8b98a5; font-size: 0.9rem; margin: 0;">
-        <b style="color: #e2e8f0;">Network Visualization:</b> This chart shows similarity relationships between countries 
-        based on their inequality patterns. Thicker lines indicate stronger correlation in trends. Hover over connections to see details.
-    </p>
-</div>
-""", unsafe_allow_html=True)
-
-# Calculate correlation matrix between countries
-country_trends = filtered_df.pivot_table(values='value', index='year', columns='country')
-correlation_matrix = country_trends.corr()
-
-# Create hierarchical edge bundling visualization
-# We'll use a circular layout with countries as nodes and correlations as edges
-
-countries = list(correlation_matrix.columns)
-n_countries = len(countries)
-
-# Create circular layout coordinates with better spacing
-angles = np.linspace(0, 2*np.pi, n_countries, endpoint=False)
-radius = 1.2  # Slightly larger radius for better spacing
-node_x = radius * np.cos(angles)
-node_y = radius * np.sin(angles)
-
-# Create edge traces for correlations above threshold
-edge_traces = []
-threshold = 0.65  # Lowered threshold to show more connections
-
-# Separate edges by strength for layering
-strong_edges = []
-medium_edges = []
-
-for i, country1 in enumerate(countries):
-    for j, country2 in enumerate(countries):
-        if i < j:  # Avoid duplicates
-            corr_value = correlation_matrix.loc[country1, country2]
-            if abs(corr_value) > threshold:
-                # Create curved edge using bezier curve through center
-                x0, y0 = node_x[i], node_y[i]
-                x1, y1 = node_x[j], node_y[j]
-                
-                # Calculate bundling strength - pull more towards center for bundling effect
-                bundle_strength = abs(corr_value)  # Stronger correlations pull more to center
-                
-                # Control point - scale by bundling strength
-                cx = 0 * bundle_strength  # Center point
-                cy = 0 * bundle_strength
-                
-                # Create smooth bezier curve with multiple control points for better bundling
-                t = np.linspace(0, 1, 100)
-                
-                # Quadratic bezier curve through center
-                curve_x = (1-t)**2 * x0 + 2*(1-t)*t * cx + t**2 * x1
-                curve_y = (1-t)**2 * y0 + 2*(1-t)*t * cy + t**2 * y1
-                
-                # Line width based on correlation strength (thicker for stronger)
-                line_width = abs(corr_value) * 4
-                
-                # Color based on positive/negative correlation with better opacity
-                if corr_value > 0:
-                    line_color = f'rgba(16, 185, 129, {abs(corr_value) * 0.5})'  # Green for positive
-                else:
-                    line_color = f'rgba(239, 68, 68, {abs(corr_value) * 0.5})'  # Red for negative
-                
-                edge_trace = go.Scatter(
-                    x=curve_x,
-                    y=curve_y,
-                    mode='lines',
-                    line=dict(width=line_width, color=line_color, shape='spline', smoothing=1.3),
-                    hoverinfo='text',
-                    text=f'<b>{country1} ↔ {country2}</b><br>Correlation: {corr_value:.3f}<br>Strength: {"Strong" if abs(corr_value) > 0.8 else "Moderate"}',
-                    showlegend=False
-                )
-                
-                if abs(corr_value) > 0.8:
-                    strong_edges.append(edge_trace)
-                else:
-                    medium_edges.append(edge_trace)
-
-# Combine edges (draw weaker ones first, then stronger on top)
-edge_traces = medium_edges + strong_edges
-
-# Calculate average GINI for each country for color mapping
-avg_gini = [country_trends[country].mean() for country in countries]
-min_gini = min(avg_gini)
-max_gini = max(avg_gini)
-
-# Create node trace with GINI-based colors
-node_trace = go.Scatter(
-    x=node_x,
-    y=node_y,
-    mode='markers+text',
-    marker=dict(
-        size=35,
-        color=avg_gini,  # Color by GINI value
-        colorscale='RdYlGn_r',  # Red (high) -> Yellow -> Green (low)
-        showscale=True,
-        colorbar=dict(
-            title=dict(
-                text='<b>Avg GINI</b>',
-                font=dict(color='#ffffff', size=12)
-            ),
-            tickfont=dict(color='#ffffff'),
-            thickness=15,
-            len=0.7,
-            x=1.02
-        ),
-        line=dict(width=3, color='#1e293b'),
-        opacity=0.95,
-        cmin=min_gini,
-        cmax=max_gini
-    ),
-    text=countries,
-    textposition='top center',
-    textfont=dict(size=12, color='#ffffff', family='Arial Black'),
-    hoverinfo='text',
-    hovertext=[f'<b>{country}</b><br>Avg GINI: {country_trends[country].mean():.2f}<br>Connections: {sum(abs(correlation_matrix.loc[country]) > threshold) - 1}<br>Status: {"Low" if country_trends[country].mean() < 35 else "Moderate" if country_trends[country].mean() < 40 else "High"} Inequality' for country in countries],
-    showlegend=False
-)
-
-# Create figure with better layering
-fig_network = go.Figure(data=edge_traces + [node_trace])
-
-fig_network.update_layout(
-    height=650,
-    paper_bgcolor='rgba(0,0,0,0)',
-    plot_bgcolor='rgba(0,0,0,0)',
-    xaxis=dict(showgrid=False, zeroline=False, showticklabels=False, range=[-1.8, 1.8]),
-    yaxis=dict(showgrid=False, zeroline=False, showticklabels=False, range=[-1.8, 1.8]),
-    margin=dict(l=40, r=40, t=60, b=40),
-    title=dict(
-        text='Country Similarity Network Based on Inequality Patterns',
-        font=dict(size=16, color='#ffffff'),
-        x=0.5,
-        xanchor='center'
-    ),
-    hovermode='closest'
-)
-
-# Download options for network chart
-col_spacer5, col_downloads5 = st.columns([10, 1])
-with col_downloads5:
-    with st.popover("⬇️", help="Download in multiple formats"):
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        
-        st.download_button("🌐 HTML", fig_network.to_html(include_plotlyjs='cdn'), f"network_{timestamp}.html", "text/html", key="network_html", use_container_width=True)
-        st.download_button("📊 JSON", fig_network.to_json(), f"network_{timestamp}.json", "application/json", key="network_json", use_container_width=True)
-        
-        try:
-            svg_bytes = fig_network.to_image(format="svg", width=1400, height=1000)
-            st.download_button("🎨 SVG", svg_bytes, f"network_{timestamp}.svg", "image/svg+xml", key="network_svg", use_container_width=True)
-        except:
-            st.button("🎨 SVG", disabled=True, key="network_svg", use_container_width=True)
-
-st.plotly_chart(fig_network, use_container_width=True, config={
-    'displayModeBar': 'hover',
-    'displaylogo': False,
-    'modeBarButtonsToRemove': ['select2d', 'lasso2d', 'autoScale2d'],
-    'toImageButtonOptions': {
-        'format': 'png',
-        'filename': 'country_network',
-        'height': 1000,
-        'width': 1400,
-        'scale': 2
-    }
-})
-
-# Add legend explaining the visualization
-st.markdown('<div style="margin-top: 1.5rem; margin-bottom: 1rem; color: #94a3b8; font-size: 0.95rem; font-weight: 600;">📖 How to Read This Network:</div>', unsafe_allow_html=True)
-
-col_leg1, col_leg2, col_leg3 = st.columns(3)
-
-with col_leg1:
-    st.markdown("""
-    <div style="background: #0f1419; padding: 1rem; border-radius: 8px; border: 1px solid rgba(16, 185, 129, 0.3);">
-        <div style="color: #10b981; font-weight: 600; margin-bottom: 0.5rem;">🟢 Node Colors</div>
-        <div style="color: #94a3b8; font-size: 0.85rem;">Green = Low inequality<br>Yellow = Moderate<br>Red = High inequality</div>
-    </div>
-    """, unsafe_allow_html=True)
-
-with col_leg2:
-    st.markdown("""
-    <div style="background: #0f1419; padding: 1rem; border-radius: 8px; border: 1px solid rgba(16, 185, 129, 0.3);">
-        <div style="color: #10b981; font-weight: 600; margin-bottom: 0.5rem;">━━ Green Lines</div>
-        <div style="color: #94a3b8; font-size: 0.85rem;">Positive correlation<br>Similar trends</div>
-    </div>
-    """, unsafe_allow_html=True)
-
-with col_leg3:
-    st.markdown("""
-    <div style="background: #0f1419; padding: 1rem; border-radius: 8px; border: 1px solid rgba(239, 68, 68, 0.3);">
-        <div style="color: #ef4444; font-weight: 600; margin-bottom: 0.5rem;">━━ Red Lines</div>
-        <div style="color: #94a3b8; font-size: 0.85rem;">Negative correlation<br>Opposite trends</div>
-    </div>
-    """, unsafe_allow_html=True)
-
-st.markdown("""
-<div style="background: rgba(59, 130, 246, 0.1); padding: 1rem; border-radius: 8px; margin-top: 1rem; border-left: 3px solid #3b82f6;">
-    <div style="color: #e2e8f0; font-size: 0.9rem;">
-        <strong style="color: #60a5fa;">💡 Key Insights:</strong><br>
-        • <strong>Node color</strong> shows average inequality level (green = better)<br>
-        • <strong>Line thickness</strong> shows correlation strength (thicker = stronger)<br>
-        • <strong>Line color</strong> shows correlation type (green = similar, red = opposite)<br>
-        • Countries with thick green connections share similar inequality patterns over time
-    </div>
-</div>
-""", unsafe_allow_html=True)
 
 # ═══════════════════════════════════════════════════════════════════
-# FOOTER INSIGHTS (NO EMOJIS)
+# FOOTER INSIGHTS 
 # ═══════════════════════════════════════════════════════════════════
 
 st.markdown("---")

@@ -11,6 +11,7 @@ from pathlib import Path
 # --------------------------------------------------
 sys.path.append(str(Path(__file__).parent.parent))
 from utils.help_system import render_help_button
+from utils.sidebar import apply_all_styles
 from utils.loaders import load_inequality_data, load_geojson
 from utils.utils import (
     human_indicator,
@@ -29,6 +30,7 @@ st.set_page_config(
     layout="wide"
 )
 render_help_button("temporal")
+apply_all_styles()
 st.title("🕰️ Temporal Comparison")
 st.caption("Temporal, spatial, and statistical comparison of inequality indicators")
 

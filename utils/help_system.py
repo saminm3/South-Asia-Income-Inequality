@@ -1,12 +1,13 @@
 """
-FIXED Help System - Bigger Bold "?" + No Interference with Download Buttons
+SIMPLEST Help System - Just Big "?" Text
+No complex CSS fighting, just big text in button
 """
 
 import streamlit as st
 
 def render_help_button(page_name: str):
     """
-    Fixed help button - bigger bold "?", won't affect download buttons
+    Simplest help button - just big "?" text
     """
     
     # Import help content
@@ -20,112 +21,11 @@ def render_help_button(page_name: str):
     if not help_data:
         return
     
-    # FIXED CSS - ONLY targets help button specifically
-    st.markdown(f"""
+    # Minimal CSS - just for help content, no button styling
+    st.markdown("""
     <style>
-        /* SUPER SPECIFIC - Only help button with our exact key pattern */
-        button[data-testid="baseButton-secondary"][aria-label*="help"] {{
-            background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%) !important;
-            color: white !important;
-            min-width: 90px !important;
-            max-width: 90px !important;
-            width: 90px !important;
-            min-height: 90px !important;
-            max-height: 90px !important;
-            height: 90px !important;
-            border-radius: 50% !important;
-            font-size: 64px !important;  /* BIGGER */
-            font-weight: 900 !important;  /* BOLD */
-            line-height: 90px !important;
-            padding: 0 !important;
-            border: none !important;
-            box-shadow: 0 20px 80px rgba(139, 92, 246, 1) !important,
-                        0 0 100px rgba(236, 72, 153, 1) !important,
-                        0 0 0 0 rgba(139, 92, 246, 1) !important,
-                        inset 0 0 40px rgba(255, 255, 255, 0.3) !important;
-            cursor: pointer !important;
-            transition: all 0.3s ease !important;
-            animation: mega-bounce 2s infinite !important;
-            position: relative !important;
-            z-index: 99999 !important;
-            display: flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-        }}
-        
-        /* Alternative selector using the container approach */
-        div[data-testid="column"]:has(button[kind="secondary"]:only-child) button[kind="secondary"] {{
-            background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%) !important;
-            color: white !important;
-            min-width: 90px !important;
-            max-width: 90px !important;
-            width: 90px !important;
-            min-height: 90px !important;
-            max-height: 90px !important;
-            height: 90px !important;
-            border-radius: 50% !important;
-            font-size: 64px !important;  /* BIGGER */
-            font-weight: 900 !important;  /* BOLD */
-            line-height: 90px !important;
-            padding: 0 !important;
-            border: none !important;
-            box-shadow: 0 20px 80px rgba(139, 92, 246, 1) !important,
-                        0 0 100px rgba(236, 72, 153, 1) !important,
-                        0 0 0 0 rgba(139, 92, 246, 1) !important,
-                        inset 0 0 40px rgba(255, 255, 255, 0.3) !important;
-            cursor: pointer !important;
-            transition: all 0.3s ease !important;
-            animation: mega-bounce 2s infinite !important;
-            position: relative !important;
-            z-index: 99999 !important;
-            display: flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-        }}
-        
-        /* MEGA BOUNCE animation */
-        @keyframes mega-bounce {{
-            0%, 100% {{
-                transform: translateY(0) scale(1) !important;
-                box-shadow: 0 20px 80px rgba(139, 92, 246, 1),
-                            0 0 100px rgba(236, 72, 153, 1),
-                            0 0 0 0 rgba(139, 92, 246, 1),
-                            inset 0 0 40px rgba(255, 255, 255, 0.3) !important;
-            }}
-            20% {{
-                transform: translateY(-20px) scale(1.15) !important;
-                box-shadow: 0 30px 100px rgba(139, 92, 246, 1),
-                            0 0 150px rgba(236, 72, 153, 1),
-                            0 0 0 30px rgba(139, 92, 246, 0),
-                            inset 0 0 60px rgba(255, 255, 255, 0.5) !important;
-            }}
-            40% {{
-                transform: translateY(0) scale(1) !important;
-            }}
-            50% {{
-                transform: translateY(-10px) scale(1.08) !important;
-                box-shadow: 0 25px 90px rgba(139, 92, 246, 1),
-                            0 0 120px rgba(236, 72, 153, 1),
-                            0 0 0 20px rgba(139, 92, 246, 0),
-                            inset 0 0 50px rgba(255, 255, 255, 0.4) !important;
-            }}
-            60% {{
-                transform: translateY(0) scale(1) !important;
-            }}
-        }}
-        
-        /* HOVER effect - ONLY for help button */
-        div[data-testid="column"]:has(button[kind="secondary"]:only-child) button[kind="secondary"]:hover {{
-            transform: scale(1.35) rotate(8deg) !important;
-            box-shadow: 0 30px 120px rgba(139, 92, 246, 1) !important,
-                        0 0 180px rgba(236, 72, 153, 1) !important,
-                        0 0 80px rgba(139, 92, 246, 1) !important,
-                        inset 0 0 70px rgba(255, 255, 255, 0.5) !important;
-            animation: none !important;
-        }}
-        
-        /* Help content styling */
-        .help-content-box {{
+        /* Help content styling only */
+        .help-content-box {
             background: linear-gradient(180deg, #1a1f3a 0%, #0f1419 100%);
             border: 2px solid rgba(139, 92, 246, 0.5);
             border-radius: 16px;
@@ -135,42 +35,42 @@ def render_help_button(page_name: str):
             overflow-y: auto;
             color: #e2e8f0;
             box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
-        }}
+        }
         
-        .help-content-box h2 {{
+        .help-content-box h2 {
             color: #ffffff;
             margin-top: 0;
             font-size: 2em;
             background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-        }}
+        }
         
-        .help-content-box h3 {{
+        .help-content-box h3 {
             color: #c4b5fd;
             margin-top: 24px;
             margin-bottom: 14px;
             font-size: 1.4em;
             border-bottom: 3px solid rgba(139, 92, 246, 0.4);
             padding-bottom: 10px;
-        }}
+        }
         
-        .help-tip-box {{
+        .help-tip-box {
             background: linear-gradient(135deg, rgba(139, 92, 246, 0.2) 0%, rgba(236, 72, 153, 0.2) 100%);
             border-left: 6px solid #8b5cf6;
             padding: 18px;
             border-radius: 10px;
             margin: 18px 0;
             color: #e2e8f0;
-        }}
+        }
         
-        .help-feature-item {{
+        .help-feature-item {
             margin-bottom: 16px;
             padding: 16px;
             background: linear-gradient(135deg, rgba(139, 92, 246, 0.12) 0%, rgba(236, 72, 153, 0.12) 100%);
             border-radius: 12px;
             border-left: 5px solid #8b5cf6;
-        }}
+        }
     </style>
     """, unsafe_allow_html=True)
     
@@ -178,12 +78,13 @@ def render_help_button(page_name: str):
     if f'show_help_{page_name}' not in st.session_state:
         st.session_state[f'show_help_{page_name}'] = False
     
-    # Button with correct tooltip - placed in specific column
-    help_col1, help_col2 = st.columns([0.88, 0.12])
+    # Simple layout - button in rightmost column
+    col1, col2 = st.columns([0.92, 0.08])
     
-    with help_col2:
-        # BIGGER, BOLDER "?" button
-        if st.button("?", key=f"help_btn_{page_name}", help="Click for help", type="secondary"):
+    with col2:
+        # Use larger emoji or text - simple solution!
+        # Option 1: Use emoji (automatically bigger)
+        if st.button("❓", key=f"help_btn_{page_name}", help="Click for help"):
             st.session_state[f'show_help_{page_name}'] = not st.session_state[f'show_help_{page_name}']
     
     # Show help content

@@ -5,8 +5,10 @@ from pathlib import Path
 # Add utils to path
 sys.path.append(str(Path(__file__).parent.parent))
 
-from utils.help_system import render_help_button
+
 from utils.help_content import HELP_CONTENT
+from utils.sidebar import apply_all_styles
+
 
 st.set_page_config(
     page_title="Help & Documentation | SA Inequality Analytics",
@@ -15,9 +17,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-
-# Add floating help button
-render_help_button("help")
+apply_all_styles()
 
 # Custom CSS for help page
 st.markdown("""
