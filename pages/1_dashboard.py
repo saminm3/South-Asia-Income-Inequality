@@ -610,7 +610,7 @@ st.markdown("""
 # ═══════════════════════════════════════════════════════════════════
 
 st.markdown("---")
-st.markdown('<div class="section-header">Country Relationship Network</div>', unsafe_allow_html=True)
+st.markdown('<div class="section-header" style="font-size: 1.5rem;">Country Relationship Network</div>', unsafe_allow_html=True)
 
 st.markdown("""
 <div style="background: rgba(59, 130, 246, 0.05); padding: 15px; border-radius: 8px; border-left: 3px solid #3b82f6; margin-bottom: 20px;">
@@ -643,7 +643,45 @@ countries_in_data = list(correlation_matrix.columns)
 # Calculate average GINI for colors
 avg_gini = {country: country_trends[country].mean() for country in countries_in_data if country in country_coords}
 
+# ═══════════════════════════════════════════════════════════════════
+#INTERACTIVITY - Country Focus Filter
+# ═══════════════════════════════════════════════════════════════════
+
+st.markdown("### Focus on Specific Country")
+col_filter, col_info = st.columns([3, 1])
+
+with col_filter:
+    selected_country_filter = st.selectbox(
+        "Select country to highlight its connections",
+        ["Show All Countries"] + sorted(countries_in_data),
+        index=0,
+        key="country_filter_arc_map",
+        help="Filter to show only one country's correlation network"
+    )
+
+with col_info:
+    if selected_country_filter != "Show All Countries":
+        # Count connections for selected country
+        selected_connections = 0
+        for other_country in countries_in_data:
+            if other_country != selected_country_filter:
+                corr_val = correlation_matrix.loc[selected_country_filter, other_country]
+                if abs(corr_val) > 0.7:
+                    selected_connections += 1
+        
+        st.metric(
+            "Connections",
+            selected_connections,
+            help=f"{selected_country_filter}'s correlations"
+        )
+
+if selected_country_filter != "Show All Countries":
+    st.info(f"🔍 Showing correlations for **{selected_country_filter}** only. Select 'Show All Countries' to reset.")
+
+# ═══════════════════════════════════════════════════════════════════
 # Create base map
+# ═══════════════════════════════════════════════════════════════════
+
 fig_arc_map = go.Figure()
 
 # Add country markers with GINI-based colors
@@ -662,19 +700,80 @@ for country in countries_in_data:
         else:
             color = '#ef4444'  # Red
         
+        # FIX #2: Highlight selected country
+        is_selected = (country == selected_country_filter)
+        marker_size = 22 if is_selected else 15
+        border_width = 3 if is_selected else 2
+        border_color = '#ffffff' if is_selected else '#1e293b'
+        text_size = 12 if is_selected else 11
+        
         # Add marker
         fig_arc_map.add_trace(go.Scattergeo(
             lon=[lon],
             lat=[lat],
             mode='markers+text',
-            marker=dict(size=15, color=color, line=dict(width=2, color='#1e293b')),
+            marker=dict(
+                size=marker_size,
+                color=color,
+                line=dict(width=border_width, color=border_color)
+            ),
             text=country,
             textposition='top center',
-            textfont=dict(size=11, color='#ffffff', family='Arial Black'),
+            textfont=dict(size=text_size, color='#ffffff', family='Arial Black'),
             name=country,
-            hovertemplate=f'<b>{country}</b><br>Avg GINI: {gini_val:.2f}<br>Lat: {lat:.2f}, Lon: {lon:.2f}<extra></extra>',
+            hovertemplate=f'<b>{country}</b><br>Avg GINI: {gini_val:.2f}<br>{"🎯 SELECTED" if is_selected else "Click dropdown to focus"}<extra></extra>',
             showlegend=False
         ))
+
+# ═══════════════════════════════════════════════════════════════════
+#  IMPROVED ARC CALCULATION - Great Circle Method
+# ═══════════════════════════════════════════════════════════════════
+
+def calculate_great_circle_arc(lat1, lon1, lat2, lon2, num_points=50):
+    """Calculate smooth great circle arc between two points"""
+    lat1_rad = np.radians(lat1)
+    lon1_rad = np.radians(lon1)
+    lat2_rad = np.radians(lat2)
+    lon2_rad = np.radians(lon2)
+    
+    lats = []
+    lons = []
+    
+    for i in range(num_points + 1):
+        t = i / num_points
+        
+        # Spherical interpolation
+        cos_angle = (np.sin(lat1_rad) * np.sin(lat2_rad) + 
+                     np.cos(lat1_rad) * np.cos(lat2_rad) * 
+                     np.cos(lon2_rad - lon1_rad))
+        cos_angle = np.clip(cos_angle, -1.0, 1.0)
+        angle = np.arccos(cos_angle)
+        
+        if angle < 1e-10:
+            lats.append(lat1 + t * (lat2 - lat1))
+            lons.append(lon1 + t * (lon2 - lon1))
+            continue
+        
+        sin_angle = np.sin(angle)
+        a = np.sin((1 - t) * angle) / sin_angle
+        b = np.sin(t * angle) / sin_angle
+        
+        x = a * np.cos(lat1_rad) * np.cos(lon1_rad) + b * np.cos(lat2_rad) * np.cos(lon2_rad)
+        y = a * np.cos(lat1_rad) * np.sin(lon1_rad) + b * np.cos(lat2_rad) * np.sin(lon2_rad)
+        z = a * np.sin(lat1_rad) + b * np.sin(lat2_rad)
+        
+        lat = np.degrees(np.arctan2(z, np.sqrt(x**2 + y**2)))
+        lon = np.degrees(np.arctan2(y, x))
+        
+        # Gentle upward curve for aesthetics
+        if 0.3 < t < 0.7:
+            curve_factor = 1 - abs(2*t - 1)
+            lat += 3 * curve_factor
+        
+        lats.append(lat)
+        lons.append(lon)
+    
+    return lats, lons
 
 # Add arcs for strong correlations
 threshold = 0.7
@@ -686,35 +785,37 @@ for i, country1 in enumerate(countries_in_data):
             corr_value = correlation_matrix.loc[country1, country2]
             
             if abs(corr_value) > threshold:
+                # FIX #2: Filter by selected country
+                if selected_country_filter != "Show All Countries":
+                    if country1 != selected_country_filter and country2 != selected_country_filter:
+                        continue  # Skip arcs not connected to selected country
+                
                 lat1, lon1 = country_coords[country1]
                 lat2, lon2 = country_coords[country2]
                 
-                # Create arc using great circle approximation
-                num_points = 50
-                lats = []
-                lons = []
-                
-                for k in range(num_points + 1):
-                    t = k / num_points
-                    # Simple arc (could be improved with proper great circle calculation)
-                    lat = lat1 + t * (lat2 - lat1)
-                    lon = lon1 + t * (lon2 - lon1)
-                    
-                    # Add curvature (push midpoint up/down based on position)
-                    if 0.2 < t < 0.8:
-                        curve_height = 5 * (1 - abs(2*t - 1))  # Peak at midpoint
-                        lat += curve_height
-                    
-                    lats.append(lat)
-                    lons.append(lon)
+                # FIX #1: Use improved great circle calculation
+                lats, lons = calculate_great_circle_arc(lat1, lon1, lat2, lon2, num_points=50)
                 
                 # Line color and width based on correlation
                 if corr_value > 0:
-                    line_color = f'rgba(16, 185, 129, {abs(corr_value) * 0.7})'
+                    base_color = '16, 185, 129'  # Green
                 else:
-                    line_color = f'rgba(239, 68, 68, {abs(corr_value) * 0.7})'
+                    base_color = '239, 68, 68'  # Red
                 
-                line_width = abs(corr_value) * 3
+                # FIX #2: Highlight connections to selected country
+                is_connected_to_selected = (
+                    selected_country_filter != "Show All Countries" and
+                    (country1 == selected_country_filter or country2 == selected_country_filter)
+                )
+                
+                if is_connected_to_selected:
+                    line_width = abs(corr_value) * 4.5  # Thicker
+                    opacity = 0.95  # More opaque
+                else:
+                    line_width = abs(corr_value) * 3
+                    opacity = abs(corr_value) * 0.7
+                
+                line_color = f'rgba({base_color}, {opacity})'
                 
                 fig_arc_map.add_trace(go.Scattergeo(
                     lon=lons,
@@ -739,20 +840,26 @@ fig_arc_map.update_geos(
     lakecolor='#050810',
     coastlinecolor='rgba(100, 116, 139, 0.5)',
     coastlinewidth=1,
-    center=dict(lat=20, lon=78),  # Center on South Asia
+    center=dict(lat=20, lon=78),
     lataxis_range=[0, 40],
     lonaxis_range=[60, 100],
     bgcolor='rgba(0,0,0,0)'
 )
 
+# Dynamic title based on filter
+if selected_country_filter != "Show All Countries":
+    title_text = f'Geographic Connection Map - {selected_country_filter}: {arc_count} Connections'
+else:
+    title_text = f'Geographic Connection Map - {arc_count} Strong Correlations'
+
 fig_arc_map.update_layout(
-    height=600,
+    height=800,
     paper_bgcolor='rgba(0,0,0,0)',
     plot_bgcolor='rgba(0,0,0,0)',
     font=dict(color='#ffffff'),
-    margin=dict(l=0, r=0, t=40, b=0),
+    margin=dict(l=20, r=20, t=40, b=20),
     title=dict(
-        text=f'Geographic Connection Map - {arc_count} Strong Correlations',
+        text=title_text,
         font=dict(size=16, color='#ffffff'),
         x=0.5,
         xanchor='center'
@@ -788,6 +895,8 @@ st.plotly_chart(fig_arc_map, use_container_width=True, config={
 })
 
 # Legend for arc map
+st.markdown("### 📖 Understanding the Map")
+
 col_arc1, col_arc2, col_arc3 = st.columns(3)
 
 with col_arc1:
@@ -818,15 +927,15 @@ st.markdown("""
 <div style="background: rgba(59, 130, 246, 0.1); padding: 1rem; border-radius: 8px; margin-top: 1rem; border-left: 3px solid #3b82f6;">
     <div style="color: #e2e8f0; font-size: 0.9rem;">
         <strong style="color: #60a5fa;">💡 Key Insights:</strong><br>
+        • <strong>Select a country</strong> from the dropdown to focus on its specific correlations<br>
         • <strong>Arc thickness</strong> shows correlation strength - thicker arcs mean stronger relationships<br>
-        • <strong>Geographic proximity</strong> can be compared with correlation patterns<br>
+        • <strong>Improved arcs</strong> now follow proper geographic paths (great circle routes)<br>
         • <strong>Green arcs</strong> connect countries with similar inequality trends over time<br>
         • <strong>Red arcs</strong> show countries moving in opposite directions<br>
         • Hover over arcs or markers to see detailed statistics
     </div>
 </div>
 """, unsafe_allow_html=True)
-
 # ═══════════════════════════════════════════════════════════════════
 # BOTTOM SECTION: Rankings & Timeline
 # ═══════════════════════════════════════════════════════════════════

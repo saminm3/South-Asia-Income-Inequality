@@ -161,7 +161,7 @@ HELP_CONTENT = {
     },
     
     "correlations": {
-        "title": "🔗 Correlations - Inequality Drivers",
+        "title": " Correlations - Inequality Drivers",
         "overview": "Discover relationships between inequality indicators and potential drivers like GDP, education, and technology. Uses statistical analysis to identify patterns.",
         "features": [
             {
@@ -392,7 +392,7 @@ HELP_CONTENT = {
     },
     
     "search": {
-        "title": "🔍 Smart Search - Quick Navigation",
+        "title": " Smart Search - Quick Navigation",
         "overview": "Keyboard-friendly search system for finding data, countries, indicators, and commands. Like VS Code's command palette for your dashboard.",
         "features": [
             {

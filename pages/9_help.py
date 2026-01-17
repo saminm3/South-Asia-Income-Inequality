@@ -154,7 +154,7 @@ st.markdown("""
 # Hero Section
 st.markdown("""
 <div class='hero-section'>
-    <div class='hero-title'>📖 Help & Documentation</div>
+    <div class='hero-title'>Help & Documentation</div>
     <div class='hero-subtitle'>
         Your comprehensive guide to analyzing income inequality across South Asia
     </div>
@@ -253,7 +253,7 @@ with tab1:
 # TAB 2: FEATURES GUIDE
 # ========================================
 with tab2:
-    st.markdown("## 📋 Page-by-Page Feature Guide")
+    st.markdown("## Page-by-Page Feature Guide")
     
     # List of pages to document
     pages_to_document = [
@@ -262,7 +262,7 @@ with tab2:
         ("map", "Map Analysis"),
         ("correlations", "Correlations"),
         ("sunburst", "Sunburst"),
-        ("simulator", "🎮 Income Simulator"),
+        ("simulator", "Income Simulator"),
         ("quality", "Data Quality"),
         ("search", "Smart Search"),
         ("temporal", "Temporal Compare")
@@ -312,7 +312,7 @@ with tab2:
 # TAB 3: TROUBLESHOOTING
 # ========================================
 with tab3:
-    st.markdown("## 🔧 Troubleshooting Guide")
+    st.markdown("## Troubleshooting Guide")
     
     st.markdown("<div class='help-card'>", unsafe_allow_html=True)
     st.markdown("### Common Issues & Solutions")
@@ -385,7 +385,7 @@ with tab3:
 # TAB 4: DATA SOURCES & METHODOLOGY
 # ========================================
 with tab4:
-    st.markdown("## 📊 Data Sources & Methodology")
+    st.markdown("## Data Sources & Methodology")
     
     st.markdown("<div class='help-card'>", unsafe_allow_html=True)
     st.markdown("### Primary Data Sources")
