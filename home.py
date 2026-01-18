@@ -7,6 +7,15 @@ import sys
 sys.path.append(str(Path(__file__).parent))
 
 from utils.loaders import load_inequality_data
+from utils.enhanced_loaders import (
+    load_education_data, 
+    load_jobs_data, 
+    load_wdi_data,
+    load_wid_data,
+    load_mpi_data,
+    load_mpi_trends,
+    load_bulk_wb_data
+)
 from utils.utils import human_indicator, get_color_scale
 
 st.set_page_config(
@@ -150,13 +159,40 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# Load data
+# Load ALL datasets - OLD + NEW + MPI + TRENDS + BULK
 df = load_inequality_data()
 if df.empty:
     st.error("❌ Data not found. Please ensure processed dataset exists.")
     st.stop()
 
+<<<<<<< Updated upstream
 # ═══════════════════════════════════════════════════════════════════
+=======
+# Load all enhanced datasets
+datasets = {
+    'edu': load_education_data(),
+    'jobs': load_jobs_data(),
+    'wdi': load_wdi_data(),
+    'wid': load_wid_data(),
+    'mpi': load_mpi_data(),
+    'trends': load_mpi_trends(),
+    'bulk': load_bulk_wb_data()
+}
+
+# Calculate total data points across all datasets
+total_data_points = len(df) + sum(len(d) for d in datasets.values() if not d.empty)
+
+# Deep Indicator Count
+indicator_count = len(df['indicator'].unique())
+if not datasets['edu'].empty: indicator_count += len(datasets['edu']['Series'].unique())
+if not datasets['jobs'].empty: indicator_count += len(datasets['jobs']['Series Name'].unique())
+if not datasets['wdi'].empty: indicator_count += len(datasets['wdi']['Series Name'].unique())
+if not datasets['bulk'].empty: indicator_count += len(datasets['bulk']['Indicator Code'].unique())
+indicator_count += 10 # MPI & Trends estimates
+
+total_indicators = indicator_count
+
+>>>>>>> Stashed changes
 # HERO SECTION
 # ═══════════════════════════════════════════════════════════════════
 
@@ -195,7 +231,7 @@ with col2:
     st.markdown(f"""
     <div style="text-align: center; padding: 2rem 1.5rem; background: linear-gradient(135deg, rgba(236, 72, 153, 0.15), rgba(236, 72, 153, 0.05)); border: 1px solid rgba(236, 72, 153, 0.3); border-radius: 12px; height: 200px; display: flex; flex-direction: column; justify-content: center;">
         <div style="font-size: 3rem; margin-bottom: 1rem;"></div>
-        <div style="font-size: 2.5rem; font-weight: 800; color: #ec4899; margin-bottom: 0.5rem;">{len(df['indicator'].unique())}</div>
+        <div style="font-size: 2.5rem; font-weight: 800; color: #ec4899; margin-bottom: 0.5rem;">{total_indicators}</div>
         <div style="color: #94a3b8; font-size: 0.9rem;">Indicators</div>
     </div>
     """, unsafe_allow_html=True)
@@ -214,7 +250,7 @@ with col4:
     st.markdown(f"""
     <div style="text-align: center; padding: 2rem 1.5rem; background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(16, 185, 129, 0.05)); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 12px; height: 200px; display: flex; flex-direction: column; justify-content: center;">
         <div style="font-size: 3rem; margin-bottom: 1rem;"></div>
-        <div style="font-size: 2.5rem; font-weight: 800; color: #10b981; margin-bottom: 0.5rem;">{len(df):,}</div>
+        <div style="font-size: 2.5rem; font-weight: 800; color: #10b981; margin-bottom: 0.5rem;">{total_data_points:,}</div>
         <div style="color: #94a3b8; font-size: 0.9rem;">Data Points</div>
     </div>
     """, unsafe_allow_html=True)
@@ -426,7 +462,54 @@ if st.session_state.analysis_config is not None:
         </div>
         """, unsafe_allow_html=True)
 
+<<<<<<< Updated upstream
 # ═══════════════════════════════════════════════════════════════════
+=======
+# DATASET PORTFOLIO SECTION
+st.markdown("<br><br>", unsafe_allow_html=True)
+st.markdown("""
+<div style="text-align: center; margin-bottom: 2rem;">
+    <h2 style="font-size: 2rem; color: #ffffff;">📊 Dynamic Dataset Portfolio</h2>
+    <p style="color: #94a3b8;">Our platform hydrates and cross-references data from global authorities</p>
+</div>
+""", unsafe_allow_html=True)
+
+p_col1, p_col2, p_col3 = st.columns(3)
+
+with p_col1:
+    st.markdown("""
+    <div style="padding: 1.5rem; background: rgba(30, 41, 59, 0.5); border-radius: 12px; border: 1px solid rgba(148, 163, 184, 0.2); height: 100%;">
+        <div style="font-size: 1.5rem; margin-bottom: 1rem;">🏛️ World Bank WDI</div>
+        <p style="color: #94a3b8; font-size: 0.9rem;">
+            Official World Development Indicators covering poverty, education, health, and gender parity across all South Asian nations.
+        </p>
+        <div style="color: #8b5cf6; font-size: 0.8rem; font-weight: 600; margin-top: 1rem;">CORE DATA REPOSITORY</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+with p_col2:
+    st.markdown("""
+    <div style="padding: 1.5rem; background: rgba(30, 41, 59, 0.5); border-radius: 12px; border: 1px solid rgba(148, 163, 184, 0.2); height: 100%;">
+        <div style="font-size: 1.5rem; margin-bottom: 1rem;">⚖️ World Inequality Database</div>
+        <p style="color: #94a3b8; font-size: 0.9rem;">
+            High-resolution income and wealth share data (WID.world), allowing for deep percentile-based analysis of wealth concentration.
+        </p>
+        <div style="color: #ec4899; font-size: 0.8rem; font-weight: 600; margin-top: 1rem;">ELITE CONCENTRATION DATA</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+with p_col3:
+    st.markdown("""
+    <div style="padding: 1.5rem; background: rgba(30, 41, 59, 0.5); border-radius: 12px; border: 1px solid rgba(148, 163, 184, 0.2); height: 100%;">
+        <div style="font-size: 1.5rem; margin-bottom: 1rem;">📍 Global MPI (UNDP/OPHI)</div>
+        <p style="color: #94a3b8; font-size: 0.9rem;">
+            Multidimensional Poverty Index tracking deprivations in health, education, and living standards at national and subnational levels.
+        </p>
+        <div style="color: #06b6d4; font-size: 0.8rem; font-weight: 600; margin-top: 1rem;">VULNERABILITY METRICS</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+>>>>>>> Stashed changes
 # HELP & DOCUMENTATION SECTION 
 # ═══════════════════════════════════════════════════════════════════
 
