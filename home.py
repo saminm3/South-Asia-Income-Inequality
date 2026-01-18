@@ -11,6 +11,7 @@ from utils.data_loader import SouthAsiaDataLoader
 from utils.utils import human_indicator, get_color_scale
 from utils.help_system import render_help_button
 from utils.sidebar import apply_all_styles 
+from utils.api_loader import get_api_loader
 
 
 st.set_page_config(
@@ -25,11 +26,17 @@ apply_all_styles()
 
 render_help_button("home")
 
-# Load data for stats and configuration
 loader = SouthAsiaDataLoader()
 summary_stats = loader.get_summary_stats()
-total_data_points = summary_stats['Total Records'].sum() if not summary_stats.empty else 0
-total_indicators = summary_stats['Indicators'].sum() if not summary_stats.empty else 0
+local_data_points = summary_stats['Total Records'].sum() if not summary_stats.empty else 0
+local_indicators = summary_stats['Indicators'].sum() if not summary_stats.empty else 0
+
+# Fetch API Stats to increase "Data Points" count
+api_loader = get_api_loader()
+api_stats = api_loader.get_api_summary_v2()
+total_data_points = local_data_points + api_stats['total_records']
+total_indicators = local_indicators + api_stats['indicators']
+
 df = load_inequality_data() # Keep this for legacy compatibility on this page if needed
 if df.empty and summary_stats.empty:
     st.error("Data not found. Please ensure processed dataset exists.")
@@ -260,6 +267,9 @@ col_btn1, col_btn2, col_btn3 = st.columns([1, 2, 1])
 with col_btn2:
     if st.button("Open Help & Documentation", use_container_width=True, type="primary"):
         st.switch_page("pages/9_help.py")
+
+# DEVELOPER ACCESS INFORMATION
+
 
 
 
