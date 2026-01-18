@@ -10,15 +10,16 @@ import numpy as np
 sys.path.append(str(Path(__file__).parent.parent))
 
 from utils.loaders import load_quality_audit
-from utils.exports import export_plot_menu
-
+from utils.help_system import render_help_button
+from utils.sidebar import apply_all_styles
 st.set_page_config(
     page_title="Data Quality",
     page_icon="✅",
     layout="wide",
     initial_sidebar_state="collapsed"
 )
-
+render_help_button("quality")
+apply_all_styles()
 # Load custom CSS
 try:
     with open('assets/dashboard.css') as f:
@@ -304,8 +305,7 @@ if 'country' in audit.columns and 'completeness' in audit.columns:
             )
         )
         
-        st.plotly_chart(fig_map, use_container_width=True, config={'displayModeBar': False})
-        export_plot_menu(fig_map, "geographic_quality_distribution", key="quality_map")
+        st.plotly_chart(fig_map, use_container_width=True)
         
         # Summary table below map
         st.markdown("#### 📋 Country Summary")
@@ -422,8 +422,7 @@ if 'source' in audit.columns and 'country' in audit.columns and 'completeness' i
         margin=dict(t=60, b=20, l=20, r=20)
     )
     
-    st.plotly_chart(fig_sankey, use_container_width=True, config={'displayModeBar': False})
-    export_plot_menu(fig_sankey, "data_flow_sankey", key="quality_sankey")
+    st.plotly_chart(fig_sankey, use_container_width=True)
 
 # ============= DETAILED ANALYSIS =============
 
@@ -472,8 +471,7 @@ with tab1:
             )
         )
         
-        st.plotly_chart(fig_heatmap, use_container_width=True, config={'displayModeBar': False})
-        export_plot_menu(fig_heatmap, "quality_completeness_heatmap", key="quality_heatmap")
+        st.plotly_chart(fig_heatmap, use_container_width=True)
 
 with tab2:
     if 'country' in audit.columns and 'completeness' in audit.columns:
@@ -585,8 +583,7 @@ with tab2:
             hovermode='closest'
         )
         
-        st.plotly_chart(fig_ridge, use_container_width=True, config={'displayModeBar': False})
-        export_plot_menu(fig_ridge, "quality_distribution_ridgeline", key="quality_ridge")
+        st.plotly_chart(fig_ridge, use_container_width=True)
         
         # Add summary statistics
         st.markdown("#### 📊 Summary Statistics")
@@ -704,8 +701,7 @@ with tab3:
                 ]
             )
             
-            st.plotly_chart(fig_gaps, use_container_width=True, config={'displayModeBar': False})
-            export_plot_menu(fig_gaps, "critical_data_gaps", key="quality_gaps")
+            st.plotly_chart(fig_gaps, use_container_width=True)
             
             # Add Lollipop Chart for severity
             st.markdown("#### 🎯 Gap Severity (Distance from Threshold)")
@@ -780,8 +776,7 @@ with tab3:
                 margin=dict(l=200, r=50, t=60, b=50)
             )
             
-            st.plotly_chart(fig_lollipop, use_container_width=True, config={'displayModeBar': False})
-            export_plot_menu(fig_lollipop, "gap_severity_analysis", key="quality_lollipop")
+            st.plotly_chart(fig_lollipop, use_container_width=True)
             
             st.markdown("---")
             st.markdown("#### 📋 Detailed Gap Information")

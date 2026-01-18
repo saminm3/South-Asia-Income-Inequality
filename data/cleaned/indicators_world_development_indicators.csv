@@ -1,0 +1,53 @@
+Series Name,Series Code
+"Adolescent fertility rate (births per 1,000 women ages 15-19)",SP.ADO.TFRT
+"Agriculture, forestry, and fishing, value added (% of GDP)",NV.AGR.TOTL.ZS
+"Annual freshwater withdrawals, total (% of internal resources)",ER.H2O.FWTL.ZS
+Births attended by skilled health staff (% of total),SH.STA.BRTC.ZS
+"Contraceptive prevalence, any method (% of married women ages 15-49)",SP.DYN.CONU.ZS
+Exports of goods and services (% of GDP),NE.EXP.GNFS.ZS
+"External debt stocks, total (DOD, current US$)",DT.DOD.DECT.CD
+"Fertility rate, total (births per woman)",SP.DYN.TFRT.IN
+"Foreign direct investment, net inflows (BoP, current US$)",BX.KLT.DINV.CD.WD
+Forest area (sq. km),AG.LND.FRST.K2
+GDP (current US$),NY.GDP.MKTP.CD
+GDP growth (annual %),NY.GDP.MKTP.KD.ZG
+"GNI per capita, Atlas method (current US$)",NY.GNP.PCAP.CD
+"GNI per capita, PPP (current international $)",NY.GNP.PCAP.PP.CD
+"GNI, Atlas method (current US$)",NY.GNP.ATLS.CD
+"GNI, PPP (current international $)",NY.GNP.MKTP.PP.CD
+Gross capital formation (% of GDP),NE.GDI.TOTL.ZS
+High-technology exports (% of manufactured exports),TX.VAL.TECH.MF.ZS
+"Immunization, measles (% of children ages 12-23 months)",SH.IMM.MEAS
+Imports of goods and services (% of GDP),NE.IMP.GNFS.ZS
+"Industry (including construction), value added (% of GDP)",NV.IND.TOTL.ZS
+"Inflation, GDP deflator (annual %)",NY.GDP.DEFL.KD.ZG
+"Life expectancy at birth, total (years)",SP.DYN.LE00.IN
+Merchandise trade (% of GDP),TG.VAL.TOTL.GD.ZS
+Military expenditure (% of GDP),MS.MIL.XPND.GD.ZS
+Mobile cellular subscriptions (per 100 people),IT.CEL.SETS.P2
+"Mortality rate, under-5 (per 1,000 live births)",SH.DYN.MORT
+Net barter terms of trade index (2015 = 100),TT.PRI.MRCH.XD.WD
+Net migration,SM.POP.NETM
+Net official development assistance and official aid received (current US$),DT.ODA.ALLD.CD
+"Personal remittances, received (current US$)",BX.TRF.PWKR.CD.DT
+Population density (people per sq. km of land area),EN.POP.DNST
+Population growth (annual %),SP.POP.GROW
+"Population, total",SP.POP.TOTL
+Poverty headcount ratio at national poverty lines (% of population),SI.POV.NAHC
+"Prevalence of HIV, total (% of population ages 15-49)",SH.DYN.AIDS.ZS
+"Prevalence of underweight, weight for age (% of children under 5)",SH.STA.MALN.ZS
+"Primary completion rate, total (% of relevant age group)",SE.PRM.CMPT.ZS
+"Revenue, excluding grants (% of GDP)",GC.REV.XGRT.GD.ZS
+"School enrollment, primary (% gross)",SE.PRM.ENRR
+"School enrollment, primary and secondary (gross), gender parity index (GPI)",SE.ENR.PRSC.FM.ZS
+"School enrollment, secondary (% gross)",SE.SEC.ENRR
+Surface area (sq. km),AG.SRF.TOTL.K2
+Tax revenue (% of GDP),GC.TAX.TOTL.GD.ZS
+Terrestrial and marine protected areas (% of total territorial area),ER.PTD.TOTL.ZS
+"Total debt service (% of exports of goods, services and primary income)",DT.TDS.DECT.EX.ZS
+Urban population growth (annual %),SP.URB.GROW
+Electric power consumption (kWh per capita),EG.USE.ELEC.KH.PC
+Energy use (kg of oil equivalent per capita),EG.USE.PCAP.KG.OE
+Income share held by lowest 20%,SI.DST.FRST.20
+Poverty headcount ratio at $3.00 a day (2021 PPP) (% of population),SI.POV.DDAY
+Domestic credit provided by financial sector (% of GDP),FS.AST.DOMS.GD.ZS

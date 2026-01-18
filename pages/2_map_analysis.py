@@ -11,18 +11,23 @@ from pathlib import Path
 sys.path.append(str(Path(__file__).parent.parent))
 
 from utils.loaders import load_inequality_data, load_geojson
-from utils.utils import human_indicator, get_color_scale
-from utils.exports import export_data_menu, export_plot_menu
+from utils.utils import human_indicator
+from utils.help_system import render_help_button
+from utils.sidebar import apply_all_styles
+
+
 
 # --------------------------------------------------
 # Page config
 # --------------------------------------------------
 st.set_page_config(
-    page_title="Map Analysis",
-    page_icon="🗺️",
+    page_title="...",
+    page_icon="...",
     layout="wide",
-    initial_sidebar_state="collapsed"
+    initial_sidebar_state="collapsed"  # ADD THIS LINE
 )
+render_help_button("map")
+apply_all_styles()
 
 # Load custom CSS
 try:
@@ -279,7 +284,7 @@ else:
     fig.update_layout(updatemenus=[])
 
 fig.update_layout(height=600, margin={'r':0,'t':50,'l':0,'b':0})
-st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
+st.plotly_chart(fig, use_container_width=True)
 
 # --------------------------------------------------
 # Year slider for insights
@@ -325,11 +330,28 @@ if insights:
 # Export section
 # --------------------------------------------------
 st.divider()
-col_ext1, col_ext2 = st.columns(2)
-with col_ext1:
-    export_plot_menu(fig, f"map_{config['indicator']}_{selected_year}", key="map_export")
-with col_ext2:
-    export_data_menu(filtered_df, f"map_data_{selected_year}", key="map_data_export")
+col1, col2 = st.columns(2)
+with col1:
+    try:
+        img_bytes = fig.to_image(format='png', width=1400, height=800)
+        st.download_button(
+            "📥 Download Map (PNG)",
+            data=img_bytes,
+            file_name=f"map_{config['indicator']}_{selected_year}.png",
+            mime="image/png",
+            use_container_width=True
+        )
+    except Exception:
+        st.info("ℹ️ Image export unavailable (Kaleido not installed).")
+with col2:
+    csv_bytes = filtered_df.to_csv(index=False).encode('utf-8')
+    st.download_button(
+        "📥 Download Data (CSV)",
+        data=csv_bytes,
+        file_name=f"map_data_{selected_year}.csv",
+        mime="text/csv",
+        use_container_width=True
+    )
 
 # --------------------------------------------------
 # Enhanced rankings table

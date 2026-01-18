@@ -10,16 +10,15 @@ sys.path.append(str(Path(__file__).parent.parent))
 
 from utils.loaders import load_all_indicators
 from utils.utils import format_value
-from utils.exports import export_plot_menu
-
-# Page config
+from utils.help_system import render_help_button
+from utils.sidebar import apply_all_styles
 st.set_page_config(
     page_title="Sunburst Explorer",
     page_icon="🌟",
-    layout="wide",
-    initial_sidebar_state="collapsed"
+    layout="wide"
 )
-
+render_help_button("sunburst")
+apply_all_styles()
 # Load custom CSS
 try:
     with open('assets/dashboard.css') as f:
@@ -166,8 +165,7 @@ fig.update_layout(
     height=850
 )
 
-st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
-export_plot_menu(fig, "sunburst_dominance_breakdown", key="sunburst_chart")
+st.plotly_chart(fig, use_container_width=True)
 
 # --- IMPORTANT clarification to avoid confusion ---
 st.info(
@@ -328,8 +326,7 @@ fig_bubble = px.scatter(
     title="🫧 Indicator Bubble View (size = normalized dominance)"
 )
 fig_bubble.update_layout(height=540, xaxis_title="Normalized dominance (0–100)", yaxis_title="")
-st.plotly_chart(fig_bubble, use_container_width=True, config={'displayModeBar': False})
-export_plot_menu(fig_bubble, f"indicator_bubbles_{spot_country}", key="bubble_chart")
+st.plotly_chart(fig_bubble, use_container_width=True)
 
 # ✅ Explanation under bubble view (simple)
 st.info(

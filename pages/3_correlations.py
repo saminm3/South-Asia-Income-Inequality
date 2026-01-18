@@ -11,18 +11,18 @@ sys.path.append(str(Path(__file__).parent.parent))
 
 from utils.loaders import load_all_indicators
 from utils.utils import human_indicator
-from utils.exports import export_data_menu, export_plot_menu
-
+from utils.help_system import render_help_button
+from utils.sidebar import apply_all_styles
 # ----------------------------
 # Page config
 # ----------------------------
 st.set_page_config(
-    page_title="Correlation Analysis",
+    page_title="Inequality Drivers (Correlation)",
     page_icon="🔗",
-    layout="wide",
-    initial_sidebar_state="collapsed"
+    layout="wide"
 )
-
+render_help_button("correlations")
+apply_all_styles()
 # Load custom CSS
 try:
     with open("assets/dashboard.css") as f:
@@ -274,8 +274,7 @@ with left:
         xaxis_title=short_name(x_indicator),
         yaxis_title=short_name(y_indicator),
     )
-    st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': False})
-    export_plot_menu(fig, "correlation_scatter", key="corr_plot")
+    st.plotly_chart(fig, use_container_width=True)
 
 with right:
     st.subheader("📊 Key stats")
@@ -354,7 +353,6 @@ ranked["Avg_Y"] = ranked["Avg_Y"].round(3)
 
 # Show as table (simple and professional)
 st.dataframe(ranked, use_container_width=True, hide_index=True)
-export_data_menu(ranked, "correlation_rankings", key="corr_data")
 
 # Optional: quick sentence
 if total >= 1:

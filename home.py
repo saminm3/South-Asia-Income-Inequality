@@ -7,195 +7,35 @@ import sys
 sys.path.append(str(Path(__file__).parent))
 
 from utils.loaders import load_inequality_data
-from utils.enhanced_loaders import (
-    load_education_data, 
-    load_jobs_data, 
-    load_wdi_data,
-    load_wid_data,
-    load_mpi_data,
-    load_mpi_trends,
-    load_bulk_wb_data
-)
+from utils.data_loader import SouthAsiaDataLoader
 from utils.utils import human_indicator, get_color_scale
+from utils.help_system import render_help_button
+from utils.sidebar import apply_all_styles 
+
 
 st.set_page_config(
     page_title="South Asia Inequality Analytics",
     page_icon="🌏",
     layout="wide",
-    initial_sidebar_state="collapsed"
+    initial_sidebar_state="expanded"
 )
 
 
-# Modern dark theme CSS 
-st.markdown("""
-<style>
-    /* Main dark gradient background */
-    .main {
-        background: linear-gradient(180deg, #0a0e27 0%, #1a1f3a 50%, #0f1419 100%);
-    }
-    
-    /* Remove padding */
-    .block-container {
-        padding-top: 2rem;
-        padding-bottom: 0rem;
-    }
-    
-    /* Hide Streamlit branding */
-    #MainMenu {visibility: hidden;}
-    footer {visibility: hidden;}
-    header {visibility: hidden;}
-    
-    /* Headers */
-    h1, h2, h3 {
-        color: #ffffff !important;
-        font-weight: 800 !important;
-    }
-    
-    /* Form styling */
-    .stForm {
-        background: linear-gradient(135deg, rgba(139, 92, 246, 0.08) 0%, rgba(236, 72, 153, 0.05) 100%);
-        border: 1px solid rgba(139, 92, 246, 0.2);
-        border-radius: 16px;
-        padding: 2rem;
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-    }
-    
-    /* Button styling */
-    .stButton > button {
-        background: linear-gradient(90deg, #8b5cf6 0%, #ec4899 100%);
-        color: white;
-        font-weight: 700;
-        border: none;
-        border-radius: 12px;
-        padding: 0.75rem 2rem;
-        font-size: 1rem;
-        box-shadow: 0 4px 20px rgba(139, 92, 246, 0.4);
-        transition: all 0.3s ease;
-    }
-    
-    .stButton > button:hover {
-        box-shadow: 0 6px 30px rgba(139, 92, 246, 0.6);
-        transform: translateY(-2px);
-    }
-    
-    /* Selectbox and multiselect styling */
-    .stSelectbox > div > div,
-    .stMultiSelect > div > div {
-        background: rgba(15, 20, 25, 0.6);
-        border: 1px solid rgba(139, 92, 246, 0.3);
-        border-radius: 8px;
-        color: #ffffff;
-    }
-    
-    /* Slider styling */
-    .stSlider > div > div > div {
-        background: linear-gradient(90deg, #8b5cf6 0%, #ec4899 100%);
-    }
-    
-    /* Info/success boxes */
-    .stAlert {
-        background: rgba(15, 20, 25, 0.6);
-        border: 1px solid rgba(139, 92, 246, 0.3);
-        border-radius: 12px;
-        color: #e2e8f0;
-    }
-    
-    /* Text colors */
-    p, label, .stMarkdown {
-        color: #e2e8f0 !important;
-    }
-    
-    /* Caption text */
-    .css-16huue1 {
-        color: #94a3b8 !important;
-    }
-    
-    /* Navigation cards */
-    .nav-card {
-        background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(236, 72, 153, 0.05) 100%);
-        border: 1px solid rgba(139, 92, 246, 0.3);
-        border-radius: 16px;
-        padding: 1.5rem;
-        margin: 0.5rem 0;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
-    }
-    
-    .nav-card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 8px 32px rgba(139, 92, 246, 0.4);
-        border-color: rgba(139, 92, 246, 0.5);
-    }
-    
-    /* Style navigation buttons to look like cards */
-    div[data-testid="column"] > div > div > button {
-        background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(236, 72, 153, 0.05) 100%) !important;
-        border: 1px solid rgba(139, 92, 246, 0.3) !important;
-        border-radius: 16px !important;
-        padding: 2rem 1.5rem !important;
-        height: auto !important;
-        min-height: 140px !important;
-        color: #e2e8f0 !important;
-        font-size: 1rem !important;
-        font-weight: 600 !important;
-        white-space: pre-line !important;
-        text-align: center !important;
-        transition: all 0.3s ease !important;
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3) !important;
-        line-height: 1.6 !important;
-    }
-    
-    div[data-testid="column"] > div > div > button:hover {
-        transform: translateY(-4px) !important;
-        box-shadow: 0 8px 32px rgba(139, 92, 246, 0.4) !important;
-        border-color: rgba(139, 92, 246, 0.5) !important;
-        background: linear-gradient(135deg, rgba(139, 92, 246, 0.15) 0%, rgba(236, 72, 153, 0.08) 100%) !important;
-    }
-    
-    div[data-testid="column"] > div > div > button:active {
-        transform: translateY(-2px) !important;
-    }
-</style>
-""", unsafe_allow_html=True)
+apply_all_styles()
 
-# Load ALL datasets - OLD + NEW + MPI + TRENDS + BULK
-df = load_inequality_data()
-if df.empty:
-    st.error("❌ Data not found. Please ensure processed dataset exists.")
+render_help_button("home")
+
+# Load data for stats and configuration
+loader = SouthAsiaDataLoader()
+summary_stats = loader.get_summary_stats()
+total_data_points = summary_stats['Total Records'].sum() if not summary_stats.empty else 0
+total_indicators = summary_stats['Indicators'].sum() if not summary_stats.empty else 0
+df = load_inequality_data() # Keep this for legacy compatibility on this page if needed
+if df.empty and summary_stats.empty:
+    st.error("Data not found. Please ensure processed dataset exists.")
     st.stop()
 
-<<<<<<< Updated upstream
-# ═══════════════════════════════════════════════════════════════════
-=======
-# Load all enhanced datasets
-datasets = {
-    'edu': load_education_data(),
-    'jobs': load_jobs_data(),
-    'wdi': load_wdi_data(),
-    'wid': load_wid_data(),
-    'mpi': load_mpi_data(),
-    'trends': load_mpi_trends(),
-    'bulk': load_bulk_wb_data()
-}
-
-# Calculate total data points across all datasets
-total_data_points = len(df) + sum(len(d) for d in datasets.values() if not d.empty)
-
-# Deep Indicator Count
-indicator_count = len(df['indicator'].unique())
-if not datasets['edu'].empty: indicator_count += len(datasets['edu']['Series'].unique())
-if not datasets['jobs'].empty: indicator_count += len(datasets['jobs']['Series Name'].unique())
-if not datasets['wdi'].empty: indicator_count += len(datasets['wdi']['Series Name'].unique())
-if not datasets['bulk'].empty: indicator_count += len(datasets['bulk']['Indicator Code'].unique())
-indicator_count += 10 # MPI & Trends estimates
-
-total_indicators = indicator_count
-
->>>>>>> Stashed changes
 # HERO SECTION
-# ═══════════════════════════════════════════════════════════════════
-
 st.markdown("""
 <div style="text-align: center; margin-bottom: 3rem;">
     <h1 style="font-size: 3.5rem; margin-bottom: 1rem; background: linear-gradient(90deg, #8b5cf6 0%, #ec4899 50%, #06b6d4 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
@@ -210,10 +50,7 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# ═══════════════════════════════════════════════════════════════════
 # QUICK STATS ROW
-# ═══════════════════════════════════════════════════════════════════
-
 st.markdown('<p style="text-align: center; color: #94a3b8; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 1rem;">Platform Overview</p>', unsafe_allow_html=True)
 
 col1, col2, col3, col4 = st.columns(4)
@@ -232,16 +69,16 @@ with col2:
     <div style="text-align: center; padding: 2rem 1.5rem; background: linear-gradient(135deg, rgba(236, 72, 153, 0.15), rgba(236, 72, 153, 0.05)); border: 1px solid rgba(236, 72, 153, 0.3); border-radius: 12px; height: 200px; display: flex; flex-direction: column; justify-content: center;">
         <div style="font-size: 3rem; margin-bottom: 1rem;"></div>
         <div style="font-size: 2.5rem; font-weight: 800; color: #ec4899; margin-bottom: 0.5rem;">{total_indicators}</div>
-        <div style="color: #94a3b8; font-size: 0.9rem;">Indicators</div>
+        <div style="color: #94a3b8; font-size: 0.9rem;">Total Indicators</div>
     </div>
     """, unsafe_allow_html=True)
 
 with col3:
-    years_span = int(df['year'].max() - df['year'].min())
+    year_span = int(df['year'].max() - df['year'].min())
     st.markdown(f"""
     <div style="text-align: center; padding: 2rem 1.5rem; background: linear-gradient(135deg, rgba(6, 182, 212, 0.15), rgba(6, 182, 212, 0.05)); border: 1px solid rgba(6, 182, 212, 0.3); border-radius: 12px; height: 200px; display: flex; flex-direction: column; justify-content: center;">
         <div style="font-size: 3rem; margin-bottom: 1rem;"></div>
-        <div style="font-size: 2.5rem; font-weight: 800; color: #06b6d4; margin-bottom: 0.5rem;">{years_span}</div>
+        <div style="font-size: 2.5rem; font-weight: 800; color: #06b6d4; margin-bottom: 0.5rem;">{year_span}</div>
         <div style="color: #94a3b8; font-size: 0.9rem;">Years of Data</div>
     </div>
     """, unsafe_allow_html=True)
@@ -251,70 +88,13 @@ with col4:
     <div style="text-align: center; padding: 2rem 1.5rem; background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(16, 185, 129, 0.05)); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 12px; height: 200px; display: flex; flex-direction: column; justify-content: center;">
         <div style="font-size: 3rem; margin-bottom: 1rem;"></div>
         <div style="font-size: 2.5rem; font-weight: 800; color: #10b981; margin-bottom: 0.5rem;">{total_data_points:,}</div>
-        <div style="color: #94a3b8; font-size: 0.9rem;">Data Points</div>
+        <div style="color: #94a3b8; font-size: 0.9rem;">Total Data Points</div>
     </div>
     """, unsafe_allow_html=True)
 
 st.markdown("<br><br>", unsafe_allow_html=True)
 
-# ═══════════════════════════════════════════════════════════════════
-# NAVIGATION CARDS (Quick Access)
-# ═══════════════════════════════════════════════════════════════════
-
-st.markdown("""
-<div style="text-align: center; margin-bottom: 2rem;">
-    <h2 style="font-size: 2rem; color: #ffffff;">🚀 Quick Access</h2>
-    <p style="color: #94a3b8;">Jump directly to any analysis tool</p>
-</div>
-""", unsafe_allow_html=True)
-
-# Define consistent button style
-button_style = """
-    height: 120px;
-    background: linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(236, 72, 153, 0.15));
-    border: 1px solid rgba(139, 92, 246, 0.3);
-    border-radius: 12px;
-    padding: 20px;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    text-align: center;
-"""
-
-# Row 1
-col1, col2, col3 = st.columns(3)
-
-with col1:
-    if st.button("📊\n\nDashboard\n\nReal-time KPIs & streamgraph", key="nav_dashboard", use_container_width=True):
-        st.switch_page("pages/1_dashboard.py")
-
-with col2:
-    if st.button("🗺️\n\nMap Analysis\n\nGeographic visualization", key="nav_map", use_container_width=True):
-        st.switch_page("pages/2_map_analysis.py")
-
-with col3:
-    if st.button("✨\n\nAuto Insights\n\nKey discoveries", key="nav_insights", use_container_width=True):
-        st.switch_page("pages/8_auto_insights.py")
-
-# Row 2
-col1, col2, col3 = st.columns(3)
-
-with col1:
-    if st.button("🔗\n\nCorrelations\n\nMulti-indicator analysis", key="nav_correlations", use_container_width=True):
-        st.switch_page("pages/3_correlations.py")
-
-with col2:
-    if st.button("⏱️\n\nTemporal Compare\n\nThen vs Now analysis", key="nav_temporal", use_container_width=True):
-        st.switch_page("pages/9_temporal_compare.py")
-
-with col3:
-    if st.button("🎯\n\nIncome Simulator\n\nScenario modeling", key="nav_simulator", use_container_width=True):
-        st.switch_page("pages/5_income_simulator.py")
-
-st.markdown("<br><br>", unsafe_allow_html=True)
-# ═══════════════════════════════════════════════════════════════════
 # CONFIGURATION SECTION
-# ═══════════════════════════════════════════════════════════════════
 
 # Initialize session state
 if 'analysis_config' not in st.session_state:
@@ -407,11 +187,9 @@ if selected_countries:
         
         st.session_state.analysis_config = new_config
 else:
-    st.warning("⚠️ Please select at least one country")
+    st.warning("Please select at least one country")
 
-# ═══════════════════════════════════════════════════════════════════
 # CURRENT CONFIGURATION DISPLAY
-# ═══════════════════════════════════════════════════════════════════
 
 if st.session_state.analysis_config is not None:
     st.markdown("<br><br>", unsafe_allow_html=True)
@@ -462,56 +240,7 @@ if st.session_state.analysis_config is not None:
         </div>
         """, unsafe_allow_html=True)
 
-<<<<<<< Updated upstream
-# ═══════════════════════════════════════════════════════════════════
-=======
-# DATASET PORTFOLIO SECTION
-st.markdown("<br><br>", unsafe_allow_html=True)
-st.markdown("""
-<div style="text-align: center; margin-bottom: 2rem;">
-    <h2 style="font-size: 2rem; color: #ffffff;">📊 Dynamic Dataset Portfolio</h2>
-    <p style="color: #94a3b8;">Our platform hydrates and cross-references data from global authorities</p>
-</div>
-""", unsafe_allow_html=True)
-
-p_col1, p_col2, p_col3 = st.columns(3)
-
-with p_col1:
-    st.markdown("""
-    <div style="padding: 1.5rem; background: rgba(30, 41, 59, 0.5); border-radius: 12px; border: 1px solid rgba(148, 163, 184, 0.2); height: 100%;">
-        <div style="font-size: 1.5rem; margin-bottom: 1rem;">🏛️ World Bank WDI</div>
-        <p style="color: #94a3b8; font-size: 0.9rem;">
-            Official World Development Indicators covering poverty, education, health, and gender parity across all South Asian nations.
-        </p>
-        <div style="color: #8b5cf6; font-size: 0.8rem; font-weight: 600; margin-top: 1rem;">CORE DATA REPOSITORY</div>
-    </div>
-    """, unsafe_allow_html=True)
-
-with p_col2:
-    st.markdown("""
-    <div style="padding: 1.5rem; background: rgba(30, 41, 59, 0.5); border-radius: 12px; border: 1px solid rgba(148, 163, 184, 0.2); height: 100%;">
-        <div style="font-size: 1.5rem; margin-bottom: 1rem;">⚖️ World Inequality Database</div>
-        <p style="color: #94a3b8; font-size: 0.9rem;">
-            High-resolution income and wealth share data (WID.world), allowing for deep percentile-based analysis of wealth concentration.
-        </p>
-        <div style="color: #ec4899; font-size: 0.8rem; font-weight: 600; margin-top: 1rem;">ELITE CONCENTRATION DATA</div>
-    </div>
-    """, unsafe_allow_html=True)
-
-with p_col3:
-    st.markdown("""
-    <div style="padding: 1.5rem; background: rgba(30, 41, 59, 0.5); border-radius: 12px; border: 1px solid rgba(148, 163, 184, 0.2); height: 100%;">
-        <div style="font-size: 1.5rem; margin-bottom: 1rem;">📍 Global MPI (UNDP/OPHI)</div>
-        <p style="color: #94a3b8; font-size: 0.9rem;">
-            Multidimensional Poverty Index tracking deprivations in health, education, and living standards at national and subnational levels.
-        </p>
-        <div style="color: #06b6d4; font-size: 0.8rem; font-weight: 600; margin-top: 1rem;">VULNERABILITY METRICS</div>
-    </div>
-    """, unsafe_allow_html=True)
-
->>>>>>> Stashed changes
 # HELP & DOCUMENTATION SECTION 
-# ═══════════════════════════════════════════════════════════════════
 
 st.divider()
 
@@ -529,8 +258,8 @@ st.markdown("""
 # Centered Help Button
 col_btn1, col_btn2, col_btn3 = st.columns([1, 2, 1])
 with col_btn2:
-    if st.button("📚 Open Help & Documentation", use_container_width=True, type="primary"):
-        st.switch_page("pages/10_help.py")
+    if st.button("Open Help & Documentation", use_container_width=True, type="primary"):
+        st.switch_page("pages/9_help.py")
 
 
 

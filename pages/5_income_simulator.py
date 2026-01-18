@@ -4,27 +4,19 @@ import plotly.graph_objects as go
 import plotly.express as px
 import numpy as np
 from pathlib import Path
-<<<<<<< Updated upstream
-from utils.exports import export_plot_menu
-
-# Page config
-=======
 from utils.help_system import render_help_button
 from utils.sidebar import apply_all_styles
-from utils.enhanced_loaders import (
-    load_wdi_data, 
-    load_education_data, 
-    load_jobs_data, 
-    get_latest_indicator_value
-)
->>>>>>> Stashed changes
+from utils.data_loader import SouthAsiaDataLoader
+from utils.loaders import load_inequality_data
+
 st.set_page_config(
     page_title="Income Simulator",
     page_icon="💸",
     layout="wide",
     initial_sidebar_state="collapsed"
 )
-
+render_help_button("simulator")
+apply_all_styles()
 # Load custom CSS
 try:
     with open('assets/dashboard.css') as f:
@@ -35,375 +27,298 @@ except FileNotFoundError:
 # Custom CSS for Professional Look
 st.markdown("""
 <style>
-    /* ==================== SIMULATOR SPECIFIC STYLES ==================== */
-    
-    /* Card Components */
-    .simulator-pro-card {
-        background: linear-gradient(135deg, rgba(30, 37, 50, 0.95) 0%, rgba(26, 31, 46, 0.95) 100%);
-        border-radius: 16px;
-        padding: 28px;
-        border: 1px solid rgba(29, 155, 240, 0.2);
-        margin-bottom: 24px;
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
-        transition: all 0.3s ease;
+    .pro-card {
+        background: #1e2532;
+        border-radius: 12px;
+        padding: 24px;
+        border: 1px solid #2f3336;
+        margin-bottom: 20px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     }
     
-    .simulator-pro-card:hover {
-        border-color: rgba(29, 155, 240, 0.4);
-        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
-        transform: translateY(-2px);
-    }
-    
-    /* Input Labels */
-    .simulator-input-label {
-        font-size: 0.9rem;
-        color: #94a3b8;
+    .input-group-label {
+        font-size: 0.85rem;
+        color: #8b98a5;
         text-transform: uppercase;
-        letter-spacing: 1px;
-        margin-bottom: 10px;
-        font-weight: 700;
-        display: block;
+        letter-spacing: 0.5px;
+        margin-bottom: 8px;
+        font-weight: 600;
     }
     
-    /* Result Display Container */
-    .simulator-result-container {
+    .result-container {
         text-align: center;
-        padding: 40px 30px;
-        background: linear-gradient(135deg, rgba(29, 155, 240, 0.1) 0%, rgba(16, 185, 129, 0.1) 100%);
-        border-radius: 20px;
-        border: 2px solid rgba(29, 155, 240, 0.3);
-        margin-bottom: 24px;
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+        padding: 30px;
+        background: linear-gradient(180deg, rgba(30, 37, 50, 0.8) 0%, rgba(30, 37, 50, 0.4) 100%);
+        border-radius: 16px;
+        border: 1px solid #2f3336;
+        margin-bottom: 20px;
     }
-    
-    .simulator-metric-value-large {
-        font-size: 4.5rem;
-        font-weight: 900;
-        background: linear-gradient(135deg, #1d9bf0 0%, #00ba7c 100%);
+    .metric-value-large {
+        font-size: 4rem;
+        font-weight: 800;
+        background: -webkit-linear-gradient(0deg, #1d9bf0, #00ba7c);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
-        background-clip: text;
         line-height: 1.1;
-        margin: 10px 0;
     }
-    
-    .simulator-metric-label {
-        color: #94a3b8;
+    .metric-label {
+        color: #8b98a5;
         text-transform: uppercase;
-        font-size: 0.95rem;
-        letter-spacing: 1.5px;
+        font-size: 0.9rem;
+        letter-spacing: 1px;
+    }
+    .metric-group {
+        font-size: 1.5rem;
         font-weight: 600;
-        margin-bottom: 10px;
+        margin-top: 10px;
     }
     
-    .simulator-metric-group {
-        font-size: 1.6rem;
-        font-weight: 700;
-        margin-top: 15px;
-    }
-    
-    /* Insight Panels */
-    .simulator-insight-panel {
-        background: rgba(29, 155, 240, 0.08);
+    .insight-panel {
+        background: rgba(29, 155, 240, 0.05);
         border-left: 4px solid #1d9bf0;
-        padding: 24px;
-        border-radius: 0 12px 12px 0;
-        margin-bottom: 18px;
-        transition: all 0.2s ease;
+        padding: 20px;
+        border-radius: 0 8px 8px 0;
+        margin-bottom: 15px;
     }
     
-    .simulator-insight-panel:hover {
-        background: rgba(29, 155, 240, 0.12);
-        transform: translateX(4px);
-    }
-    
-    .simulator-insight-panel-success {
-        background: rgba(16, 185, 129, 0.08);
+    .insight-panel-success {
+        background: rgba(16, 185, 129, 0.05);
         border-left: 4px solid #10b981;
-        padding: 24px;
-        border-radius: 0 12px 12px 0;
-        margin-bottom: 18px;
-        transition: all 0.2s ease;
+        padding: 20px;
+        border-radius: 0 8px 8px 0;
+        margin-bottom: 15px;
     }
     
-    .simulator-insight-panel-success:hover {
-        background: rgba(16, 185, 129, 0.12);
-        transform: translateX(4px);
-    }
-    
-    .simulator-insight-panel-warning {
-        background: rgba(245, 158, 11, 0.08);
+    .insight-panel-warning {
+        background: rgba(245, 158, 11, 0.05);
         border-left: 4px solid #f59e0b;
-        padding: 24px;
-        border-radius: 0 12px 12px 0;
-        margin-bottom: 18px;
-        transition: all 0.2s ease;
+        padding: 20px;
+        border-radius: 0 8px 8px 0;
+        margin-bottom: 15px;
     }
     
-    .simulator-insight-panel-warning:hover {
-        background: rgba(245, 158, 11, 0.12);
-        transform: translateX(4px);
-    }
-    
-    .simulator-insight-title {
+    .insight-title {
         color: #ffffff;
-        font-weight: 700;
+        font-weight: 600;
         margin-bottom: 12px;
         display: flex;
         align-items: center;
-        gap: 10px;
-        font-size: 1.15rem;
+        gap: 8px;
+        font-size: 1.1rem;
     }
     
-    /* Section Headers */
-    .simulator-section-header {
-        font-size: 1.5rem;
-        font-weight: 800;
+    .section-header {
+        font-size: 1.3rem;
+        font-weight: 700;
         color: #ffffff;
-        margin: 40px 0 20px 0;
-        padding-bottom: 12px;
-        border-bottom: 3px solid rgba(29, 155, 240, 0.4);
-        display: flex;
-        align-items: center;
-        gap: 10px;
+        margin: 30px 0 15px 0;
+        padding-bottom: 10px;
+        border-bottom: 2px solid rgba(29, 155, 240, 0.3);
     }
     
-    /* Comparison Card */
-    .simulator-comparison-card {
-        background: linear-gradient(135deg, rgba(59, 130, 246, 0.12), rgba(16, 185, 129, 0.12));
-        border: 2px solid rgba(59, 130, 246, 0.4);
-        border-radius: 20px;
-        padding: 36px;
-        margin: 24px 0;
-        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+    .comparison-card {
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(16, 185, 129, 0.1));
+        border: 2px solid rgba(59, 130, 246, 0.3);
+        border-radius: 16px;
+        padding: 30px;
+        margin: 20px 0;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
     }
     
-    /* Profile Badges */
-    .simulator-profile-badge {
+    .profile-badge {
         display: inline-block;
-        padding: 10px 20px;
-        border-radius: 24px;
-        font-weight: 800;
-        font-size: 0.9rem;
-        letter-spacing: 1.2px;
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-weight: 700;
+        font-size: 0.85rem;
+        letter-spacing: 1px;
         text-transform: uppercase;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
     }
     
-    .simulator-badge-primary {
-        background: linear-gradient(135deg, #3b82f6 0%, #1d9bf0 100%);
+    .badge-primary {
+        background: linear-gradient(135deg, #3b82f6, #1d9bf0);
         color: white;
     }
     
-    .simulator-badge-success {
-        background: linear-gradient(135deg, #10b981 0%, #34d399 100%);
+    .badge-success {
+        background: linear-gradient(135deg, #10b981, #34d399);
         color: white;
     }
     
-    /* Profile Summary Box */
-    .simulator-profile-summary {
-        background: rgba(30, 37, 50, 0.6);
-        border: 1px solid rgba(29, 155, 240, 0.3);
-        border-radius: 12px;
-        padding: 20px;
-        line-height: 2.2;
+    .historical-card {
+        background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(239, 68, 68, 0.1));
+        border: 2px solid rgba(245, 158, 11, 0.3);
+        border-radius: 16px;
+        padding: 25px;
+        margin: 20px 0;
     }
     
-    /* Recommendation Box */
-    .simulator-recommendation-box {
-        background: rgba(255, 255, 255, 0.04);
-        padding: 18px;
-        border-radius: 10px;
-        margin-bottom: 14px;
-        border-left: 3px solid;
-        transition: all 0.2s ease;
+    .delta-badge {
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-weight: 700;
+        font-size: 0.9rem;
     }
     
-    .simulator-recommendation-box:hover {
-        background: rgba(255, 255, 255, 0.06);
-        transform: translateX(4px);
-    }
-    
-    /* Responsive Design */
-    @media (max-width: 768px) {
-        .simulator-metric-value-large {
-            font-size: 3rem;
-        }
-        
-        .simulator-section-header {
-            font-size: 1.2rem;
-        }
-        
-        .simulator-comparison-card {
-            padding: 20px;
-        }
-    }
+    .delta-up { background: rgba(16, 185, 129, 0.2); color: #10b981; }
+    .delta-down { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
 </style>
 """, unsafe_allow_html=True)
 
-# Data-driven Country Context Generator
-@st.cache_data
-def get_data_driven_country_data():
-    """Build dynamic country parameters from real WDI, Education, and Jobs data"""
-    countries = ['Bangladesh', 'India', 'Pakistan', 'Nepal', 'Sri Lanka', 'Afghanistan', 'Bhutan', 'Maldives']
-    dynamic_data = {}
-    
-    for country in countries:
-        # Default fallback values
-        literacy = get_latest_indicator_value(country, 'education', 'SE.ADT.LITR.ZS') or 65.0
-        edu_exp = get_latest_indicator_value(country, 'education', 'SE.XPD.TOTL.GD.ZS') or 3.5
-        urban_elec = get_latest_indicator_value(country, 'jobs', 'EG.ELC.ACCS.UR.ZS') or 98.0
-        rural_elec = get_latest_indicator_value(country, 'jobs', 'EG.ELC.ACCS.RU.ZS') or 80.0
-        female_labor = get_latest_indicator_value(country, 'jobs', 'SL.TLF.CACT.FE.ZS') or 30.0
-        poverty = get_latest_indicator_value(country, 'wdi', 'SI.POV.NAHC') or 20.0
-        
-        # 1. Base Score: Increases with literacy, decreases with poverty
-        # A country with 100% literacy and 0% poverty would have a base of ~35
-        # A country with 50% literacy and 40% poverty would have a base of ~15
-        base = 10 + (literacy / 5) - (poverty / 10)
-        base = max(15, min(35, base))
-        
-        # 2. Education Weight: Increases with government education expenditure % of GDP
-        # Higher investment usually translates to higher returns on education in the job market
-        weight = 0.2 + (edu_exp / 15)
-        weight = max(0.25, min(0.45, weight))
-        
-        # 3. Urban Bonus: Higher if there's a big gap between urban and rural infra (electricity)
-        elec_gap = max(0, urban_elec - rural_elec)
-        bonus = 4 + (elec_gap / 4)
-        bonus = max(6, min(14, bonus))
-        
-        # 4. Gender Penalty: Lower if female labor participation is high
-        penalty = -12 + (female_labor / 10)
-        penalty = max(-10, min(-4, penalty))
-        
-        dynamic_data[country] = {
-            'base': base,
-            'education_weight': weight,
-            'urban_bonus': bonus,
-            'gender_penalty': penalty,
-            'raw_stats': {
-                'Literacy': literacy,
-                'Edu Exp (% GDP)': edu_exp,
-                'Poverty Headcount': poverty,
-                'Female Labor Force %': female_labor
-            }
-        }
-    
-    return dynamic_data
+# Country data
+COUNTRY_DATA = {
+    'Bangladesh': {'base': 25, 'education_weight': 0.32, 'urban_bonus': 8},
+    'India': {'base': 22, 'education_weight': 0.35, 'urban_bonus': 12},
+    'Pakistan': {'base': 20, 'education_weight': 0.30, 'urban_bonus': 10},
+    'Nepal': {'base': 22, 'education_weight': 0.32, 'urban_bonus': 7},
+    'Sri Lanka': {'base': 25, 'education_weight': 0.32, 'urban_bonus': 11}
+}
 
-# Initialize Data-Driven Parameters
-COUNTRY_DATA = get_data_driven_country_data()
+@st.cache_data(ttl=3600)
+def get_historical_data_efficiently():
+    """Helper to load main data once for simulator use"""
+    return load_inequality_data()
 
 def calculate_percentile(country, edu, digital, gender, urban, occupation="Services", credit=False, age="Adult"):
-    """Calculate economic percentile using data-driven dynamic weights"""
+    """Calculate economic percentile with detailed component breakdown"""
     data = COUNTRY_DATA.get(country, COUNTRY_DATA['India'])
     base = data['base']
     weight = data['education_weight']
     bonus = data['urban_bonus']
-    gender_pen = data['gender_penalty']
     
-    # Occupation impact (anchored in regional employment trends)
     occ_map = {"Agriculture": 0, "Industry": 8, "Services": 12, "Public Sector": 15, "Unemployed": -5}
     occ_val = occ_map.get(occupation, 10)
     
-    # Credit access (Modern banking/Fintech impact)
-    credit_val = 7 if credit else 0
+    credit_val = 6 if credit else 0
     
-    # Age factor (Experience vs Entry-level)
-    age_map = {"Youth (<25)": -3, "Adult (25-60)": 7, "Senior (>60)": 3}
-    age_val = age_map.get(age, 5)
+    age_map = {"Youth (<25)": -4, "Adult (25-60)": 6, "Senior (>60)": 2}
+    age_val = age_map.get(age, 4)
     
-    # Core calculations
-    # Education: Max weight scaled by years (out of 20)
-    edu_contrib = (edu / 20) * 45 * weight
-    # Digital: Standardized impact of tech literacy
-    digital_contrib = (digital / 100) * 15
-    # Gender: Penalty derived from regional labor parity
-    gender_contrib = gender * gender_pen
-    # Urbanization: Bonus derived from infrastructure gaps
-    urban_contrib = urban * bonus
+    edu_contrib = (edu/20)*40*weight
+    digital_contrib = (digital/100)*15
+    gender_contrib = gender*(-8)
+    urban_contrib = urban*bonus
     
     raw_percentile = base + edu_contrib + digital_contrib + gender_contrib + urban_contrib + occ_val + credit_val + age_val
     
     components = {
-        "Base Value (Macro Context)": base,
-        "Education Returns": edu_contrib,
-        "Digital Advantage": digital_contrib,
-        "Occupation Premium": occ_val,
-        "Urban Infrastructure Bonus": urban_contrib,
-        "Credit/Bank Access": credit_val,
-        "Age & Experience": age_val,
-        "Gender-based Inequality": gender_contrib 
+        "Base Value": base,
+        "Education": edu_contrib,
+        "Digital Skills": digital_contrib,
+        "Occupation": occ_val,
+        "Urban Advantage": urban_contrib,
+        "Credit Access": credit_val,
+        "Age Factor": age_val,
+        "Gender Impact": gender_contrib 
     }
     
-    return max(1, min(99, raw_percentile)), components
+    return max(0, min(100, raw_percentile)), components
+
+def calculate_historical_percentile(country, year, edu, digital, gender, urban, occupation="Services", credit=False, age="Adult"):
+    """
+    Data-driven historical percentile calculation.
+    Adjusts weights based on real-world indicators for that specific year.
+    Uses south_asia_indicators.csv as the source of truth.
+    """
+    all_data = get_historical_data_efficiently()
+    country_data = all_data[all_data['country'] == country]
+    
+    def get_val(indicator_name, default_val):
+        # Try exact year
+        val_df = country_data[(country_data['indicator'] == indicator_name) & (country_data['year'] == year)]
+        if not val_df.empty:
+            return val_df['value'].values[0]
+        
+        # Try closest year within 5 years
+        proximity_df = country_data[country_data['indicator'] == indicator_name].copy()
+        if proximity_df.empty:
+            return default_val
+        
+        proximity_df['dist'] = abs(proximity_df['year'] - year)
+        closest = proximity_df[proximity_df['dist'] <= 5].sort_values('dist')
+        if not closest.empty:
+            return closest['value'].values[0]
+        
+        return default_val
+
+    # FETCH DATA
+    internet_val = get_val('Individuals using the Internet (% of population)', 0.1 if year < 2005 else 10.0)
+    edu_completion = get_val('Completion rate, primary education (%)', 60.0 if year < 2005 else 80.0)
+    gdp_pc = get_val('GDP per capita (current US$)', 500.0 if year < 2005 else 2000.0)
+    gini_val = get_val('Gini index', 35.0)
+
+    # DYNAMIC WEIGHTS - Continuous Scaling for higher sensitivity
+    # 1. Digital Skills weight: Exclusive eliteness factor
+    # Scaled from 3.0x (at 0% internet) down to 1.0x (at 40% internet)
+    digital_mult = max(1.0, 3.0 - (internet_val / 20.0))
+    digital_weight = 15.0 * digital_mult
+    
+    # 2. Education weight: Scarcity value of formal schooling
+    # Scaled from 1.8x (at 40% completion) down to 1.0x (at 95% completion)
+    edu_mult = max(1.0, 1.8 - ((edu_completion - 40) / 55.0 * 0.8)) if edu_completion > 40 else 1.8
+    base_edu_weight = COUNTRY_DATA.get(country, COUNTRY_DATA['India'])['education_weight']
+    adjusted_edu_weight = base_edu_weight * edu_mult
+    
+    # 3. Base Value: Absolute economic floor calibrated to GDP growth
+    # We use a log scale to reflect that a $2k economy provides a much higher "floor" than a $400 economy
+    gdp_floor = np.log2(max(1, gdp_pc / 100)) * 4
+    base_val = 10.0 + gdp_floor - (gini_val / 5)
+    
+    # Standard components
+    occ_map = {"Agriculture": 0, "Industry": 8, "Services": 12, "Public Sector": 15, "Unemployed": -5}
+    occ_val = occ_map.get(occupation, 10)
+    credit_val = 6 if credit else 0
+    age_map = {"Youth (<25)": -4, "Adult (25-60)": 6, "Senior (>60)": 2}
+    age_val = age_map.get(age, 4)
+    
+    edu_contrib = (edu/20)*40*adjusted_edu_weight
+    digital_contrib = (digital/100)*digital_weight
+    gender_contrib = gender*(-8)
+    urban_contrib = urban*COUNTRY_DATA.get(country, COUNTRY_DATA['India'])['urban_bonus']
+    
+    raw_p = base_val + edu_contrib + digital_contrib + gender_contrib + urban_contrib + occ_val + credit_val + age_val
+    
+    components = {
+        "Base Economic Strength": base_val,
+        "Education Prestige": edu_contrib,
+        "Digital Edge Factor": digital_contrib,
+        "Occupation Sector": occ_val,
+        "Social Access Factors": urban_contrib + gender_contrib + credit_val + age_val
+    }
+    
+    return max(0, min(100, raw_p)), components
 
 def get_tercile(p):
     if p < 33.33: return "Lower Tercile", "#ef4444"
     if p < 66.66: return "Middle Tercile", "#f59e0b"
     return "Upper Tercile", "#10b981"
 
-def render_gauge(p, title="", height=360):
-    # Determine gradient color based on value
-    if p < 33.33:
-        bar_color = "#ef4444"  # Red
-    elif p < 66.66:
-        bar_color = "#f59e0b"  # Orange
-    else:
-        bar_color = "#10b981"  # Green
-    
+def render_gauge(p, title="", height=250):
     fig = go.Figure(go.Indicator(
         mode="gauge+number",
         value=p,
-        number={
-            'font': {'size': 64, 'color': '#ffffff', 'family': 'Inter, sans-serif'},
-            'suffix': '<span style="font-size:32px; color: #94a3b8;">th</span>'
-        },
-        title={
-            'text': title, 
-            'font': {'size': 18, 'color': '#e2e8f0', 'family': 'Inter, sans-serif'}
-        },
+        title={'text': title, 'font': {'size': 18, 'color': '#e2e8f0'}},
         domain={'x': [0, 1], 'y': [0, 1]},
         gauge={
-            'axis': {
-                'range': [0, 100],
-                'tickwidth': 2,
-                'tickcolor': "#64748b",
-                'tickfont': {'size': 14, 'color': '#94a3b8', 'family': 'Inter, sans-serif'},
-                'tickmode': 'array',
-                'tickvals': [0, 20, 40, 60, 80, 100],
-                'showticklabels': True
-            },
-            'bar': {'color': 'rgba(0,0,0,0)', 'thickness': 0},  # Hide the default bar
-            'bgcolor': "rgba(30, 37, 50, 0.4)",
-            'borderwidth': 2,
-            'bordercolor': "rgba(100, 116, 139, 0.4)",
+            'axis': {'range': [0, 100], 'tickwidth': 1, 'tickcolor': "#8b98a5"},
+            'bar': {'color': "#ffffff"},
+            'bgcolor': "rgba(0,0,0,0)",
+            'borderwidth': 0,
             'steps': [
-                {'range': [0, 25], 'color': "#dc2626"},      # Red
-                {'range': [25, 50], 'color': "#fb923c"},     # Orange  
-                {'range': [50, 75], 'color': "#fbbf24"},     # Yellow
-                {'range': [75, 100], 'color': "#3b82f6"}     # Blue
+                {'range': [0, 33.33], 'color': "rgba(239, 68, 68, 0.3)"},
+                {'range': [33.33, 66.66], 'color': "rgba(245, 158, 11, 0.3)"},
+                {'range': [66.66, 100], 'color': "rgba(16, 185, 129, 0.3)"}
             ],
-            'threshold': {
-                'line': {
-                    'color': "#000000",  # Black needle
-                    'width': 14  # Much thicker needle
-                },
-                'thickness': 1.0,  # Maximum thickness for bold appearance
-                'value': p
-            }
+            'threshold': {'line': {'color': "#fff", 'width': 4}, 'thickness': 0.75, 'value': p}
         }
     ))
-    
     fig.update_layout(
         paper_bgcolor='rgba(0,0,0,0)',
         plot_bgcolor='rgba(0,0,0,0)',
-        font={'color': "#e2e8f0", 'family': 'Inter, sans-serif'},
+        font={'color': "#e2e8f0"},
         height=height,
-        margin=dict(l=60, r=60, t=80, b=50)
+        margin=dict(l=30, r=30, t=50, b=20)
     )
-    
     return fig
 
 def generate_insights(sp_p, breakdown_components, sp_country, sp_gender, sp_location, sp_occ, sp_credit, sp_edu, sp_digital):
@@ -428,7 +343,7 @@ def generate_insights(sp_p, breakdown_components, sp_country, sp_gender, sp_loca
         })
     
     # Education
-    edu_contrib = breakdown_components['Education Returns']
+    edu_contrib = breakdown_components['Education']
     if sp_edu < 10:
         potential_gain = (12-sp_edu) * 2
         insights.append({
@@ -443,7 +358,7 @@ def generate_insights(sp_p, breakdown_components, sp_country, sp_gender, sp_loca
     
     # Gender
     if sp_gender == "Female":
-        gender_impact = abs(breakdown_components['Gender-based Inequality'])
+        gender_impact = abs(breakdown_components['Gender Impact'])
         insights.append({
             "type": "warning", "icon": "⚖️", "title": "Gender Wage Gap Impact",
             "text": f"As a woman in {sp_country}, you face a structural disadvantage of about {gender_impact:.0f} points. This reflects real-world wage gaps and labor participation barriers."
@@ -472,7 +387,7 @@ def generate_insights(sp_p, breakdown_components, sp_country, sp_gender, sp_loca
     else:
         insights.append({
             "type": "success", "icon": "🏙️", "title": "Urban Location Advantage",
-            "text": f"Living urban gives you {breakdown_components['Urban Infrastructure Bonus']:.0f} extra points from concentrated economic opportunities."
+            "text": f"Living urban gives you {breakdown_components['Urban Advantage']:.0f} extra points from concentrated economic opportunities."
         })
     
     # Occupation
@@ -492,12 +407,12 @@ def generate_insights(sp_p, breakdown_components, sp_country, sp_gender, sp_loca
     if not sp_credit:
         insights.append({
             "type": "warning", "icon": "🏦", "title": "Financial Exclusion Barrier",
-            "text": f"Lack of credit access costs 7 points. Without banking, you can't save safely, build credit, get loans, or invest. Opening an account is easiest improvement."
+            "text": f"Lack of credit access costs 6 points. Without banking, you can't save safely, build credit, get loans, or invest. Opening an account is easiest improvement."
         })
     else:
         insights.append({
             "type": "success", "icon": "🏦", "title": "Financial Inclusion Advantage",
-            "text": f"Credit access adds 7 points, enabling investment in assets, handling emergencies, and building financial security."
+            "text": f"Credit access adds 6 points, enabling investment in assets, handling emergencies, and building financial security."
         })
     
     # Recommendations
@@ -531,1295 +446,766 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
+# Track simulator mode in session state
+if 'simulator_mode' not in st.session_state:
+    st.session_state.simulator_mode = "individual"
+
 # Methodology
 with st.expander("🔬 How Does This Simulator Work?", expanded=False):
     st.markdown("""
     ### Calculation Methodology
     
-    This simulator uses a **data-driven multi-factor regression model** calibrated using real World Bank indicators (WDI, Education, and Jobs). 
-    
-    **The Data-Driven Difference:**
-    Unlike simple calculators, our model's weights change dynamically based on:
-    - **Macro Base Scores**: Derived from literacy rates and national poverty headcount.
-    - **Education Returns**: Weights adjusted by national expenditure on education.
-    - **Infrastructure Premiums**: Urban bonuses calculated from urban-rural electricity access gaps.
-    - **Gender Adjustments**: Structural penalties based on female labor force participation.
+    This simulator uses a **multi-factor regression model** calibrated for South Asian economies. It shows your **relative economic position** compared to others in your country, not exact income.
     
     **The Formula:**
     ```
-    Economic Position = Base(Country Data) + Education(Weighted) + Digital Skills + 
-                       Gender(Waithed) + Urban/Rural(Gap-driven) + Occupation + 
-                       Credit Access + Age
+    Economic Position = Base + Education + Digital Skills + Gender + 
+                       Urban/Rural + Occupation + Credit Access + Age
     ```
     
-    **Note:** This is a simplified educational model based on macroeconomic indicators. Real individual income varies by employer, specific skills, and micro-market conditions.
+    ### What Each Factor Means:
+    
+    - **Base Value**: Starting point based on country's economic development
+    - **Education**: Each year of schooling increases earning potential
+    - **Digital Skills**: Tech proficiency opening access to higher-paying modern jobs
+    - **Gender**: Accounts for structural wage gaps and labor participation barriers
+    - **Urban/Rural**: Cities concentrate opportunities and offer higher wages
+    - **Occupation**: Different sectors have different income ceilings
+    - **Credit Access**: Financial inclusion enables investment and asset building
+    - **Age**: Career stage affects current earning potential
+    
+    **Note:** This is a simplified educational model. Real income depends on many more factors including specific skills, location, employers, market conditions, and personal circumstances.
     """)
 
-# ============= STEP 1: PROFILE =============
+# ============= MODE SELECTION =============
+st.markdown('<p class="section-header">🎯 Step 1: Choose Your Simulator Mode</p>', unsafe_allow_html=True)
 
-st.markdown('<p class="simulator-section-header">📝 Step 1: Build Your Profile</p>', unsafe_allow_html=True)
+mode_options = ["📊 Individual Profile Simulator", "🔄 Profile Comparison Simulator", "🗓️ Historical Snapshot Comparison"]
+current_mode_idx = 0
+if st.session_state.simulator_mode == "comparison": current_mode_idx = 1
+elif st.session_state.simulator_mode == "historical": current_mode_idx = 2
 
-col_input, col_preview = st.columns([2, 1], gap="large")
-
-with col_input:
-    # Country Selection
-    st.markdown('<div class="simulator-input-label">🌍 Country</div>', unsafe_allow_html=True)
-    sp_country = st.selectbox("Select your country", list(COUNTRY_DATA.keys()), key="sp_country", label_visibility="collapsed")
-    
-    st.markdown("---")
-    
-    # Education & Skills
-    st.markdown('<div class="simulator-input-label">🎓 Education & Skills</div>', unsafe_allow_html=True)
-    col_edu1, col_edu2 = st.columns(2)
-    with col_edu1:
-        sp_edu = st.slider("Years of Formal Education", 0, 20, 12, key="sp_edu")
-    with col_edu2:
-        sp_digital = st.slider("Digital Proficiency (%)", 0, 100, 50, key="sp_digital")
-    
-    st.markdown("---")
-    
-    # Demographics
-    st.markdown('<div class="simulator-input-label">👤 Demographics</div>', unsafe_allow_html=True)
-    col_demo1, col_demo2 = st.columns(2)
-    with col_demo1:
-        sp_gender = st.selectbox("Gender", ["Male", "Female"], key="sp_gender")
-        sp_age = st.selectbox("Age Group", ["Youth (<25)", "Adult (25-60)", "Senior (>60)"], index=1, key="sp_age")
-    with col_demo2:
-        sp_location = st.selectbox("Location Type", ["Rural", "Urban"], key="sp_location")
-        sp_credit = st.checkbox("Has Bank Account / Credit Access", value=False, key="sp_credit")
-    
-    st.markdown("---")
-    
-    # Occupation
-    st.markdown('<div class="simulator-input-label">💼 Occupation</div>', unsafe_allow_html=True)
-    sp_occ = st.selectbox("Primary Work Sector", ["Agriculture", "Industry", "Services", "Public Sector", "Unemployed"], index=2, key="sp_occ", label_visibility="collapsed")
-
-with col_preview:
-    st.markdown("### 👤 Your Profile")
-    st.markdown(f"""
-    <div class="simulator-profile-summary">
-        <b style="color: #1d9bf0;">Country:</b> {sp_country}<br>
-        <b style="color: #1d9bf0;">Education:</b> {sp_edu} years<br>
-        <b style="color: #1d9bf0;">Digital Skills:</b> {sp_digital}%<br>
-        <b style="color: #1d9bf0;">Gender:</b> {sp_gender}<br>
-        <b style="color: #1d9bf0;">Age:</b> {sp_age}<br>
-        <b style="color: #1d9bf0;">Location:</b> {sp_location}<br>
-        <b style="color: #1d9bf0;">Credit:</b> {'Yes ✓' if sp_credit else 'No ✗'}<br>
-        <b style="color: #1d9bf0;">Occupation:</b> {sp_occ}
-    </div>
-    """, unsafe_allow_html=True)
-
-# Calculate
-g_val = 1 if sp_gender == "Female" else 0
-u_val = 1 if sp_location == "Urban" else 0
-sp_p, breakdown_components = calculate_percentile(sp_country, sp_edu, sp_digital, g_val, u_val, sp_occ, sp_credit, sp_age)
-
-
-# ============= STEP 2: RESULTS + INSIGHTS =============
-
-st.markdown('<p class="simulator-section-header">📊 Step 2: Your Simulation Results</p>', unsafe_allow_html=True)
-
-group, color = get_tercile(sp_p)
-
-result_col1, result_col2 = st.columns([1, 1], gap="large")
-
-with result_col1:
-    st.markdown(f"""
-    <div class="simulator-result-container">
-        <p class="simulator-metric-label">Your Economic Percentile</p>
-        <div class="simulator-metric-value-large">{sp_p:.1f}<span style="font-size:2rem; vertical-align:super;">th</span></div>
-        <div class="simulator-metric-group" style="color: {color};">{group}</div>
-        <p style="color: #e2e8f0; margin-top: 20px; font-size: 1.05rem; line-height: 1.6;">
-            This means you rank <b>higher than {sp_p:.1f}%</b> of people in {sp_country}.<br><br>
-            <span style="color: #8b98a5;">In simpler terms: Out of every 100 people, you'd be in a better economic position than about <b>{int(sp_p)}</b> of them.</span>
-        </p>
-    </div>
-    """, unsafe_allow_html=True)
-
-with result_col2:
-<<<<<<< Updated upstream
-    fig_gauge = render_gauge(sp_p, "Your Economic Position", height=300)
-    st.plotly_chart(fig_gauge, use_container_width=True, config={'displayModeBar': False})
-    export_plot_menu(fig_gauge, "personal_economic_position", key="gauge_chart")
-
-# ============= STEP 3: VISUALIZATIONS =============
-
-st.markdown('<p class="section-header">🔍 Step 3: Understanding Your Score</p>', unsafe_allow_html=True)
-
-viz_col1, viz_col2 = st.columns([1, 1], gap="large")
-
-with viz_col1:
-    st.markdown('<div class="pro-card">', unsafe_allow_html=True)
-    st.markdown("### 🏗️ What's Building Your Score?")
-    st.markdown('<p style="color: #8b98a5; font-size: 0.9rem; margin-bottom: 15px;">Size shows how much each factor adds. Bigger = more impact.</p>', unsafe_allow_html=True)
-    
-    tree_data = [{"Factor": k, "Contribution": v} for k, v in breakdown_components.items() if v > 0]
-    
-    if tree_data:
-        df_tree = pd.DataFrame(tree_data)
-        fig_tree = px.treemap(df_tree, path=['Factor'], values='Contribution', color='Contribution', color_continuous_scale='Tealgrn')
-        fig_tree.update_traces(textinfo="label+value", textfont=dict(size=13, color='white'))
-        fig_tree.update_layout(paper_bgcolor='rgba(0,0,0,0)', font={'color': '#e2e8f0'}, height=320, margin=dict(t=5, l=5, r=5, b=5))
-        st.plotly_chart(fig_tree, use_container_width=True, config={'displayModeBar': False})
-        export_plot_menu(fig_tree, "factor_contributions", key="tree_chart")
-    
-    st.markdown('</div>', unsafe_allow_html=True)
-
-with viz_col2:
-    st.markdown('<div class="pro-card">', unsafe_allow_html=True)
-    st.markdown("### 📈 How Education Changes Everything")
-    st.markdown('<p style="color: #8b98a5; font-size: 0.9rem; margin-bottom: 15px;">Shows how your position changes with education. Red star = you now.</p>', unsafe_allow_html=True)
-    
-    edu_range = list(range(0, 21, 2))
-    scores_by_edu = []
-    for e in edu_range:
-        score, _ = calculate_percentile(sp_country, e, sp_digital, g_val, u_val, sp_occ, sp_credit, sp_age)
-        scores_by_edu.append({"Education Years": e, "Percentile": score})
-    
-    df_edu = pd.DataFrame(scores_by_edu)
-    fig_line = px.line(df_edu, x='Education Years', y='Percentile', markers=True)
-    fig_line.add_scatter(x=[sp_edu], y=[sp_p], mode='markers', marker=dict(size=16, color='#ef4444', symbol='star'), name='You Are Here')
-    fig_line.update_traces(line_color='#1d9bf0', line_width=3, selector=dict(mode='lines'))
-    fig_line.update_layout(
-        paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font={'color': '#e2e8f0'}, height=320,
-        xaxis=dict(title="Years of Education", showgrid=True, gridcolor='rgba(255,255,255,0.1)'),
-        yaxis=dict(title="Economic Percentile", showgrid=True, gridcolor='rgba(255,255,255,0.1)'),
-        margin=dict(t=10, l=10, r=10, b=10)
-    )
-    st.plotly_chart(fig_line, use_container_width=True, config={'displayModeBar': False})
-    export_plot_menu(fig_line, "education_impact_trend", key="edu_line_chart")
-    st.markdown('</div>', unsafe_allow_html=True)
-
-# Factor table
-st.markdown('<div class="pro-card">', unsafe_allow_html=True)
-st.markdown("#### 📋 Detailed Factor Contribution")
-factor_df = pd.DataFrame([
-    {"Factor": k, "Points Added": f"{v:+.1f}", "Impact": "🟢 Positive" if v > 0 else ("🔴 Negative" if v < 0 else "⚪ Neutral")}
-    for k, v in breakdown_components.items()
-])
-st.dataframe(factor_df, use_container_width=True, hide_index=True)
-st.markdown('</div>', unsafe_allow_html=True)
-
-# ============= STEP 4: INSIGHTS =============
-
-st.markdown('<p class="section-header">💡 Step 4: What This Means for You - Plain Language Insights</p>', unsafe_allow_html=True)
-=======
-    st.plotly_chart(render_gauge(sp_p, "Your Economic Position"), use_container_width=True)
-
-# Insights Section
-st.markdown('<p class="simulator-section-header">� What This Means for You - Plain Language Insights</p>', unsafe_allow_html=True)
->>>>>>> Stashed changes
-
-insights, recommendations = generate_insights(sp_p, breakdown_components, sp_country, sp_gender, sp_location, sp_occ, sp_credit, sp_edu, sp_digital)
-
-insight_cols = st.columns(2, gap="large")
-
-for idx, insight in enumerate(insights):
-    with insight_cols[idx % 2]:
-        panel_class = f"simulator-insight-panel-{insight['type']}" if insight['type'] in ['success', 'warning'] else "simulator-insight-panel"
-        st.markdown(f"""
-        <div class="{panel_class}">
-            <div class="simulator-insight-title">{insight['icon']} {insight['title']}</div>
-            <p style="color: #e2e8f0; font-size: 0.95rem; line-height: 1.6; margin: 0;">{insight['text']}</p>
-        </div>
-        """, unsafe_allow_html=True)
-
-# Recommendations
-if recommendations:
-    st.markdown('<p class="simulator-section-header">🎯 Personalized Recommendations</p>', unsafe_allow_html=True)
-    st.markdown('<p style="color: #8b98a5; margin-bottom: 15px;">Based on your profile, here are the most impactful actions to improve your economic position:</p>', unsafe_allow_html=True)
-    
-    for i, rec in enumerate(recommendations, 1):
-        priority_color = "#ef4444" if rec['priority'] == "HIGH" else "#f59e0b"
-        st.markdown(f"""
-        <div class="simulator-recommendation-box" style="border-left-color: {priority_color};">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                <b style="color: #ffffff; font-size: 1.05rem;">{i}. {rec['action']}</b>
-                <span style="background: {priority_color}; color: white; padding: 4px 12px; border-radius: 12px; font-size: 0.75rem; font-weight: 600;">{rec['priority']}</span>
-            </div>
-            <p style="color: #e2e8f0; margin: 0; line-height: 1.6;">{rec['detail']}</p>
-        </div>
-        """, unsafe_allow_html=True)
-
-# ============= STEP 3: COMPARISON FEATURE =============
-
-st.markdown('<p class="simulator-section-header">🔄 Step 3: Profile Comparison Tool</p>', unsafe_allow_html=True)
-
-# Add tabs for different comparison types
-comparison_tab1, comparison_tab2 = st.tabs(["👥 Profile vs Profile", "📅 Same Profile Across Years"])
-
-# ============= TAB 1: PROFILE VS PROFILE =============
-with comparison_tab1:
-    st.markdown("""
-    <div class="simulator-comparison-card">
-        <h3 style="text-align: center; color: #ffffff; margin-bottom: 10px;">Compare Two Different Profiles</h3>
-        <p style="text-align: center; color: #8b98a5; margin-bottom: 30px;">Create two profiles to see how different factors affect economic outcomes</p>
-    </div>
-    """, unsafe_allow_html=True)
-
-# Comparison inputs
-comp_col1, comp_col2 = st.columns([1, 1], gap="large")
-
-with comp_col1:
-<<<<<<< Updated upstream
-    # Completely remove all leading whitespace to prevent any markdown code-block triggers
-    st.markdown(f"""
-<div class="pro-card" style="border: 2px solid #3b82f6;">
-<div style="text-align: center; margin-bottom: 20px;">
-<span class="profile-badge badge-primary">Profile A (You)</span>
-</div>
-<div style="background: rgba(59, 130, 246, 0.1); padding: 20px; border-radius: 10px; margin-bottom: 15px;">
-<div style="text-align: center;">
-<div style="font-size: 3.5rem; font-weight: 800; color: #60a5fa; margin: 10px 0;">{sp_p:.1f}<span style="font-size: 1.5rem;">th</span></div>
-<div style="color: #8b98a5; font-size: 0.9rem;">PERCENTILE</div>
-</div>
-</div>
-<div style="line-height: 2; color: #e2e8f0; font-size: 0.9rem;">
-<b style="color: #60a5fa;">Country:</b> {sp_country}<br>
-<b style="color: #60a5fa;">Education:</b> {sp_edu} years<br>
-<b style="color: #60a5fa;">Digital:</b> {sp_digital}%<br>
-<b style="color: #60a5fa;">Gender:</b> {sp_gender}<br>
-<b style="color: #60a5fa;">Location:</b> {sp_location}<br>
-<b style="color: #60a5fa;">Credit:</b> {'Yes' if sp_credit else 'No'}<br>
-<b style="color: #60a5fa;">Occupation:</b> {sp_occ}
-</div>
-</div>
-""", unsafe_allow_html=True)
-
-with comp_col2:
-    # Use a container for interactions and style it
-    with st.container(border=True):
-        st.markdown('<div style="text-align: center; margin-bottom: 20px;"><span class="profile-badge badge-success">Profile B (Compare)</span></div>', unsafe_allow_html=True)
-        
-        # Comparison profile inputs
-        comp_country = st.selectbox("Country", list(COUNTRY_DATA.keys()), index=list(COUNTRY_DATA.keys()).index(sp_country), key="comp_country")
-        
-        comp_col_a, comp_col_b = st.columns(2)
-        with comp_col_a:
-            comp_edu = st.slider("Education (yrs)", 0, 20, sp_edu, key="comp_edu")
-            comp_gender = st.selectbox("Gender", ["Male", "Female"], index=0 if sp_gender == "Male" else 1, key="comp_gender")
-        with comp_col_b:
-            comp_digital = st.slider("Digital (%)", 0, 100, sp_digital, key="comp_digital")
-            comp_location = st.selectbox("Location", ["Rural", "Urban"], index=0 if sp_location == "Rural" else 1, key="comp_location")
-        
-        comp_occ = st.selectbox("Occupation", ["Agriculture", "Industry", "Services", "Public Sector", "Unemployed"], 
-                                index=["Agriculture", "Industry", "Services", "Public Sector", "Unemployed"].index(sp_occ), key="comp_occ")
-        comp_credit = st.checkbox("Credit Access", value=sp_credit, key="comp_credit")
-        comp_age = sp_age  # Keep same for fair comparison
-        
-        # Calculate comparison score
-        comp_g_val = 1 if comp_gender == "Female" else 0
-        comp_u_val = 1 if comp_location == "Urban" else 0
-        comp_p, comp_components = calculate_percentile(comp_country, comp_edu, comp_digital, comp_g_val, comp_u_val, comp_occ, comp_credit, comp_age)
-        comp_group, comp_color = get_tercile(comp_p)
-        
-        st.markdown(f"""
-<div style="background: rgba(16, 185, 129, 0.1); padding: 20px; border-radius: 10px; margin-top: 15px;">
-<div style="text-align: center;">
-<div style="font-size: 3.5rem; font-weight: 800; color: #34d399; margin: 10px 0;">{comp_p:.1f}<span style="font-size: 1.5rem;">th</span></div>
-<div style="color: #8b98a5; font-size: 0.9rem;">PERCENTILE</div>
-</div>
-</div>
-""", unsafe_allow_html=True)
-=======
-    st.markdown('<div style="text-align: center; margin-bottom: 20px;"><span class="simulator-profile-badge simulator-badge-primary">Profile A (You)</span></div>', unsafe_allow_html=True)
-    
-    # Profile A inputs
-    comp_a_country = st.selectbox("Country", list(COUNTRY_DATA.keys()), index=list(COUNTRY_DATA.keys()).index(sp_country), key="comp_a_country")
-    
-    comp_a_col_a, comp_a_col_b = st.columns(2)
-    with comp_a_col_a:
-        comp_a_edu = st.slider("Education (yrs)", 0, 20, sp_edu, key="comp_a_edu")
-        comp_a_gender = st.selectbox("Gender", ["Male", "Female"], index=0 if sp_gender == "Male" else 1, key="comp_a_gender")
-    with comp_a_col_b:
-        comp_a_digital = st.slider("Digital (%)", 0, 100, sp_digital, key="comp_a_digital")
-        comp_a_location = st.selectbox("Location", ["Rural", "Urban"], index=0 if sp_location == "Rural" else 1, key="comp_a_location")
-    
-    comp_a_occ = st.selectbox("Occupation", ["Agriculture", "Industry", "Services", "Public Sector", "Unemployed"], 
-                            index=["Agriculture", "Industry", "Services", "Public Sector", "Unemployed"].index(sp_occ), key="comp_a_occ")
-    comp_a_credit = st.checkbox("Credit Access", value=sp_credit, key="comp_a_credit")
-    comp_a_age = sp_age  # Keep same for fair comparison
-    
-    # Calculate Profile A score
-    comp_a_g_val = 1 if comp_a_gender == "Female" else 0
-    comp_a_u_val = 1 if comp_a_location == "Urban" else 0
-    comp_a_p, comp_a_components = calculate_percentile(comp_a_country, comp_a_edu, comp_a_digital, comp_a_g_val, comp_a_u_val, comp_a_occ, comp_a_credit, comp_a_age)
-    comp_a_group, comp_a_color = get_tercile(comp_a_p)
-    
-    st.markdown(f"""
-    <div style="background: rgba(59, 130, 246, 0.1); padding: 20px; border-radius: 10px; margin-top: 15px; border: 2px solid #3b82f6;">
-        <div style="text-align: center;">
-            <div style="font-size: 3.5rem; font-weight: 800; color: #60a5fa; margin: 10px 0;">{comp_a_p:.1f}<span style="font-size: 1.5rem;">th</span></div>
-            <div style="color: #8b98a5; font-size: 0.9rem;">PERCENTILE</div>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
-
-with comp_col2:
-    st.markdown('<div style="text-align: center; margin-bottom: 20px;"><span class="simulator-profile-badge simulator-badge-success">Profile B (Compare)</span></div>', unsafe_allow_html=True)
-    
-    # Comparison profile inputs
-    comp_country = st.selectbox("Country", list(COUNTRY_DATA.keys()), index=list(COUNTRY_DATA.keys()).index(sp_country), key="comp_country")
-    
-    comp_col_a, comp_col_b = st.columns(2)
-    with comp_col_a:
-        comp_edu = st.slider("Education (yrs)", 0, 20, sp_edu, key="comp_edu")
-        comp_gender = st.selectbox("Gender", ["Male", "Female"], index=0 if sp_gender == "Male" else 1, key="comp_gender")
-    with comp_col_b:
-        comp_digital = st.slider("Digital (%)", 0, 100, sp_digital, key="comp_digital")
-        comp_location = st.selectbox("Location", ["Rural", "Urban"], index=0 if sp_location == "Rural" else 1, key="comp_location")
-    
-    comp_occ = st.selectbox("Occupation", ["Agriculture", "Industry", "Services", "Public Sector", "Unemployed"], 
-                            index=["Agriculture", "Industry", "Services", "Public Sector", "Unemployed"].index(sp_occ), key="comp_occ")
-    comp_credit = st.checkbox("Credit Access", value=sp_credit, key="comp_credit")
-    comp_age = sp_age  # Keep same for fair comparison
-    
-    # Calculate comparison score
-    comp_g_val = 1 if comp_gender == "Female" else 0
-    comp_u_val = 1 if comp_location == "Urban" else 0
-    comp_p, comp_components = calculate_percentile(comp_country, comp_edu, comp_digital, comp_g_val, comp_u_val, comp_occ, comp_credit, comp_age)
-    comp_group, comp_color = get_tercile(comp_p)
-    
-    st.markdown(f"""
-    <div style="background: rgba(16, 185, 129, 0.1); padding: 20px; border-radius: 10px; margin-top: 15px; border: 2px solid #10b981;">
-        <div style="text-align: center;">
-            <div style="font-size: 3.5rem; font-weight: 800; color: #34d399; margin: 10px 0;">{comp_p:.1f}<span style="font-size: 1.5rem;">th</span></div>
-            <div style="color: #8b98a5; font-size: 0.9rem;">PERCENTILE</div>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
->>>>>>> Stashed changes
-
-# Stunning Circular Comparison Visualization
-st.markdown("---")
-st.markdown("### 🎯 Visual Comparison Dashboard")
-
-viz_comp_col1, viz_comp_col2, viz_comp_col3 = st.columns([1, 2, 1], gap="large")
-
-with viz_comp_col1:
-    # Profile A Donut
-    fig_donut_a = go.Figure(data=[go.Pie(
-        values=[comp_a_p, 100-comp_a_p],
-        hole=0.7,
-        marker=dict(colors=['#3b82f6', 'rgba(59, 130, 246, 0.1)'], line=dict(color='#0f1419', width=2)),
-        textinfo='none',
-        hoverinfo='skip',
-        showlegend=False
-    )])
-    fig_donut_a.update_layout(
-        paper_bgcolor='rgba(0,0,0,0)',
-        height=250,
-        margin=dict(t=10, b=10, l=10, r=10),
-        annotations=[
-            dict(text=f"<b>{comp_a_p:.0f}%</b>", x=0.5, y=0.55, font=dict(size=36, color='#60a5fa'), showarrow=False),
-            dict(text="Profile A", x=0.5, y=0.35, font=dict(size=14, color='#8b98a5'), showarrow=False)
-        ]
-    )
-    st.plotly_chart(fig_donut_a, use_container_width=True, config={'displayModeBar': False})
-    export_plot_menu(fig_donut_a, "profile_a_percentile", key="donut_a")
-
-with viz_comp_col2:
-    # Difference indicator  
-    diff = comp_p - comp_a_p
-    diff_color = "#10b981" if diff > 0 else "#ef4444" if diff < 0 else "#8b98a5"
-    diff_icon = "📈" if diff > 0 else "📉" if diff < 0 else "➡️"
-    diff_text = "Better" if diff > 0 else "Worse" if diff < 0 else "Same"
-    
-    st.markdown(f"""
-<div style="text-align: center; padding: 40px; background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(16, 185, 129, 0.1)); border-radius: 16px; border: 2px solid {diff_color};">
-<div style="font-size: 4rem; margin-bottom: 15px;">{diff_icon}</div>
-<div style="font-size: 3rem; font-weight: 900; color: {diff_color}; margin: 15px 0;">
-{'+' if diff > 0 else ''}{diff:.1f}
-</div>
-<div style="color: #8b98a5; font-size: 1rem; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 10px;">Percentile Points</div>
-<div style="color: #e2e8f0; font-size: 1.3rem; font-weight: 600;">Profile B is {diff_text}</div>
-<div style="color: #8b98a5; font-size: 0.9rem; margin-top: 15px;">
-{f"Profile B ranks {abs(diff):.1f} points higher" if diff > 0 else f"Profile A ranks {abs(diff):.1f} points higher" if diff < 0 else "Both profiles are equal"}
-</div>
-</div>
-""", unsafe_allow_html=True)
-
-with viz_comp_col3:
-    # Profile B Donut
-    fig_donut_b = go.Figure(data=[go.Pie(
-        values=[comp_p, 100-comp_p],
-        hole=0.7,
-        marker=dict(colors=['#10b981', 'rgba(16, 185, 129, 0.1)'], line=dict(color='#0f1419', width=2)),
-        textinfo='none',
-        hoverinfo='skip',
-        showlegend=False
-    )])
-    fig_donut_b.update_layout(
-        paper_bgcolor='rgba(0,0,0,0)',
-        height=250,
-        margin=dict(t=10, b=10, l=10, r=10),
-        annotations=[
-            dict(text=f"<b>{comp_p:.0f}%</b>", x=0.5, y=0.55, font=dict(size=36, color='#34d399'), showarrow=False),
-            dict(text="Profile B", x=0.5, y=0.35, font=dict(size=14, color='#8b98a5'), showarrow=False)
-        ]
-    )
-    st.plotly_chart(fig_donut_b, use_container_width=True, config={'displayModeBar': False})
-    export_plot_menu(fig_donut_b, "profile_b_percentile", key="donut_b")
-
-# Side-by-side radar chart with normalized values
-st.markdown("### 🕸️ Multi-Dimensional Comparison")
-
-# Prepare data with actual values and percentages
-categories = ['Education\n(Years)', 'Digital Skills\n(%)', 'Occupation\n(Points)', 'Urban\n(Points)', 'Credit\n(Points)']
-
-# Get raw input values for better comparison
-profile_a_raw = [comp_a_edu, comp_a_digital, comp_a_components['Occupation Premium'], comp_a_components['Urban Infrastructure Bonus'], comp_a_components['Credit/Bank Access']]
-profile_b_raw = [comp_edu, comp_digital, comp_components['Occupation Premium'], comp_components['Urban Infrastructure Bonus'], comp_components['Credit/Bank Access']]
-
-# Normalize to 0-100 scale for better visualization
-def normalize_value(value, max_val):
-    return (value / max_val) * 100 if max_val > 0 else 0
-
-profile_a_normalized = [
-    normalize_value(comp_a_edu, 20),  # Education out of 20
-    comp_a_digital,  # Already 0-100
-    normalize_value(comp_a_components['Occupation Premium'], 15),  # Occupation max is 15
-    normalize_value(comp_a_components['Urban Infrastructure Bonus'], 14),  # Urban max is 14 (dynamic)
-    normalize_value(comp_a_components['Credit/Bank Access'], 7)  # Credit max is 7
-]
-
-profile_b_normalized = [
-    normalize_value(comp_edu, 20),
-    comp_digital,
-    normalize_value(comp_components['Occupation Premium'], 15),
-    normalize_value(comp_components['Urban Infrastructure Bonus'], 14),
-    normalize_value(comp_components['Credit/Bank Access'], 7)
-]
-
-fig_radar = go.Figure()
-
-fig_radar.add_trace(go.Scatterpolar(
-    r=profile_a_normalized,
-    theta=categories,
-    fill='toself',
-    name='Profile A (You)',
-    line=dict(color='#3b82f6', width=3),
-    fillcolor='rgba(59, 130, 246, 0.3)',
-    hovertemplate='<b>%{theta}</b><br>Score: %{r:.1f}/100<extra></extra>'
-))
-
-fig_radar.add_trace(go.Scatterpolar(
-    r=profile_b_normalized,
-    theta=categories,
-    fill='toself',
-    name='Profile B (Compare)',
-    line=dict(color='#10b981', width=3),
-    fillcolor='rgba(16, 185, 129, 0.3)',
-    hovertemplate='<b>%{theta}</b><br>Score: %{r:.1f}/100<extra></extra>'
-))
-
-fig_radar.update_layout(
-    polar=dict(
-        radialaxis=dict(
-            visible=True, 
-            range=[0, 100],
-            tickmode='linear',
-            tick0=0,
-            dtick=20,
-            gridcolor='rgba(255,255,255,0.15)',
-            tickfont=dict(size=11, color='#8b98a5')
-        ),
-        angularaxis=dict(
-            gridcolor='rgba(255,255,255,0.15)',
-            tickfont=dict(size=12, color='#e2e8f0')
-        ),
-        bgcolor='rgba(0,0,0,0)'
-    ),
-    paper_bgcolor='rgba(0,0,0,0)',
-    plot_bgcolor='rgba(0,0,0,0)',
-    font=dict(color='#e2e8f0', family='Inter'),
-    height=500,
-    showlegend=True,
-    legend=dict(
-        orientation="h", 
-        yanchor="bottom", 
-        y=-0.15, 
-        xanchor="center", 
-        x=0.5,
-        bgcolor='rgba(30, 37, 50, 0.8)',
-        bordercolor='rgba(255,255,255,0.1)',
-        borderwidth=1,
-        font=dict(size=13)
-    ),
-    margin=dict(t=40, b=80, l=80, r=80)
+mode = st.radio(
+    "Select Simulation Mode:",
+    mode_options,
+    index=current_mode_idx,
+    horizontal=True,
+    label_visibility="collapsed"
 )
 
-st.plotly_chart(fig_radar, use_container_width=True, config={'displayModeBar': False})
-export_plot_menu(fig_radar, "multi_dimensional_comparison", key="radar_chart")
+# Update state based on radio selection
+if "Individual" in mode:
+    st.session_state.simulator_mode = "individual"
+elif "Historical Snapshot" in mode:
+    st.session_state.simulator_mode = "historical"
+else:
+    st.session_state.simulator_mode = "comparison"
 
-# Add explanation
-st.markdown("""
-<<<<<<< Updated upstream
-<div style="background: rgba(59, 130, 246, 0.05); padding: 15px; border-radius: 8px; border-left: 3px solid #3b82f6; margin-top: 15px;">
-<p style="color: #8b98a5; font-size: 0.9rem; margin: 0;">
-<b style="color: #e2e8f0;">How to read this chart:</b> Each axis represents a different factor, normalized to a 0-100 scale. 
-Larger areas indicate stronger profiles. The blue area shows Profile A (you), and the green area shows Profile B (comparison).
-</p>
-=======
+mode_display = {
+    "individual": "📊 Individual Profile",
+    "comparison": "🔄 Profile Comparison",
+    "historical": "🗓️ Historical Snapshot"
+}
+
+# Display selected mode info
+st.markdown(f"""
+<div style="text-align: center; margin: 20px 0; padding: 15px; background: rgba(29, 155, 240, 0.1); border-radius: 10px; border: 1px solid #1d9bf0;">
+    <span style="color: #1d9bf0; font-weight: 600; font-size: 1.1rem;">
+        Active Mode: {mode_display.get(st.session_state.simulator_mode)} Simulator
+    </span>
 </div>
 """, unsafe_allow_html=True)
-
-# ============= TIMELINE ANALYSIS SECTION (MOVED) =============
-
-st.markdown('<p class="simulator-section-header">📅 Historical Context & Timeline Analysis</p>', unsafe_allow_html=True)
-
-st.markdown("""
-<div style="background: rgba(29, 155, 240, 0.08); padding: 20px; border-radius: 12px; border-left: 4px solid #1d9bf0; margin-bottom: 20px;">
-    <p style="color: #e2e8f0; margin: 0; line-height: 1.6;">
-        <b style="color: #1d9bf0;">📊 Year-Wise Analysis:</b> See how education and employment have evolved in your country over time. 
-        Compare different years to understand long-term trends and how your current profile compares to historical averages.
-    </p>
->>>>>>> Stashed changes
-</div>
-""", unsafe_allow_html=True)
-
-# Load historical data
-from utils.enhanced_loaders import load_education_data, load_jobs_data
-
-timeline_col1_m, timeline_col2_m = st.columns([2, 1])
-
-with timeline_col1_m:
-    # Year selector for comparison
-    selected_years_m = st.select_slider(
-        "📅 Select Years to Compare",
-        options=list(range(2000, 2025)),
-        value=(2000, 2023),
-        help="Compare how indicators changed between two years",
-        key="timeline_slider_moved"
-    )
-
-with timeline_col2_m:
-    show_timeline_m = st.checkbox("📈 Show Timeline Visualizations", value=True, key="timeline_check_moved")
-
-if show_timeline_m:
-    # Load real data
-    edu_data_m = load_education_data()
-    jobs_data_m = load_jobs_data()
-    
-    # Filter for selected country
-    country_edu_m = edu_data_m[edu_data_m['Country Name'] == sp_country]
-    country_jobs_m = jobs_data_m[jobs_data_m['Country Name'] == sp_country]
-    
-    timeline_viz_col1_m, timeline_viz_col2_m = st.columns(2)
-    
-    with timeline_viz_col1_m:
-        st.markdown("### 📚 Education Trends Over Time")
-        
-        # Get enrollment rate data
-        enrollment_data_m = country_edu_m[
-            country_edu_m['Series'].str.contains('enrollment', case=False, na=False) |
-            country_edu_m['Series'].str.contains('enrolment', case=False, na=False)
-        ].copy()
-        
-        if not enrollment_data_m.empty:
-            # Aggregate by year (take mean if multiple indicators)
-            enrollment_trend_m = enrollment_data_m.groupby('Year')['Value'].mean().reset_index()
-            enrollment_trend_m = enrollment_trend_m.sort_values('Year')
-            
-            # Premium "WOW" Visualization for Education
-            fig_edu_m = go.Figure()
-            
-            # Area Fill
-            fig_edu_m.add_trace(go.Scatter(
-                x=enrollment_trend_m['Year'], y=enrollment_trend_m['Value'],
-                mode='lines', line=dict(width=0), fill='tozeroy',
-                fillcolor='rgba(59, 130, 246, 0.1)', hoverinfo='skip', showlegend=False
-            ))
-            
-            # Main Line
-            fig_edu_m.add_trace(go.Scatter(
-                x=enrollment_trend_m['Year'], y=enrollment_trend_m['Value'],
-                mode='lines+markers', name='Enrollment',
-                line=dict(color='#3b82f6', width=4, shape='spline', smoothing=1.3),
-                marker=dict(size=8, color='#ffffff', line=dict(color='#3b82f6', width=2)),
-                hovertemplate="<b>Year: %{x}</b><br>Rate: %{y:.1f}%<extra></extra>"
-            ))
-            
-            # Highlight selected years if applicable
-            if len(selected_years_m) == 2:
-                y1, y2 = selected_years_m
-                v1 = enrollment_trend_m[enrollment_trend_m['Year'] == y1]['Value'].values
-                v2 = enrollment_trend_m[enrollment_trend_m['Year'] == y2]['Value'].values
-                
-                if len(v1) > 0:
-                    fig_edu_m.add_annotation(x=y1, y=v1[0], text=f"{y1}", showarrow=True, arrowhead=2, arrowcolor="#ef4444", ay=-30, font=dict(color="#ef4444"))
-                if len(v2) > 0:
-                    fig_edu_m.add_annotation(x=y2, y=v2[0], text=f"{y2}", showarrow=True, arrowhead=2, arrowcolor="#10b981", ay=-30, font=dict(color="#10b981"))
-            
-            fig_edu_m.update_layout(
-                paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
-                font={'color': '#e2e8f0', 'family': 'Inter'}, height=350,
-                margin=dict(t=30, b=20, l=10, r=10),
-                xaxis=dict(showgrid=True, gridcolor='rgba(255,255,255,0.05)', zeroline=False),
-                yaxis=dict(showgrid=True, gridcolor='rgba(255,255,255,0.05)', zeroline=False, ticksuffix="%"),
-                hovermode='x unified'
-            )
-            st.plotly_chart(fig_edu_m, use_container_width=True, config={'displayModeBar': False})
-            
-            # Show comparison
-            if len(selected_years_m) == 2:
-                year_start_m, year_end_m = selected_years_m
-                val_start_m = enrollment_trend_m[enrollment_trend_m['Year'] == year_start_m]['Value'].values
-                val_end_m = enrollment_trend_m[enrollment_trend_m['Year'] == year_end_m]['Value'].values
-                
-                if len(val_start_m) > 0 and len(val_end_m) > 0:
-                    change_m = val_end_m[0] - val_start_m[0]
-                    change_pct_m = (change_m / val_start_m[0] * 100) if val_start_m[0] > 0 else 0
-                    
-                    st.markdown(f"""
-                    <div style="background: rgba(59, 130, 246, 0.1); padding: 15px; border-radius: 8px; margin-top: 10px;">
-                        <b style="color: #60a5fa;">Change from {year_start_m} to {year_end_m}:</b><br>
-                        <span style="color: {'#10b981' if change_m > 0 else '#ef4444'}; font-size: 1.2rem; font-weight: 600;">
-                            {change_m:+.1f} points ({change_pct_m:+.1f}%)
-                        </span>
-                    </div>
-                    """, unsafe_allow_html=True)
-        else:
-            st.info("📊 Education trend data not available for this country")
-    
-    with timeline_viz_col2_m:
-        st.markdown("### 💼 Employment & Access Trends")
-        
-        # Get electricity access as proxy for development
-        electricity_data_m = country_jobs_m[
-            country_jobs_m['Series Name'].str.contains('electricity', case=False, na=False)
-        ].copy()
-        
-        if not electricity_data_m.empty:
-            electricity_trend_m = electricity_data_m.groupby('Year')['Value'].mean().reset_index()
-            electricity_trend_m = electricity_trend_m.sort_values('Year')
-            
-            # Premium "WOW" Visualization for Jobs & Access
-            fig_jobs_m = go.Figure()
-            
-            # Area Fill
-            fig_jobs_m.add_trace(go.Scatter(
-                x=electricity_trend_m['Year'], y=electricity_trend_m['Value'],
-                mode='lines', line=dict(width=0), fill='tozeroy',
-                fillcolor='rgba(16, 185, 129, 0.1)', hoverinfo='skip', showlegend=False
-            ))
-            
-            # Main Line
-            fig_jobs_m.add_trace(go.Scatter(
-                x=electricity_trend_m['Year'], y=electricity_trend_m['Value'],
-                mode='lines+markers', name='Access Rate',
-                line=dict(color='#10b981', width=4, shape='spline', smoothing=1.3),
-                marker=dict(size=8, color='#ffffff', line=dict(color='#10b981', width=2)),
-                hovertemplate="<b>Year: %{x}</b><br>Rate: %{y:.1f}%<extra></extra>"
-            ))
-            
-            # Highlight selected years if applicable
-            if len(selected_years_m) == 2:
-                y1, y2 = selected_years_m
-                v1 = electricity_trend_m[electricity_trend_m['Year'] == y1]['Value'].values
-                v2 = electricity_trend_m[electricity_trend_m['Year'] == y2]['Value'].values
-                
-                if len(v1) > 0:
-                    fig_jobs_m.add_annotation(x=y1, y=v1[0], text=f"{y1}", showarrow=True, arrowhead=2, arrowcolor="#ef4444", ay=-30, font=dict(color="#ef4444"))
-                if len(v2) > 0:
-                    fig_jobs_m.add_annotation(x=y2, y=v2[0], text=f"{y2}", showarrow=True, arrowhead=2, arrowcolor="#10b981", ay=-30, font=dict(color="#10b981"))
-            
-            fig_jobs_m.update_layout(
-                paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)',
-                font={'color': '#e2e8f0', 'family': 'Inter'}, height=350,
-                margin=dict(t=30, b=20, l=10, r=10),
-                xaxis=dict(showgrid=True, gridcolor='rgba(255,255,255,0.05)', zeroline=False),
-                yaxis=dict(showgrid=True, gridcolor='rgba(255,255,255,0.05)', zeroline=False, ticksuffix="%"),
-                hovermode='x unified'
-            )
-            st.plotly_chart(fig_jobs_m, use_container_width=True, config={'displayModeBar': False})
-            
-            # Show comparison
-            if len(selected_years_m) == 2:
-                year_start_m, year_end_m = selected_years_m
-                val_start_m = electricity_trend_m[electricity_trend_m['Year'] == year_start_m]['Value'].values
-                val_end_m = electricity_trend_m[electricity_trend_m['Year'] == year_end_m]['Value'].values
-                
-                if len(val_start_m) > 0 and len(val_end_m) > 0:
-                    change_m = val_end_m[0] - val_start_m[0]
-                    change_pct_m = (change_m / val_start_m[0] * 100) if val_start_m[0] > 0 else 0
-                    
-                    st.markdown(f"""
-                    <div style="background: rgba(16, 185, 129, 0.1); padding: 15px; border-radius: 8px; margin-top: 10px;">
-                        <b style="color: #34d399;">Change from {year_start_m} to {year_end_m}:</b><br>
-                        <span style="color: {'#10b981' if change_m > 0 else '#ef4444'}; font-size: 1.2rem; font-weight: 600;">
-                            {change_m:+.1f} points ({change_pct_m:+.1f}%)
-                        </span>
-                    </div>
-                    """, unsafe_allow_html=True)
-        else:
-            st.info("📊 Employment trend data not available for this country")
-    
-    # ============= COMPREHENSIVE YEAR COMPARISON (MOVED) =============
-    
-    st.markdown("---")
-    st.markdown("### 📊 Comprehensive Year-Wise Comparison Dashboard")
-    st.markdown(f"""
-    <div style="background: rgba(16, 185, 129, 0.08); padding: 15px; border-radius: 8px; margin-bottom: 20px;">
-        <p style="color: #8b98a5; margin: 0;">
-            <b style="color: #10b981;">Side-by-Side Analysis:</b> Compare ALL key indicators between 
-            <b style="color: #ef4444;">{selected_years_m[0]}</b> and <b style="color: #10b981;">{selected_years_m[1]}</b> 
-            to see how {sp_country} has evolved.
-        </p>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    # Prepare comparison data
-    from utils.enhanced_loaders import load_wdi_data as load_wdi_data_m
-    wdi_data_m = load_wdi_data_m()
-    country_wdi_m = wdi_data_m[wdi_data_m['Country Name'] == sp_country]
-    
-    year_start_m, year_end_m = selected_years_m
-    
-    # Define key indicators to compare
-    comparison_indicators_m = {
-        'Education': {
-            'Enrollment Rate': ('enrollment', country_edu_m),
-            'Literacy Rate': ('literacy', country_edu_m),
-        },
-        'Development': {
-            'GDP per Capita': ('GDP per capita', country_wdi_m),
-            'Poverty Rate': ('poverty', country_wdi_m),
-        },
-        'Employment': {
-            'Electricity Access': ('electricity', country_jobs_m),
-            'Employment Rate': ('employment', country_jobs_m),
-        }
-    }
-    
-    comparison_data_m = []
-    
-    # Extract data for each indicator
-    for category_m, indicators_m in comparison_indicators_m.items():
-        for indicator_name_m, (search_term_m, data_source_m) in indicators_m.items():
-            # Filter data
-            if data_source_m is country_edu_m:
-                filtered_m = data_source_m[
-                    data_source_m['Series'].str.contains(search_term_m, case=False, na=False)
-                ]
-            else:
-                filtered_m = data_source_m[
-                    data_source_m['Series Name'].str.contains(search_term_m, case=False, na=False)
-                ]
-            
-            if not filtered_m.empty:
-                val_start_arr_m = filtered_m[filtered_m['Year'] == year_start_m]['Value'].values
-                val_end_arr_m = filtered_m[filtered_m['Year'] == year_end_m]['Value'].values
-                
-                if len(val_start_arr_m) > 0 and len(val_end_arr_m) > 0:
-                    delta_m = val_end_arr_m[0] - val_start_arr_m[0]
-                    delta_pct_m = (delta_m / val_start_arr_m[0] * 100) if val_start_arr_m[0] > 0 else 0
-                    
-                    comparison_data_m.append({
-                        'Category': category_m,
-                        'Indicator': indicator_name_m,
-                        f'{year_start_m}': f"{val_start_arr_m[0]:.1f}",
-                        f'{year_end_m}': f"{val_end_arr_m[0]:.1f}",
-                        'Change': f"{delta_m:+.1f}",
-                        'Change %': f"{delta_pct_m:+.1f}%",
-                        'Trend': '📈' if delta_m > 0 else '📉' if delta_m < 0 else '➡️'
-                    })
-    
-    if comparison_data_m:
-        comp_df_m = pd.DataFrame(comparison_data_m)
-        st.dataframe(
-            comp_df_m,
-            use_container_width=True,
-            hide_index=True,
-            column_config={
-                'Trend': st.column_config.TextColumn('Trend', width='small'),
-                'Change': st.column_config.TextColumn('Change', width='small'),
-                'Change %': st.column_config.TextColumn('% Change', width='small'),
-            }
-        )
-        
-        # Summary statistics
-        improv_m = sum(1 for item in comparison_data_m if float(item['Change'].replace('+', '')) > 0)
-        total_ind_m = len(comparison_data_m)
-        improv_rate_m = (improv_m / total_ind_m * 100) if total_ind_m > 0 else 0
-        
-        summ_col1_m, summ_col2_m, summ_col3_m = st.columns(3)
-        with summ_col1_m:
-            st.markdown(f'<div style="text-align: center; padding: 20px; background: rgba(16, 185, 129, 0.1); border-radius: 8px;"><div style="font-size: 2rem; color: #10b981;">📈</div><div style="font-size: 1.8rem; font-weight: 700; color: #10b981;">{improv_m}</div><div style="color: #8b98a5; font-size: 0.9rem;">Improved</div></div>', unsafe_allow_html=True)
-        with summ_col2_m:
-            st.markdown(f'<div style="text-align: center; padding: 20px; background: rgba(59, 130, 246, 0.1); border-radius: 8px;"><div style="font-size: 2rem; color: #3b82f6;">📊</div><div style="font-size: 1.8rem; font-weight: 700; color: #3b82f6;">{total_ind_m}</div><div style="color: #8b98a5; font-size: 0.9rem;">Total Indicators</div></div>', unsafe_allow_html=True)
-        with summ_col3_m:
-            st.markdown(f'<div style="text-align: center; padding: 20px; background: rgba(236, 72, 153, 0.1); border-radius: 8px;"><div style="font-size: 2rem; color: #ec4899;">✨</div><div style="font-size: 1.8rem; font-weight: 700; color: #ec4899;">{improv_rate_m:.0f}%</div><div style="color: #8b98a5; font-size: 0.9rem;">Improvement Rate</div></div>', unsafe_allow_html=True)
 
 st.markdown("---")
 
-# Detailed factor comparison - IN EXPANDER
-with st.expander("📊 View Detailed Factor-by-Factor Breakdown"):
-    st.markdown("Compare the exact point contributions for each factor between both profiles.")
-    
-    # Create comparison dataframe
-    comparison_data = []
-    for factor in comp_a_components.keys():
-        comparison_data.append({
-            "Factor": factor,
-            "Profile A": f"{comp_a_components[factor]:+.1f}",
-            "Profile B": f"{comp_components[factor]:+.1f}",
-            "Difference": f"{comp_components[factor] - comp_a_components[factor]:+.1f}"
-        })
-    
-    comp_df = pd.DataFrame(comparison_data)
-    st.dataframe(comp_df, use_container_width=True, hide_index=True)
+# ============= CONDITIONAL RENDERING BASED ON MODE =============
 
+if st.session_state.simulator_mode == "individual":
+    # ============= INDIVIDUAL MODE - STEP 1: PROFILE =============
+    
+    st.markdown('<p class="section-header">📝 Step 2: Build Your Profile</p>', unsafe_allow_html=True)
 
+    col_input, col_preview = st.columns([2, 1], gap="large")
 
-# ============= TAB 2: SAME PROFILE ACROSS YEARS =============
-with comparison_tab2:
-    st.markdown("""
-    <div style="background: linear-gradient(135deg, rgba(236, 72, 153, 0.1), rgba(59, 130, 246, 0.1)); 
-                padding: 20px; border-radius: 12px; margin-bottom: 20px; border-left: 4px solid #ec4899;">
-        <h3 style="text-align: center; color: #ffffff; margin-bottom: 10px;">📅 Yearly Trend Analysis</h3>
-        <p style="text-align: center; color: #8b98a5; margin-bottom: 0;">
-            See how <b>your exact profile</b> would perform in different years. 
-            Compare 2001 vs 2023 to understand how the value of education and skills has changed over time.
-        </p>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    # Year selection for trend analysis
-    trend_col1, trend_col2 = st.columns(2)
-    
-    with trend_col1:
-        year_for_comparison_1 = st.selectbox(
-            "📅 Year 1 (Earlier)",
-            options=list(range(2000, 2025)),
-            index=1,  # 2001
-            key="trend_year_1"
-        )
-    
-    with trend_col2:
-        year_for_comparison_2 = st.selectbox(
-            "📅 Year 2 (Later)",
-            options=list(range(2000, 2025)),
-            index=23,  # 2023
-            key="trend_year_2"
-        )
-    
-    st.markdown("---")
-    
-    # Profile summary
-    st.markdown(f"""
-    <div style="background: rgba(59, 130, 246, 0.1); padding: 15px; border-radius: 8px; margin-bottom: 20px;">
-        <b style="color: #60a5fa;">📋 Your Profile Being Compared:</b><br>
-        <div style="margin-top: 10px; color: #e2e8f0;">
-            <b>Country:</b> {sp_country} &nbsp;|&nbsp; 
-            <b>Education:</b> {sp_edu} years &nbsp;|&nbsp; 
-            <b>Digital:</b> {sp_digital}% &nbsp;|&nbsp; 
-            <b>Gender:</b> {sp_gender} &nbsp;|&nbsp; 
-            <b>Location:</b> {sp_location} &nbsp;|&nbsp; 
-            <b>Occupation:</b> {sp_occ}
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    # Calculate percentile for both years
-    # Note: This is a simulation - in reality we'd adjust based on year-specific data
-    # For now, we'll show how the same education level becomes more/less valuable
-    
-    # Load year-specific data to adjust the calculation
-    edu_data = load_education_data()
-    country_edu_trend = edu_data[edu_data['Country Name'] == sp_country]
-    
-    # Get enrollment rates for both years to estimate education value change
-    enrollment_year1 = country_edu_trend[
-        (country_edu_trend['Year'] == year_for_comparison_1) &
-        (country_edu_trend['Series'].str.contains('enrollment', case=False, na=False))
-    ]['Value'].mean()
-    
-    
-    enrollment_year2 = country_edu_trend[
-        (country_edu_trend['Year'] == year_for_comparison_2) &
-        (country_edu_trend['Series'].str.contains('enrollment', case=False, na=False))
-    ]['Value'].mean()
-    
-    # Adjust percentile based on education improvement (simplified model)
-    # If enrollment increased, same education becomes less rare, so percentile might decrease
-    year1_percentile = sp_p
-    if not pd.isna(enrollment_year1) and not pd.isna(enrollment_year2):
-        enrollment_change_factor = enrollment_year2 / enrollment_year1 if enrollment_year1 > 0 else 1
-        # Higher enrollment = more competition, so adjust percentile
-        year2_percentile = sp_p * (2 - min(enrollment_change_factor, 1.5))  # Cap at 1.5x growth
-    else:
-        year2_percentile = sp_p * 0.95  # Default: slight decrease due to general education improvement
-    
-    year2_percentile = min(99.9, max(1.0, year2_percentile))  # Keep within bounds
-    
-    # Display comparison cards
-    year_comp_col1, year_comp_col2, year_comp_col3 = st.columns([1, 0.5, 1])
-    
-    with year_comp_col1:
-        st.markdown(f"""
-        <div style="background: rgba(239, 68, 68, 0.15); padding: 25px; border-radius: 12px; border: 2px solid #ef4444;">
-            <div style="text-align: center;">
-                <div style="font-size: 1.2rem; color: #fca5a5; margin-bottom: 10px;">📅 {year_for_comparison_1}</div>
-                <div style="font-size: 3.5rem; font-weight: 800; color: #ef4444;">{year1_percentile:.1f}<span style="font-size: 1.5rem;">th</span></div>
-                <div style="color: #8b98a5; font-size: 0.9rem; margin-top: 10px;">PERCENTILE</div>
-                <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(239, 68, 68, 0.3);">
-                    <div style="color: #e2e8f0; font-size: 0.85rem;">
-                        Your {sp_edu} years of education placed you <b style="color: #ef4444;">above {year1_percentile:.1f}%</b> of people
-                    </div>
-                </div>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    with year_comp_col2:
-        percentile_change = year2_percentile - year1_percentile
-        arrow = "→" if abs(percentile_change) < 1 else ("↗" if percentile_change > 0 else "↘")
-        arrow_color = "#10b981" if percentile_change > 0 else "#ef4444" if percentile_change < 0 else "#8b98a5"
+    with col_input:
+        st.markdown('<div class="pro-card">', unsafe_allow_html=True)
         
+        st.markdown('<div class="input-group-label">🌍 Country</div>', unsafe_allow_html=True)
+        sp_country = st.selectbox("Select your country", list(COUNTRY_DATA.keys()), key="sp_country", label_visibility="collapsed")
+        
+        st.markdown("---")
+        st.markdown('<div class="input-group-label">🎓 Education & Skills</div>', unsafe_allow_html=True)
+        
+        col_edu1, col_edu2 = st.columns(2)
+        with col_edu1:
+            sp_edu = st.slider("Years of Formal Education", 0, 20, 12, key="sp_edu")
+        with col_edu2:
+            sp_digital = st.slider("Digital Proficiency (%)", 0, 100, 50, key="sp_digital")
+        
+        st.markdown("---")
+        st.markdown('<div class="input-group-label">👤 Demographics</div>', unsafe_allow_html=True)
+        
+        col_demo1, col_demo2 = st.columns(2)
+        with col_demo1:
+            sp_gender = st.selectbox("Gender", ["Male", "Female"], key="sp_gender")
+            sp_age = st.selectbox("Age Group", ["Youth (<25)", "Adult (25-60)", "Senior (>60)"], index=1, key="sp_age")
+        with col_demo2:
+            sp_location = st.selectbox("Location Type", ["Rural", "Urban"], key="sp_location")
+            sp_credit = st.checkbox("Has Bank Account / Credit Access", value=False, key="sp_credit")
+        
+        st.markdown("---")
+        st.markdown('<div class="input-group-label">💼 Occupation</div>', unsafe_allow_html=True)
+        sp_occ = st.selectbox("Primary Work Sector", ["Agriculture", "Industry", "Services", "Public Sector", "Unemployed"], index=2, key="sp_occ", label_visibility="collapsed")
+        
+        st.markdown('</div>', unsafe_allow_html=True)
+
+    with col_preview:
+        st.markdown('<div class="pro-card">', unsafe_allow_html=True)
+        st.markdown("### 👤 Your Profile")
         st.markdown(f"""
-        <div style="display: flex; align-items: center; justify-content: center; height: 100%;">
-            <div style="text-align: center;">
-                <div style="font-size: 3rem; color: {arrow_color};">{arrow}</div>
-                <div style="font-size: 1.2rem; font-weight: 700; color: {arrow_color};">
-                    {percentile_change:+.1f}
-                </div>
-                <div style="color: #8b98a5; font-size: 0.75rem;">points</div>
-            </div>
+        <div style="line-height: 2.2; color: #e2e8f0; font-size: 0.95rem;">
+            <b style="color: #1d9bf0;">Country:</b> {sp_country}<br>
+            <b style="color: #1d9bf0;">Education:</b> {sp_edu} years<br>
+            <b style="color: #1d9bf0;">Digital Skills:</b> {sp_digital}%<br>
+            <b style="color: #1d9bf0;">Gender:</b> {sp_gender}<br>
+            <b style="color: #1d9bf0;">Age:</b> {sp_age}<br>
+            <b style="color: #1d9bf0;">Location:</b> {sp_location}<br>
+            <b style="color: #1d9bf0;">Credit:</b> {'Yes ✓' if sp_credit else 'No ✗'}<br>
+            <b style="color: #1d9bf0;">Occupation:</b> {sp_occ}
         </div>
         """, unsafe_allow_html=True)
-    
-    with year_comp_col3:
+        st.markdown('</div>', unsafe_allow_html=True)
+
+    # Calculate
+    g_val = 1 if sp_gender == "Female" else 0
+    u_val = 1 if sp_location == "Urban" else 0
+    sp_p, breakdown_components = calculate_percentile(sp_country, sp_edu, sp_digital, g_val, u_val, sp_occ, sp_credit, sp_age)
+
+    # ============= STEP 2: RESULTS =============
+
+    st.markdown('<p class="section-header">📊 Step 2: Your Simulation Results</p>', unsafe_allow_html=True)
+
+    group, color = get_tercile(sp_p)
+
+    result_col1, result_col2 = st.columns([1, 1], gap="large")
+
+    with result_col1:
         st.markdown(f"""
-        <div style="background: rgba(16, 185, 129, 0.15); padding: 25px; border-radius: 12px; border: 2px solid #10b981;">
-            <div style="text-align: center;">
-                <div style="font-size: 1.2rem; color: #6ee7b7; margin-bottom: 10px;">📅 {year_for_comparison_2}</div>
-                <div style="font-size: 3.5rem; font-weight: 800; color: #10b981;">{year2_percentile:.1f}<span style="font-size: 1.5rem;">th</span></div>
-                <div style="color: #8b98a5; font-size: 0.9rem; margin-top: 10px;">PERCENTILE</div>
-                <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid rgba(16, 185, 129, 0.3);">
-                    <div style="color: #e2e8f0; font-size: 0.85rem;">
-                        Same education now places you <b style="color: #10b981;">above {year2_percentile:.1f}%</b> of people
-                    </div>
-                </div>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    # Interpretation
-    st.markdown("---")
-    st.markdown("### 📖 What This Means")
-    
-    if percentile_change > 2:
-        interpretation = f"""
-        <div style="background: rgba(16, 185, 129, 0.1); padding: 20px; border-radius: 12px; border-left: 4px solid #10b981;">
-            <b style="color: #10b981;">✅ Education Value Increased</b><br>
-            <p style="color: #e2e8f0; margin-top: 10px;">
-                Between {year_for_comparison_1} and {year_for_comparison_2}, having {sp_edu} years of education became 
-                <b>MORE valuable</b> in {sp_country}. Despite more people getting educated, skilled workers are in higher demand.
+        <div class="result-container">
+            <p class="metric-label">Your Economic Percentile</p>
+            <div class="metric-value-large">{sp_p:.1f}<span style="font-size:2rem; vertical-align:super;">th</span></div>
+            <div class="metric-group" style="color: {color};">{group}</div>
+            <p style="color: #e2e8f0; margin-top: 20px; font-size: 1.05rem; line-height: 1.6;">
+                This means you rank <b>higher than {sp_p:.1f}%</b> of people in {sp_country}.<br><br>
+                <span style="color: #8b98a5;">In simpler terms: Out of every 100 people, you'd be in a better economic position than about <b>{int(sp_p)}</b> of them.</span>
             </p>
         </div>
-        """
-    elif percentile_change < -2:
-        interpretation = f"""
-        <div style="background: rgba(239, 68, 68, 0.1); padding: 20px; border-radius: 12px; border-left: 4px solid #ef4444;">
-            <b style="color: #ef4444;">⚠️ Increased Competition</b><br>
-            <p style="color: #e2e8f0; margin-top: 10px;">
-                Between {year_for_comparison_1} and {year_for_comparison_2}, having {sp_edu} years of education became 
-                <b>less rare</b> in {sp_country}. More people achieved similar education levels, increasing competition.
-            </p>
-        </div>
-        """
-    else:
-        interpretation = f"""
-        <div style="background: rgba(59, 130, 246, 0.1); padding: 20px; border-radius: 12px; border-left: 4px solid #3b82f6;">
-            <b style="color: #3b82f6;">➡️ Relatively Stable</b><br>
-            <p style="color: #e2e8f0; margin-top: 10px;">
-                Between {year_for_comparison_1} and {year_for_comparison_2}, having {sp_edu} years of education 
-                maintained similar relative value in {sp_country}.
-            </p>
-        </div>
-        """
-    
-    st.markdown(interpretation, unsafe_allow_html=True)
-    
-    # Year-by-year trend chart
-    st.markdown("---")
-    st.markdown("### 📈 Year-by-Year Trend")
-    
-    years_range = list(range(year_for_comparison_1, year_for_comparison_2 + 1))
-    percentile_trend = []
-    
-    for year in years_range:
-        # Get enrollment for this year
-        enrollment = country_edu_trend[
-            (country_edu_trend['Year'] == year) &
-            (country_edu_trend['Series'].str.contains('enrollment', case=False, na=False))
-        ]['Value'].mean()
-        
-        if not pd.isna(enrollment) and not pd.isna(enrollment_year1):
-            factor = enrollment / enrollment_year1 if enrollment_year1 > 0 else 1
-            percentile_year = sp_p * (2 - min(factor, 1.5))
-        else:
-            # Linear interpolation
-            progress = (year - year_for_comparison_1) / (year_for_comparison_2 - year_for_comparison_1)
-            percentile_year = year1_percentile + (year2_percentile - year1_percentile) * progress
-        
-        percentile_trend.append({
-            'Year': year,
-            'Percentile': min(99.9, max(1.0, percentile_year))
-        })
-    
-    trend_df = pd.DataFrame(percentile_trend)
-    
-    if not trend_df.empty and len(trend_df) > 1:
-        # Create the "WOW" Glowing Area Chart
-        fig_trend = go.Figure()
-
-        # 1. Background Area with Gradient-like effect
-        fig_trend.add_trace(go.Scatter(
-            x=trend_df['Year'],
-            y=trend_df['Percentile'],
-            mode='lines',
-            line=dict(width=0),
-            fill='tozeroy',
-            fillcolor='rgba(236, 72, 153, 0.15)',
-            hoverinfo='skip',
-            showlegend=False
-        ))
-
-        # 2. Main Vibrant Line with Spline Smoothing (THICKER and BIGGER Markers)
-        fig_trend.add_trace(go.Scatter(
-            x=trend_df['Year'],
-            y=trend_df['Percentile'],
-            mode='lines+markers',
-            name='Economic Percentile',
-            line=dict(
-                color='#ec4899', 
-                width=6, 
-                shape='spline',
-                smoothing=1.3
-            ),
-            marker=dict(
-                size=12,
-                color='#ffffff',
-                line=dict(color='#ec4899', width=3),
-                symbol='diamond'
-            ),
-            hovertemplate="<b>Year: %{x}</b><br>Percentile: %{y:.1f}th<extra></extra>"
-        ))
-
-        # 3. Add Glow Effect (thin blurred overlay)
-        fig_trend.add_trace(go.Scatter(
-            x=trend_df['Year'],
-            y=trend_df['Percentile'],
-            mode='lines',
-            line=dict(
-                color='#ec4899', 
-                width=12, 
-                shape='spline',
-                smoothing=1.3
-            ),
-            opacity=0.2,
-            hoverinfo='skip',
-            showlegend=False
-        ))
-
-        # 4. Summary Insight and Annotations
-        first_p = trend_df.iloc[0]['Percentile']
-        last_p = trend_df.iloc[-1]['Percentile']
-        total_delta = last_p - first_p
-        
-        # Summary Card to EMPHASIZE the change
-        status_text = "Progress" if total_delta > 0 else "Decline"
-        status_color = "#10b981" if total_delta > 0 else "#ef4444"
-        arrow_icon = "↗️" if total_delta > 0 else "↘️"
-
-        st.markdown(f"""
-        <div style="background: rgba(30, 41, 59, 0.4); padding: 20px; border-radius: 12px; border-left: 5px solid {status_color}; margin-bottom: 25px;">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-                <div>
-                    <span style="color: #94a3b8; font-size: 0.85rem; text-transform: uppercase; font-weight: 600;">Overall Trend</span>
-                    <h2 style="color: #e2e8f0; margin: 0; font-weight: 800;">{total_delta:+.1f}% {status_text} {arrow_icon}</h2>
-                </div>
-                <div style="text-align: right; background: rgba(0,0,0,0.2); padding: 8px 15px; border-radius: 8px;">
-                    <div style="color: #94a3b8; font-size: 0.75rem;">TIMELINE</div>
-                    <div style="color: #60a5fa; font-weight: 700; font-size: 1.1rem;">{year_for_comparison_1} — {year_for_comparison_2}</div>
-                </div>
-            </div>
-        </div>
         """, unsafe_allow_html=True)
 
-        fig_trend.add_annotation(
-            x=trend_df.iloc[0]['Year'], y=first_p,
-            text=f"BASE: {first_p:.1f}%",
-            showarrow=True, arrowhead=3, arrowcolor="#94a3b8",
-            ax=-30, ay=-40, font=dict(color="#94a3b8", size=11),
-            bgcolor="rgba(15, 23, 42, 0.9)", bordercolor="#94a3b8", borderpad=4
-        )
+    with result_col2:
+        st.plotly_chart(render_gauge(sp_p, "Your Economic Position", height=300), use_container_width=True)
+
+    # ============= STEP 3: VISUALIZATIONS =============
+
+    st.markdown('<p class="section-header">🔍 Step 3: Understanding Your Score</p>', unsafe_allow_html=True)
+
+    viz_col1, viz_col2 = st.columns([1, 1], gap="large")
+
+    with viz_col1:
+        st.markdown('<div class="pro-card">', unsafe_allow_html=True)
+        st.markdown("### 🏗️ What's Building Your Score?")
+        st.markdown('<p style="color: #8b98a5; font-size: 0.9rem; margin-bottom: 15px;">Size shows how much each factor adds. Bigger = more impact.</p>', unsafe_allow_html=True)
         
-        fig_trend.add_annotation(
-            x=trend_df.iloc[-1]['Year'], y=last_p,
-            text=f"NOW: {last_p:.1f}%",
-            showarrow=True, arrowhead=3, arrowcolor="#ec4899",
-            ax=30, ay=-40, font=dict(color="#ec4899", size=13, weight="bold"),
-            bgcolor="rgba(15, 23, 42, 0.9)", bordercolor="#ec4899", borderpad=4
-        )
-
-        # 5. Tight Dynamic Layout (Maximum emphasis on variation)
-        min_p = trend_df['Percentile'].min()
-        max_p = trend_df['Percentile'].max()
-        # Tighten padding to make variation look more dramatic
-        padding = max(0.5, (max_p - min_p) * 0.1) if max_p > min_p else 2
+        tree_data = [{"Factor": k, "Contribution": v} for k, v in breakdown_components.items() if v > 0]
         
-        fig_trend.update_layout(
-            paper_bgcolor='rgba(0,0,0,0)',
-            plot_bgcolor='rgba(0,0,0,0)',
-            font={'color': '#e2e8f0', 'family': 'Inter'},
-            height=480, # Slightly taller
-            margin=dict(t=30, b=20, l=20, r=20),
-            xaxis=dict(
-                showgrid=True, 
-                gridcolor='rgba(255,255,255,0.05)',
-                tickfont=dict(size=12, color='#94a3b8'),
-                zeroline=False,
-                showspikes=True,
-                spikemode='across',
-                spikesnap='cursor',
-                showline=True,
-                spikecolor="rgba(236, 72, 153, 0.3)",
-                spikethickness=1
-            ),
-            yaxis=dict(
-                showgrid=True, 
-                gridcolor='rgba(255,255,255,0.1)', 
-                range=[max(0, min_p - padding), min(100, max_p + padding)],
-                tickfont=dict(size=12, color='#94a3b8'),
-                zeroline=False,
-                ticksuffix="%"
-            ),
-            hovermode='x unified',
-            hoverlabel=dict(
-                bgcolor='#1e293b',
-                font_size=14,
-                font_family="Inter"
-            )
-        )
+        if tree_data:
+            df_tree = pd.DataFrame(tree_data)
+            fig_tree = px.treemap(df_tree, path=['Factor'], values='Contribution', color='Contribution', color_continuous_scale='Tealgrn')
+            fig_tree.update_traces(textinfo="label+value", textfont=dict(size=13, color='white'))
+            fig_tree.update_layout(paper_bgcolor='rgba(0,0,0,0)', font={'color': '#e2e8f0'}, height=320, margin=dict(t=5, l=5, r=5, b=5))
+            st.plotly_chart(fig_tree, use_container_width=True)
         
-        st.plotly_chart(fig_trend, use_container_width=True, config={'displayModeBar': False})
-    elif not trend_df.empty:
-        st.info("💡 Select a wider year range to see the historical trend visualization.")
-    else:
-        st.warning("⚠️ Cannot generate trend chart. Please ensure Year 1 is earlier than Year 2.")
-    
-    st.markdown(f"""
-    <div style="background: rgba(236, 72, 153, 0.08); padding: 15px; border-radius: 8px; margin-top: 15px;">
-        <p style="color: #8b98a5; margin: 0; font-size: 0.9rem;">
-            <b style="color: #ec4899;">📊 Trend Analysis:</b> This chart shows how your exact profile 
-            ({ sp_edu} years education, {sp_digital}% digital skills) would have performed each year from 
-            {year_for_comparison_1} to {year_for_comparison_2}.
-        </p>
-    </div>
-    """, unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=True)
 
-# ============= STEP 4: DETAILED VISUALIZATIONS =============
-
-st.markdown('<p class="simulator-section-header">📈 Step 4: Detailed Analysis & Visualizations</p>', unsafe_allow_html=True)
-
-viz_col1, viz_col2 = st.columns([1, 1], gap="large")
-
-with viz_col1:
-    st.markdown("### 🏗️ What's Building Your Score?")
-    st.markdown('<p style="color: #8b98a5; font-size: 0.9rem; margin-bottom: 15px;">Size shows how much each factor adds. Bigger = more impact.</p>', unsafe_allow_html=True)
-    
-    tree_data = [{"Factor": k, "Contribution": v} for k, v in breakdown_components.items() if v > 0]
-    
-    if tree_data:
-        df_tree = pd.DataFrame(tree_data)
-        fig_tree = px.treemap(
-            df_tree, 
-            path=['Factor'], 
-            values='Contribution', 
-            color='Contribution', 
-            color_continuous_scale='Tealgrn',
-            hover_data={'Contribution': ':.2f'}
+    with viz_col2:
+        st.markdown('<div class="pro-card">', unsafe_allow_html=True)
+        st.markdown("### 📈 How Education Changes Everything")
+        st.markdown('<p style="color: #8b98a5; font-size: 0.9rem; margin-bottom: 15px;">Shows how your position changes with education. Red star = you now.</p>', unsafe_allow_html=True)
+        
+        edu_range = list(range(0, 21, 2))
+        scores_by_edu = []
+        for e in edu_range:
+            score, _ = calculate_percentile(sp_country, e, sp_digital, g_val, u_val, sp_occ, sp_credit, sp_age)
+            scores_by_edu.append({"Education Years": e, "Percentile": score})
+        
+        df_edu = pd.DataFrame(scores_by_edu)
+        fig_line = px.line(df_edu, x='Education Years', y='Percentile', markers=True)
+        fig_line.add_scatter(x=[sp_edu], y=[sp_p], mode='markers', marker=dict(size=16, color='#ef4444', symbol='star'), name='You Are Here')
+        fig_line.update_traces(line_color='#1d9bf0', line_width=3, selector=dict(mode='lines'))
+        fig_line.update_layout(
+            paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font={'color': '#e2e8f0'}, height=320,
+            xaxis=dict(title="Years of Education", showgrid=True, gridcolor='rgba(255,255,255,0.1)'),
+            yaxis=dict(title="Economic Percentile", showgrid=True, gridcolor='rgba(255,255,255,0.1)'),
+            margin=dict(t=10, l=10, r=10, b=10)
         )
-        fig_tree.update_traces(
-            textinfo="label+value", 
-            textfont=dict(size=14, color='white', family='Inter, sans-serif'),
-            marker=dict(line=dict(color='rgba(255,255,255,0.3)', width=2)),
-            hovertemplate='<b>%{label}</b><br>Contribution: %{value:.1f} points<extra></extra>'
-        )
-        fig_tree.update_layout(
-            paper_bgcolor='rgba(0,0,0,0)', 
-            font={'color': '#e2e8f0', 'family': 'Inter, sans-serif'}, 
-            height=480, 
-            margin=dict(t=5, l=5, r=5, b=5)
-        )
-        st.plotly_chart(fig_tree, use_container_width=True)
+        st.plotly_chart(fig_line, use_container_width=True)
+        st.markdown('</div>', unsafe_allow_html=True)
 
-with viz_col2:
-    st.markdown("### 📈 How Education Changes Everything")
-    st.markdown('<p style="color: #8b98a5; font-size: 0.9rem; margin-bottom: 15px;">Shows how your position changes with education. Red star = you now.</p>', unsafe_allow_html=True)
-    
-    edu_range = list(range(0, 21, 2))
-    scores_by_edu = []
-    for e in edu_range:
-        score, _ = calculate_percentile(sp_country, e, sp_digital, g_val, u_val, sp_occ, sp_credit, sp_age)
-        scores_by_edu.append({"Education Years": e, "Percentile": score})
-    
-    df_edu = pd.DataFrame(scores_by_edu)
-    fig_line = px.line(df_edu, x='Education Years', y='Percentile', markers=True)
-    fig_line.add_scatter(
-        x=[sp_edu], 
-        y=[sp_p], 
-        mode='markers', 
-        marker=dict(size=18, color='#ef4444', symbol='star', line=dict(color='white', width=2)), 
-        name='You Are Here',
-        hovertemplate='<b>Your Position</b><br>Education: %{x} years<br>Percentile: %{y:.1f}<extra></extra>'
-    )
-    fig_line.update_traces(
-        line_color='#1d9bf0', 
-        line_width=4, 
-        selector=dict(mode='lines'),
-        hovertemplate='Education: %{x} years<br>Percentile: %{y:.1f}<extra></extra>'
-    )
-    fig_line.update_layout(
-        paper_bgcolor='rgba(0,0,0,0)', 
-        plot_bgcolor='rgba(0,0,0,0)', 
-        font={'color': '#e2e8f0', 'family': 'Inter, sans-serif'}, 
-        height=480,
-        xaxis=dict(
-            title="Years of Education", 
-            showgrid=True, 
-            gridcolor='rgba(255,255,255,0.1)',
-            title_font=dict(size=14, color='#e2e8f0')
-        ),
-        yaxis=dict(
-            title="Economic Percentile", 
-            showgrid=True, 
-            gridcolor='rgba(255,255,255,0.1)',
-            title_font=dict(size=14, color='#e2e8f0')
-        ),
-        margin=dict(t=10, l=10, r=10, b=10),
-        hovermode='x unified'
-    )
-    st.plotly_chart(fig_line, use_container_width=True)
-
-# Factor table - HIDE BY DEFAULT IN EXPANDER
-with st.expander("📊 View Detailed Factor-by-Factor Calculations"):
+    # Factor table
+    st.markdown('<div class="pro-card">', unsafe_allow_html=True)
     st.markdown("#### 📋 Detailed Factor Contribution")
-    st.markdown('<p style="color: #8b98a5; font-size: 0.9rem; margin-bottom: 15px;">Complete breakdown of how each factor impacts your economic position</p>', unsafe_allow_html=True)
     factor_df = pd.DataFrame([
         {"Factor": k, "Points Added": f"{v:+.1f}", "Impact": "🟢 Positive" if v > 0 else ("🔴 Negative" if v < 0 else "⚪ Neutral")}
         for k, v in breakdown_components.items()
     ])
     st.dataframe(factor_df, use_container_width=True, hide_index=True)
+    st.markdown('</div>', unsafe_allow_html=True)
+
+    # ============= STEP 4: INSIGHTS =============
+
+    st.markdown('<p class="section-header">💡 Step 4: What This Means for You - Plain Language Insights</p>', unsafe_allow_html=True)
+
+    insights, recommendations = generate_insights(sp_p, breakdown_components, sp_country, sp_gender, sp_location, sp_occ, sp_credit, sp_edu, sp_digital)
+
+    insight_cols = st.columns(2, gap="large")
+
+    for idx, insight in enumerate(insights):
+        with insight_cols[idx % 2]:
+            panel_class = f"insight-panel-{insight['type']}" if insight['type'] in ['success', 'warning'] else "insight-panel"
+            st.markdown(f"""
+            <div class="{panel_class}">
+                <div class="insight-title">{insight['icon']} {insight['title']}</div>
+                <p style="color: #e2e8f0; font-size: 0.95rem; line-height: 1.6; margin: 0;">{insight['text']}</p>
+            </div>
+            """, unsafe_allow_html=True)
+
+    # Recommendations
+    if recommendations:
+        st.markdown('<p class="section-header">🎯 Personalized Recommendations</p>', unsafe_allow_html=True)
+        st.markdown('<div class="pro-card">', unsafe_allow_html=True)
+        st.markdown('<p style="color: #8b98a5; margin-bottom: 15px;">Based on your profile, here are the most impactful actions to improve your economic position:</p>', unsafe_allow_html=True)
+        
+        for i, rec in enumerate(recommendations, 1):
+            priority_color = "#ef4444" if rec['priority'] == "HIGH" else "#f59e0b"
+            st.markdown(f"""
+            <div style="background: rgba(255,255,255,0.03); padding: 15px; border-radius: 8px; margin-bottom: 12px; border-left: 3px solid {priority_color};">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <b style="color: #ffffff; font-size: 1.05rem;">{i}. {rec['action']}</b>
+                    <span style="background: {priority_color}; color: white; padding: 4px 12px; border-radius: 12px; font-size: 0.75rem; font-weight: 600;">{rec['priority']}</span>
+                </div>
+                <p style="color: #e2e8f0; margin: 0; line-height: 1.6;">{rec['detail']}</p>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        st.markdown('</div>', unsafe_allow_html=True)
+
+# ============= COMPARISON MODE =============
+elif st.session_state.simulator_mode == "comparison":
+    st.markdown('<p class="section-header">📝 Step 2: Build Both Profiles</p>', unsafe_allow_html=True)
+    
+    st.markdown("""
+    <div class="comparison-card">
+        <h3 style="text-align: center; color: #ffffff; margin-bottom: 10px;">Profile Comparison Tool</h3>
+        <p style="text-align: center; color: #8b98a5; margin-bottom: 20px;">Create two independent profiles to see how different factors affect economic outcomes</p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Profile A and B inputs side by side - BOTH INDEPENDENT
+    profile_col1, profile_col2 = st.columns([1, 1], gap="large")
+    
+    with profile_col1:
+        st.markdown('<div class="pro-card" style="border: 2px solid #3b82f6;">', unsafe_allow_html=True)
+        st.markdown('<div style="text-align: center; margin-bottom: 20px;"><span class="profile-badge badge-primary">Profile A</span></div>', unsafe_allow_html=True)
+        
+        # PROFILE A INPUTS
+        st.markdown('<div class="input-group-label">🌍 Country</div>', unsafe_allow_html=True)
+        profile_a_country = st.selectbox("Country", list(COUNTRY_DATA.keys()), key="profile_a_country", label_visibility="collapsed")
+        
+        st.markdown("---")
+        st.markdown('<div class="input-group-label">🎓 Education & Skills</div>', unsafe_allow_html=True)
+        col_a1, col_a2 = st.columns(2)
+        with col_a1:
+            profile_a_edu = st.slider("Education (yrs)", 0, 20, 12, key="profile_a_edu")
+        with col_a2:
+            profile_a_digital = st.slider("Digital (%)", 0, 100, 50, key="profile_a_digital")
+        
+        st.markdown("---")
+        st.markdown('<div class="input-group-label">👤 Demographics</div>', unsafe_allow_html=True)
+        col_a3, col_a4 = st.columns(2)
+        with col_a3:
+            profile_a_gender = st.selectbox("Gender", ["Male", "Female"], key="profile_a_gender")
+            profile_a_age = st.selectbox("Age", ["Youth (<25)", "Adult (25-60)", "Senior (>60)"], index=1, key="profile_a_age")
+        with col_a4:
+            profile_a_location = st.selectbox("Location", ["Rural", "Urban"], key="profile_a_location")
+            profile_a_credit = st.checkbox("Credit Access", value=False, key="profile_a_credit")
+        
+        st.markdown("---")
+        st.markdown('<div class="input-group-label">💼 Occupation</div>', unsafe_allow_html=True)
+        profile_a_occ = st.selectbox("Sector", ["Agriculture", "Industry", "Services", "Public Sector", "Unemployed"], index=2, key="profile_a_occ", label_visibility="collapsed")
+        
+        st.markdown('</div>', unsafe_allow_html=True)
+    
+    with profile_col2:
+        st.markdown('<div class="pro-card" style="border: 2px solid #10b981;">', unsafe_allow_html=True)
+        st.markdown('<div style="text-align: center; margin-bottom: 20px;"><span class="profile-badge badge-success">Profile B</span></div>', unsafe_allow_html=True)
+        
+        # PROFILE B INPUTS - COMPLETELY INDEPENDENT
+        st.markdown('<div class="input-group-label">🌍 Country</div>', unsafe_allow_html=True)
+        profile_b_country = st.selectbox("Country", list(COUNTRY_DATA.keys()), key="profile_b_country", label_visibility="collapsed")
+        
+        st.markdown("---")
+        st.markdown('<div class="input-group-label">🎓 Education & Skills</div>', unsafe_allow_html=True)
+        col_b1, col_b2 = st.columns(2)
+        with col_b1:
+            profile_b_edu = st.slider("Education (yrs)", 0, 20, 12, key="profile_b_edu")
+        with col_b2:
+            profile_b_digital = st.slider("Digital (%)", 0, 100, 50, key="profile_b_digital")
+        
+        st.markdown("---")
+        st.markdown('<div class="input-group-label">👤 Demographics</div>', unsafe_allow_html=True)
+        col_b3, col_b4 = st.columns(2)
+        with col_b3:
+            profile_b_gender = st.selectbox("Gender", ["Male", "Female"], key="profile_b_gender")
+            profile_b_age = st.selectbox("Age", ["Youth (<25)", "Adult (25-60)", "Senior (>60)"], index=1, key="profile_b_age")
+        with col_b4:
+            profile_b_location = st.selectbox("Location", ["Rural", "Urban"], key="profile_b_location")
+            profile_b_credit = st.checkbox("Credit Access", value=False, key="profile_b_credit")
+        
+        st.markdown("---")
+        st.markdown('<div class="input-group-label">💼 Occupation</div>', unsafe_allow_html=True)
+        profile_b_occ = st.selectbox("Sector", ["Agriculture", "Industry", "Services", "Public Sector", "Unemployed"], index=2, key="profile_b_occ", label_visibility="collapsed")
+        
+        st.markdown('</div>', unsafe_allow_html=True)
+    
+    # Calculate both profiles
+    profile_a_g_val = 1 if profile_a_gender == "Female" else 0
+    profile_a_u_val = 1 if profile_a_location == "Urban" else 0
+    profile_a_p, profile_a_components = calculate_percentile(
+        profile_a_country, profile_a_edu, profile_a_digital, 
+        profile_a_g_val, profile_a_u_val, profile_a_occ, profile_a_credit, profile_a_age
+    )
+    
+    profile_b_g_val = 1 if profile_b_gender == "Female" else 0
+    profile_b_u_val = 1 if profile_b_location == "Urban" else 0
+    profile_b_p, profile_b_components = calculate_percentile(
+        profile_b_country, profile_b_edu, profile_b_digital, 
+        profile_b_g_val, profile_b_u_val, profile_b_occ, profile_b_credit, profile_b_age
+    )
+    
+    #  ============= COMPARISON RESULTS =============
+    st.markdown('<p class="section-header">📊 Step 3: Comparison Results</p>', unsafe_allow_html=True)
+    
+    # Display both profile summaries with scores
+    summary_col1, summary_col2 = st.columns([1, 1], gap="large")
+    
+    with summary_col1:
+        st.markdown('<div class="pro-card" style="border: 2px solid #3b82f6;">', unsafe_allow_html=True)
+        st.markdown('<div style="text-align: center; margin-bottom: 20px;"><span class="profile-badge badge-primary">Profile A Results</span></div>', unsafe_allow_html=True)
+        
+        st.markdown(f"""
+        <div style="background: rgba(59, 130, 246, 0.1); padding: 20px; border-radius: 10px; margin-bottom: 15px;">
+            <div style="text-align: center;">
+                <div style="font-size: 3.5rem; font-weight: 800; color: #60a5fa; margin: 10px 0;">{profile_a_p:.1f}<span style="font-size: 1.5rem;">th</span></div>
+                <div style="color: #8b98a5; font-size: 0.9rem;">PERCENTILE</div>
+            </div>
+        </div>
+        
+        <div style="line-height: 2; color: #e2e8f0; font-size: 0.9rem;">
+            <b style="color: #60a5fa;">Country:</b> {profile_a_country}<br>
+            <b style="color: #60a5fa;">Education:</b> {profile_a_edu} years<br>
+            <b style="color: #60a5fa;">Digital:</b> {profile_a_digital}%<br>
+            <b style="color: #60a5fa;">Gender:</b> {profile_a_gender}<br>
+            <b style="color: #60a5fa;">Location:</b> {profile_a_location}<br>
+            <b style="color: #60a5fa;">Credit:</b> {'Yes' if profile_a_credit else 'No'}<br>
+            <b style="color: #60a5fa;">Occupation:</b> {profile_a_occ}
+        </div>
+        """, unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=True)
+    
+    with summary_col2:
+        st.markdown('<div class="pro-card" style="border: 2px solid #10b981;">', unsafe_allow_html=True)
+        st.markdown('<div style="text-align: center; margin-bottom: 20px;"><span class="profile-badge badge-success">Profile B Results</span></div>', unsafe_allow_html=True)
+        
+        st.markdown(f"""
+        <div style="background: rgba(16, 185, 129, 0.1); padding: 20px; border-radius: 10px; margin-bottom: 15px;">
+            <div style="text-align: center;">
+                <div style="font-size: 3.5rem; font-weight: 800; color: #34d399; margin: 10px 0;">{profile_b_p:.1f}<span style="font-size: 1.5rem;">th</span></div>
+                <div style="color: #8b98a5; font-size: 0.9rem;">PERCENTILE</div>
+            </div>
+        </div>
+        
+        <div style="line-height: 2; color: #e2e8f0; font-size: 0.9rem;">
+            <b style="color: #34d399;">Country:</b> {profile_b_country}<br>
+            <b style="color: #34d399;">Education:</b> {profile_b_edu} years<br>
+            <b style="color: #34d399;">Digital:</b> {profile_b_digital}%<br>
+            <b style="color: #34d399;">Gender:</b> {profile_b_gender}<br>
+            <b style="color: #34d399;">Location:</b> {profile_b_location}<br>
+            <b style="color: #34d399;">Credit:</b> {'Yes' if profile_b_credit else 'No'}<br>
+            <b style="color: #34d399;">Occupation:</b> {profile_b_occ}
+        </div>
+        """, unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=True)
+    
+    # Visual Comparison Dashboard
+    st.markdown("---")
+    st.markdown("### 🎯 Visual Comparison Dashboard")
+    
+    viz_comp_col1, viz_comp_col2, viz_comp_col3 = st.columns([1, 2, 1], gap="large")
+    
+    with viz_comp_col1:
+        # Profile A Donut
+        fig_donut_a = go.Figure(data=[go.Pie(
+            values=[profile_a_p, 100-profile_a_p],
+            hole=0.7,
+            marker=dict(colors=['#3b82f6', 'rgba(59, 130, 246, 0.1)'], line=dict(color='#0f1419', width=2)),
+            textinfo='none',
+            hoverinfo='skip',
+            showlegend=False
+        )])
+        fig_donut_a.update_layout(
+            paper_bgcolor='rgba(0,0,0,0)',
+            height=250,
+            margin=dict(t=10, b=10, l=10, r=10),
+            annotations=[
+                dict(text=f"<b>{profile_a_p:.0f}%</b>", x=0.5, y=0.55, font=dict(size=36, color='#60a5fa'), showarrow=False),
+                dict(text="Profile A", x=0.5, y=0.35, font=dict(size=14, color='#8b98a5'), showarrow=False)
+            ]
+        )
+        st.plotly_chart(fig_donut_a, use_container_width=True)
+    
+    with viz_comp_col2:
+        # Difference indicator
+        diff = profile_b_p - profile_a_p
+        diff_color = "#10b981" if diff > 0 else "#ef4444" if diff < 0 else "#8b98a5"
+        diff_icon = "📈" if diff > 0 else "📉" if diff < 0 else "➡️"
+        diff_text = "Better" if diff > 0 else "Worse" if diff < 0 else "Same"
+        
+        st.markdown(f"""
+        <div style="text-align: center; padding: 40px; background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(16, 185, 129, 0.1)); border-radius: 16px; border: 2px solid {diff_color};">
+            <div style="font-size: 4rem; margin-bottom: 15px;">{diff_icon}</div>
+            <div style="font-size: 3rem; font-weight: 900; color: {diff_color}; margin: 15px 0;">
+                {'+' if diff > 0 else ''}{diff:.1f}
+            </div>
+            <div style="color: #8b98a5; font-size: 1rem; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 10px;">Percentile Points</div>
+            <div style="color: #e2e8f0; font-size: 1.3rem; font-weight: 600;">Profile B is {diff_text}</div>
+            <div style="color: #8b98a5; font-size: 0.9rem; margin-top: 15px;">
+                {f"Profile B ranks {abs(diff):.1f} points higher" if diff > 0 else f"Profile A ranks {abs(diff):.1f} points higher" if diff < 0 else "Both profiles are equal"}
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    with viz_comp_col3:
+        # Profile B Donut
+        fig_donut_b = go.Figure(data=[go.Pie(
+            values=[profile_b_p, 100-profile_b_p],
+            hole=0.7,
+            marker=dict(colors=['#10b981', 'rgba(16, 185, 129, 0.1)'], line=dict(color='#0f1419', width=2)),
+            textinfo='none',
+            hoverinfo='skip',
+            showlegend=False
+        )])
+        fig_donut_b.update_layout(
+            paper_bgcolor='rgba(0,0,0,0)',
+            height=250,
+            margin=dict(t=10, b=10, l=10, r=10),
+            annotations=[
+                dict(text=f"<b>{profile_b_p:.0f}%</b>", x=0.5, y=0.55, font=dict(size=36, color='#34d399'), showarrow=False),
+                dict(text="Profile B", x=0.5, y=0.35, font=dict(size=14, color='#8b98a5'), showarrow=False)
+            ]
+        )
+        st.plotly_chart(fig_donut_b, use_container_width=True)
+    
+    # Detailed factor comparison
+    st.markdown("### 📊 Factor-by-Factor Breakdown")
+    
+    # Create comparison dataframe
+    comparison_data = []
+    for factor in profile_a_components.keys():
+        comparison_data.append({
+            "Factor": factor,
+            "Profile A": f"{profile_a_components[factor]:+.1f}",
+            "Profile B": f"{profile_b_components[factor]:+.1f}",
+            "Difference": f"{profile_b_components[factor] - profile_a_components[factor]:+.1f}"
+        })
+    
+    comp_df = pd.DataFrame(comparison_data)
+    st.dataframe(comp_df, use_container_width=True, hide_index=True)
+    
+    # Multi-dimensional radar chart comparison
+    st.markdown("### 🕸️ Multi-Dimensional Comparison")
+    
+    categories = ['Education\n(Years)', 'Digital Skills\n(%)', 'Occupation\n(Points)', 'Urban\n(Points)', 'Credit\n(Points)']
+    
+    # Normalize to 0-100 scale for better visualization
+    def normalize_value(value, max_val):
+        return (value / max_val) * 100 if max_val > 0 else 0
+    
+    profile_a_normalized = [
+        normalize_value(profile_a_edu, 20),  # Education out of 20
+        profile_a_digital,  # Already 0-100
+        normalize_value(profile_a_components['Occupation'], 15),  # Occupation max is 15
+        normalize_value(profile_a_components['Urban Advantage'], 12),  # Urban max is 12
+        normalize_value(profile_a_components['Credit Access'], 6)  # Credit max is 6
+    ]
+    
+    profile_b_normalized = [
+        normalize_value(profile_b_edu, 20),
+        profile_b_digital,
+        normalize_value(profile_b_components['Occupation'], 15),
+        normalize_value(profile_b_components['Urban Advantage'], 12),
+        normalize_value(profile_b_components['Credit Access'], 6)
+    ]
+    
+    fig_radar = go.Figure()
+    
+    fig_radar.add_trace(go.Scatterpolar(
+        r=profile_a_normalized,
+        theta=categories,
+        fill='toself',
+        name='Profile A',
+        line=dict(color='#3b82f6', width=3),
+        fillcolor='rgba(59, 130, 246, 0.3)',
+        hovertemplate='<b>%{theta}</b><br>Score: %{r:.1f}/100<extra></extra>'
+    ))
+    
+    fig_radar.add_trace(go.Scatterpolar(
+        r=profile_b_normalized,
+        theta=categories,
+        fill='toself',
+        name='Profile B',
+        line=dict(color='#10b981', width=3),
+        fillcolor='rgba(16, 185, 129, 0.3)',
+        hovertemplate='<b>%{theta}</b><br>Score: %{r:.1f}/100<extra></extra>'
+    ))
+    
+    fig_radar.update_layout(
+        polar=dict(
+            radialaxis=dict(
+                visible=True, 
+                range=[0, 100],
+                tickmode='linear',
+                tick0=0,
+                dtick=20,
+                gridcolor='rgba(255,255,255,0.15)',
+                tickfont=dict(size=11, color='#8b98a5')
+            ),
+            angularaxis=dict(
+                gridcolor='rgba(255,255,255,0.15)',
+                tickfont=dict(size=12, color='#e2e8f0')
+            ),
+            bgcolor='rgba(0,0,0,0)'
+        ),
+        paper_bgcolor='rgba(0,0,0,0)',
+        plot_bgcolor='rgba(0,0,0,0)',
+        font=dict(color='#e2e8f0', family='Inter'),
+        height=500,
+        showlegend=True,
+        legend=dict(
+            orientation="h", 
+            yanchor="bottom", 
+            y=-0.15, 
+            xanchor="center", 
+            x=0.5,
+            bgcolor='rgba(30, 37, 50, 0.8)',
+            bordercolor='rgba(255,255,255,0.1)',
+            borderwidth=1,
+            font=dict(size=13)
+        ),
+        margin=dict(t=40, b=80, l=80, r=80)
+    )
+    
+    st.plotly_chart(fig_radar, use_container_width=True)
+    
+# ============= HISTORICAL SNAPSHOT MODE =============
+else:
+    st.markdown('<p class="section-header">⏳ Step 2: Configure Historical Comparison</p>', unsafe_allow_html=True)
+    
+    st.markdown("""
+    <div class="historical-card">
+        <h3 style="text-align: center; color: #f59e0b; margin-bottom: 10px;">🗓️ Historical Evolution Tool</h3>
+        <p style="text-align: center; color: #8b98a5; margin-bottom: 20px;">Observe how the <b>same profile attributes</b> would result in different social standings across two distinct time periods.</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # SHARED ATTRIBUTES FOR BOTH YEARS
+    st.markdown("#### 🛠️ Fixed Profile Attributes")
+    col_attr1, col_attr2 = st.columns([2, 1], gap="large")
+    
+    with col_attr1:
+        st.markdown('<div class="pro-card">', unsafe_allow_html=True)
+        h_country = st.selectbox("Compare data for:", list(COUNTRY_DATA.keys()), key="h_country")
+        
+        c1, c2 = st.columns(2)
+        with c1:
+            h_edu = st.slider("Shared Education (yrs)", 0, 20, 12, key="h_edu")
+            h_gender = st.selectbox("Shared Gender", ["Male", "Female"], key="h_gender")
+        with c2:
+            h_digital = st.slider("Shared Digital Skills (%)", 0, 100, 50, key="h_digital")
+            h_loc = st.selectbox("Shared Location", ["Rural", "Urban"], key="h_loc")
+        
+        h_occ = st.selectbox("Shared Occupation", ["Agriculture", "Industry", "Services", "Public Sector", "Unemployed"], index=2, key="h_occ")
+        st.markdown('</div>', unsafe_allow_html=True)
+
+    with col_attr2:
+        st.markdown('<div class="pro-card" style="border: 2px solid #f59e0b; height: 100%;">', unsafe_allow_html=True)
+        st.markdown("### 📅 Select Timeframes")
+        # Get year range from data
+        year_1 = st.selectbox("Select Year 1 (Baseline)", list(range(2000, 2024)), index=1, key="year_1")
+        year_2 = st.selectbox("Select Year 2 (Comparison)", list(range(2000, 2024)), index=23, key="year_2")
+        
+        st.markdown(f"""
+        <div style="margin-top: 30px; padding: 15px; background: rgba(245, 158, 11, 0.1); border-radius: 8px; border-left: 4px solid #f59e0b;">
+            <p style="font-size: 0.9rem; color: #e2e8f0; margin: 0;">
+                Comparing <b>{h_country}</b> in <b>{year_1}</b> vs <b>{year_2}</b>.
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=True)
+
+    # CALCULATIONS
+    h_g_val = 1 if h_gender == "Female" else 0
+    h_u_val = 1 if h_loc == "Urban" else 0
+    
+    p1, comp1 = calculate_historical_percentile(h_country, year_1, h_edu, h_digital, h_g_val, h_u_val, h_occ, False, "Adult")
+    p2, comp2 = calculate_historical_percentile(h_country, year_2, h_edu, h_digital, h_g_val, h_u_val, h_occ, False, "Adult")
+    
+    # RESULTS
+    st.markdown('<p class="section-header">📊 Step 3: Social Standing Evolution</p>', unsafe_allow_html=True)
+    
+    res_col1, res_col2 = st.columns(2, gap="large")
+    
+    with res_col1:
+        st.markdown(f'<div style="text-align: center; color: #8b98a5; margin-bottom: 10px;">POSITION IN {year_1}</div>', unsafe_allow_html=True)
+        st.plotly_chart(render_gauge(p1, f"Standing in {year_1}", height=280), use_container_width=True)
+        
+    with res_col2:
+        st.markdown(f'<div style="text-align: center; color: #8b98a5; margin-bottom: 10px;">POSITION IN {year_2}</div>', unsafe_allow_html=True)
+        st.plotly_chart(render_gauge(p2, f"Standing in {year_2}", height=280), use_container_width=True)
+
+    # EVOLUTION DASHBOARD
+    evol_diff = p2 - p1
+    evol_color = "#10b981" if evol_diff > 0 else "#ef4444" if evol_diff < 0 else "#8b98a5"
+    evol_trend = "Social Mobility ↑" if evol_diff > 0 else "Standing Declined ↓" if evol_diff < 0 else "Stagnant ➡️"
+    
+    st.markdown(f"""
+    <div style="background: rgba(30, 37, 50, 0.6); padding: 30px; border-radius: 16px; border: 1px solid #2f3336; text-align: center; margin: 20px 0;">
+        <div style="font-size: 1.2rem; color: #8b98a5; text-transform: uppercase; letter-spacing: 2px;">Change in Percentile Ranking</div>
+        <div style="font-size: 4.5rem; font-weight: 800; color: {evol_color}; margin: 10px 0;">{evol_diff:+.1f}</div>
+        <div style="font-size: 1.5rem; font-weight: 600; color: {evol_color};">{evol_trend}</div>
+        <p style="color: #94a3b8; max-width: 600px; margin: 20px auto 0 auto;">
+            A change of <b>{abs(evol_diff):.1f} percentile points</b> suggests that having these specific attributes 
+            in {year_2} makes you relatively <b>{"better" if evol_diff > 0 else "worse"} off</b> compared to others in 
+            {h_country} than it did in {year_1}.
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # LINE CHART FOR HISTORICAL TREND
+    st.markdown("### 📈 Social Standing Evolution (2000 - 2023)")
+    st.markdown(f'<p style="color: #8b98a5; font-size: 0.9rem; margin-bottom: 20px;">Tracking how the <b>exact same profile</b> would have ranked in {h_country} across two decades of economic change.</p>', unsafe_allow_html=True)
+    
+    # Calculate trend data
+    trend_years = list(range(2000, 2024))
+    trend_scores = []
+    for y in trend_years:
+        score, _ = calculate_historical_percentile(h_country, y, h_edu, h_digital, 1 if h_gender == "Female" else 0, 1 if h_loc == "Urban" else 0, h_occ)
+        trend_scores.append(score)
+    
+    df_trend = pd.DataFrame({"Year": trend_years, "Percentile": trend_scores})
+    
+    fig_trend = px.line(df_trend, x="Year", y="Percentile", markers=False)
+    
+    # Highlight Year 1 and Year 2
+    highlight_years = [year_1, year_2]
+    highlight_scores = [p1, p2]
+    
+    fig_trend.add_scatter(
+        x=highlight_years, 
+        y=highlight_scores,
+        mode='markers+text',
+        marker=dict(size=14, color=[evol_color if y == year_2 else "#3b82f6" for y in highlight_years], symbol='circle', line=dict(width=2, color='white')),
+        text=[f"{y}" for y in highlight_years],
+        textposition="top center",
+        name="Selected Eras",
+        hovertemplate="<b>%{x}</b><br>Percentile: %{y:.1f}<extra></extra>"
+    )
+
+    fig_trend.update_traces(line=dict(width=4, color='#1d9bf0', shape='spline'))
+    
+    fig_trend.update_layout(
+        paper_bgcolor='rgba(0,0,0,0)',
+        plot_bgcolor='rgba(0,0,0,0)',
+        font=dict(color='#e2e8f0', family='Inter'),
+        height=450,
+        margin=dict(t=20, b=20, l=20, r=20),
+        xaxis=dict(
+            title="Year", 
+            showgrid=True, 
+            gridcolor='rgba(255,255,255,0.05)',
+            dtick=2
+        ),
+        yaxis=dict(
+            title="Relative Economic Percentile", 
+            showgrid=True, 
+            gridcolor='rgba(255,255,255,0.1)',
+            range=[0, 100]
+        ),
+        showlegend=False
+    )
+    
+    st.plotly_chart(fig_trend, use_container_width=True)
+
+    # DETAILED SHIFT table
+    st.markdown("### 📈 Evolution of Factor Impact")
+    st.markdown('<p style="color: #8b98a5; font-size: 0.9rem; margin-bottom: 15px;">How the "Reward" for each attribute has changed over time due to economic shifts.</p>', unsafe_allow_html=True)
+    
+    table_data = []
+    for factor in comp1.keys():
+        val1 = comp1[factor]
+        val2 = comp2[factor]
+        diff = val2 - val1
+        table_data.append({
+            "Factor": factor,
+            f"Impact in {year_1} (pts)": f"{val1:+.1f}",
+            f"Impact in {year_2} (pts)": f"{val2:+.1f}",
+            "Shift in Value": f"{diff:+.1f}"
+        })
+    
+    st.table(pd.DataFrame(table_data))
+    
+    st.info(f"💡 **Analysis:** Between {year_1} and {year_2}, {h_country}'s economic landscape transformed significantly. In {year_1}, with lower internet penetration and schooling rates, your profile attributes were far more 'exclusive', granting a higher relative bonus. By {year_2}, as these resources became more common, the 'scarcity premium' for basic education and digital access declined, but the overall economic floor (Base Strength) rose due to GDP growth.")
+    
+    # ERA COMPARISON TABLE
+    st.markdown("### 🏛️ Era Analysis")
+    era_col1, era_col2 = st.columns(2)
+    
+    with era_col1:
+        st.markdown(f"""
+        <div style="background: rgba(59, 130, 246, 0.05); padding: 15px; border-radius: 8px; border: 1px dashed #3b82f6;">
+            <h5 style="color: #3b82f6;">The {year_1} Context</h5>
+            <p style="font-size: 0.85rem; color: #8b98a5;">
+                In this era, a person with your profile was an <b>outlier</b>. Low national averages meant your education and skills placed you in an elite bracket. 
+                Economic opportunities were concentrated, making your "scarcity value" exceptionally high.
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+    with era_col2:
+        st.markdown(f"""
+        <div style="background: rgba(16, 185, 129, 0.05); padding: 15px; border-radius: 8px; border: 1px dashed #10b981;">
+            <h5 style="color: #10b981;">The {year_2} Context</h5>
+            <p style="font-size: 0.85rem; color: #8b98a5;">
+                By {year_2}, the middle class had expanded. Your skills are now more <b>standardized</b>. While the country is wealthier (higher base), 
+                you face more competition from others with similar profiles, requiring higher specialization to maintain the same relative lead.
+            </p>
+        </div>
+        """, unsafe_allow_html=True)
 
 # Footer
 st.divider()
 st.markdown("""
 <div style="text-align: center; color: #8b98a5; font-size: 0.85rem; padding: 20px 0;">
-    <b>Income Simulator v4.0</b> | Enhanced with Visual Analytics, Comparison Tools & Plain-Language Insights<br>
+    <b>Income Simulator v5.0</b> | Modernized with Mode Selection, Independent Profile Inputs & Enhanced Comparison Tools<br>
     Calibrated for South Asian socio-economic contexts | Educational purposes only
 </div>
 """, unsafe_allow_html=True)

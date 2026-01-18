@@ -10,20 +10,27 @@ from pathlib import Path
 # Path setup
 # --------------------------------------------------
 sys.path.append(str(Path(__file__).parent.parent))
-from utils.loaders import load_all_indicators
-from utils.utils import human_indicator, format_value
-from utils.exports import export_data_menu, export_plot_menu
+from utils.help_system import render_help_button
+from utils.sidebar import apply_all_styles
+from utils.loaders import load_inequality_data, load_geojson
+from utils.utils import (
+    human_indicator,
+    get_color_scale,
+    handle_missing_data,
+    validate_dataframe,
+    format_value,
+    safe_divide
+)
 
 # --------------------------------------------------
 # Page configuration
 # --------------------------------------------------
 st.set_page_config(
     page_title="Temporal Comparison",
-    page_icon="🕰️",
-    layout="wide",
-    initial_sidebar_state="collapsed"
+    layout="wide"
 )
-
+render_help_button("temporal")
+apply_all_styles()
 st.title("🕰️ Temporal Comparison")
 st.caption("Temporal, spatial, and statistical comparison of inequality indicators")
 
@@ -193,8 +200,7 @@ if viz_option == "Choropleth Map":
             title=f"{human_indicator(indicator)} — THEN ({then_year})"
         )
         fig_then.update_geos(fitbounds="locations", visible=False)
-        st.plotly_chart(fig_then, use_container_width=True, config={'displayModeBar': False})
-        export_plot_menu(fig_then, f"temporal_{indicator}_then_{then_year}", key="temp_map_then")
+        st.plotly_chart(fig_then, use_container_width=True)
 
     with c2:
         fig_now = px.choropleth(
@@ -208,22 +214,19 @@ if viz_option == "Choropleth Map":
             title=f"{human_indicator(indicator)} — NOW ({now_year})"
         )
         fig_now.update_geos(fitbounds="locations", visible=False)
-        st.plotly_chart(fig_now, use_container_width=True, config={'displayModeBar': False})
-        export_plot_menu(fig_now, f"temporal_{indicator}_now_{now_year}", key="temp_map_now")
+        st.plotly_chart(fig_now, use_container_width=True)
 
 elif viz_option == "Bar Chart":
     with c1:
         fig_then = px.bar(df_then.sort_values("value", ascending=ascending),
                           x="country", y="value", color="value",
                           color_continuous_scale=color_scale)
-        st.plotly_chart(fig_then, use_container_width=True, config={'displayModeBar': False})
-        export_plot_menu(fig_then, f"temporal_bar_{indicator}_then_{then_year}", key="temp_bar_then")
+        st.plotly_chart(fig_then, use_container_width=True)
     with c2:
         fig_now = px.bar(df_now.sort_values("value", ascending=ascending),
                          x="country", y="value", color="value",
                          color_continuous_scale=color_scale)
-        st.plotly_chart(fig_now, use_container_width=True, config={'displayModeBar': False})
-        export_plot_menu(fig_now, f"temporal_bar_{indicator}_now_{now_year}", key="temp_bar_now")
+        st.plotly_chart(fig_now, use_container_width=True)
 
 elif viz_option == "Scatter Plot":
     fig_scatter = px.scatter(
@@ -234,8 +237,7 @@ elif viz_option == "Scatter Plot":
         type="line", x0=vmin, y0=vmin, x1=vmax, y1=vmax,
         line=dict(color="red", dash="dash")
     )
-    st.plotly_chart(fig_scatter, use_container_width=True, config={'displayModeBar': False})
-    export_plot_menu(fig_scatter, "temporal_scatter", key="temp_scatter")
+    st.plotly_chart(fig_scatter, use_container_width=True)
 
 elif viz_option == "Ranking Shift":
     fig_rank = px.scatter(
@@ -248,8 +250,7 @@ elif viz_option == "Ranking Shift":
         x1=cmp["rank_then"].max(), y1=cmp["rank_then"].max(),
         line=dict(color="black", dash="dash")
     )
-    st.plotly_chart(fig_rank, use_container_width=True, config={'displayModeBar': False})
-    export_plot_menu(fig_rank, "ranking_shift", key="rank_shift")
+    st.plotly_chart(fig_rank, use_container_width=True)
 
 elif viz_option == "Country Table":
     tbl = cmp.copy()
@@ -292,4 +293,9 @@ Paired t-test: **p = {p_value:.4f}**, indicating the change is **{sig}**.
 # --------------------------------------------------
 # Export
 # --------------------------------------------------
-export_data_menu(cmp, "temporal_comparison_results", key="temp_comp_data")
+st.download_button(
+    "📥 Download Temporal Comparison Results (CSV)",
+    cmp.to_csv(index=False),
+    file_name="Temporal_Comparison.csv",
+    mime="text/csv"
+)
