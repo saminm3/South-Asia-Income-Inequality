@@ -25,7 +25,7 @@ st.set_page_config(
     page_title="Dashboard",
     page_icon="📊",
     layout="wide",
-    initial_sidebar_state="collapsed"
+    initial_sidebar_state="expanded"
 )
 
 # Initialize API loaders after page config
