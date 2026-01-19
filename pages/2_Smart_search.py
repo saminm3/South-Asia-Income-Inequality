@@ -246,7 +246,7 @@ st.subheader("⌨ Quick Search Command Palette")
 st.markdown("""
 <div style='background-color: rgba(100,100,100,0.1); padding: 10px; border-radius: 5px; margin-bottom: 15px;'>
     💡 <b>Tip:</b> Type to search countries, indicators, years, or commands. 
-    <span class='kbd-hint'>Ctrl</span> + <span class='kbd-hint'>K</span> to focus search (browser).
+    
 </div>
 """, unsafe_allow_html=True)
 
@@ -557,47 +557,122 @@ with col_help:
 st.divider()
 
 # --------------------------------------------------
-# SECTION 3: Bookmarked Views (NOW EXECUTABLE!)
+# SECTION 3: Bookmarked Views (SAFE VERSION WITH ERROR HANDLING!)
 # --------------------------------------------------
 st.subheader("⭐ Quick Access Bookmarks")
 st.caption("Pre-configured views for common analysis needs")
 
+# Helper function to find the actual GINI indicator name in data
+def get_gini_indicator():
+    """Auto-detect the GINI indicator name from available data"""
+    # Try common variations
+    gini_variations = ['gini_index', 'GINI Index', 'SI.POV.GINI', 'gini', 'GINI']
+    
+    for variation in gini_variations:
+        # Exact match
+        if variation in df['indicator'].values:
+            return variation
+        # Case-insensitive match
+        try:
+            matches = df[df['indicator'].str.contains(variation, case=False, na=False)]
+            if not matches.empty:
+                return matches['indicator'].iloc[0]
+        except:
+            continue
+    
+    # Fallback: return first indicator
+    return df['indicator'].iloc[0] if not df.empty else 'gini_index'
+
+# Helper function to safely get high inequality countries
+def get_high_inequality_countries(threshold=40):
+    """Get countries with average GINI > threshold, with fallback"""
+    try:
+        gini_indicator = get_gini_indicator()
+        gini_data = df[df['indicator'] == gini_indicator]
+        
+        if gini_data.empty:
+            return df['country'].unique().tolist()
+        
+        avg_gini = gini_data.groupby('country')['value'].mean()
+        high_countries = avg_gini[avg_gini > threshold].index.tolist()
+        
+        # If no countries match, lower threshold or use all
+        if not high_countries:
+            # Try lower threshold
+            high_countries = avg_gini[avg_gini > 35].index.tolist()
+            if not high_countries:
+                # Use all countries as fallback
+                return df['country'].unique().tolist()
+        
+        return high_countries
+    except Exception as e:
+        # If anything fails, return all countries
+        return df['country'].unique().tolist()
+
+# Helper function to safely get low inequality countries
+def get_low_inequality_countries(threshold=30):
+    """Get countries with average GINI < threshold, with fallback"""
+    try:
+        gini_indicator = get_gini_indicator()
+        gini_data = df[df['indicator'] == gini_indicator]
+        
+        if gini_data.empty:
+            return df['country'].unique().tolist()
+        
+        avg_gini = gini_data.groupby('country')['value'].mean()
+        low_countries = avg_gini[avg_gini < threshold].index.tolist()
+        
+        # If no countries match, try higher threshold or use all
+        if not low_countries:
+            # Try higher threshold
+            low_countries = avg_gini[avg_gini < 35].index.tolist()
+            if not low_countries:
+                # Use all countries as fallback
+                return df['country'].unique().tolist()
+        
+        return low_countries
+    except Exception as e:
+        # If anything fails, return all countries
+        return df['country'].unique().tolist()
+
+# Get the actual GINI indicator name from data
+detected_gini_indicator = get_gini_indicator()
+
+# SAFE BOOKMARKS with automatic error handling
 bookmarks = {
-    " High Inequality Countries": {
+    "🔴 High Inequality Countries": {
         "description": "Countries with GINI > 40 (severe inequality)",
-        "countries": [c for c in df['country'].unique() 
-                     if df[(df['country']==c) & (df['indicator']=='gini_index')]['value'].mean() > 40],
-        "indicator": "gini_index",
+        "countries": get_high_inequality_countries(40),
+        "indicator": detected_gini_indicator,
         "page": "pages/1_Dashboard.py"
     },
-    " Low Inequality Countries": {
+    "🟢 Low Inequality Countries": {
         "description": "Countries with GINI < 30 (more equitable)",
-        "countries": [c for c in df['country'].unique() 
-                     if df[(df['country']==c) & (df['indicator']=='gini_index')]['value'].mean() < 30],
-        "indicator": "gini_index",
+        "countries": get_low_inequality_countries(30),
+        "indicator": detected_gini_indicator,
         "page": "pages/1_Dashboard.py"
     },
-    " Recent Decade Analysis": {
+    "📈 Recent Decade Analysis": {
         "description": "Focus on 2015-2024 data",
         "countries": df['country'].unique().tolist(),
-        "indicator": "gini_index",
-        "year_range": (2015, 2024),
+        "indicator": detected_gini_indicator,
+        "year_range": (max(2015, int(df['year'].min())), int(df['year'].max())),
         "page": "pages/1_Dashboard.py"
     },
-    " GDP vs Inequality": {
+    "💰 GDP vs Inequality": {
         "description": "Explore economic growth and inequality relationship",
         "page": "pages/4_Correlations.py"
     },
-    " Regional Comparison": {
+    "🌍 Regional Comparison": {
         "description": "Compare all countries side-by-side",
         "countries": df['country'].unique().tolist(),
-        "indicator": "gini_index",
+        "indicator": detected_gini_indicator,
         "page": "pages/7_Sunburst.py"
     },
-    " Latest Year Geographic View": {
+    "🗺️ Latest Year Geographic View": {
         "description": "Map visualization of most recent data",
         "countries": df['country'].unique().tolist(),
-        "indicator": "gini_index",
+        "indicator": detected_gini_indicator,
         "year_range": (int(df['year'].max()), int(df['year'].max())),
         "page": "pages/3_Map_analysis.py"
     }
@@ -625,6 +700,10 @@ with col_desc:
         </div>
     </div>
     """, unsafe_allow_html=True)
+    
+    # Show filter info if countries are specified
+    if 'countries' in bookmark_info:
+        st.caption(f"📍 Will filter to: {len(bookmark_info['countries'])} countries")
 
 with col_action:
     st.write("")  # Spacing
@@ -632,9 +711,14 @@ with col_action:
     if st.button("Execute Bookmark →", use_container_width=True, type="primary", key="execute_bookmark"):
         # Build config if needed
         if 'countries' in bookmark_info:
+            # Validate that we have countries
+            if not bookmark_info['countries']:
+                st.error("❌ No countries match this filter. Please try a different bookmark.")
+                st.stop()
+            
             config = {
                 'countries': bookmark_info['countries'],
-                'indicator': bookmark_info.get('indicator', 'gini_index'),
+                'indicator': bookmark_info.get('indicator', detected_gini_indicator),
                 'year_range': bookmark_info.get('year_range', (int(df['year'].min()), int(df['year'].max()))),
                 'color_scale': 'Viridis'
             }
