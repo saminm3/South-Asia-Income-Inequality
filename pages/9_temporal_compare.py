@@ -20,8 +20,7 @@ from utils.utils import (
     format_value,
     safe_divide
 )
-from utils.help_system import render_help_button
-from utils.sidebar import apply_all_styles
+
 
 # --------------------------------------------------
 # Page configuration
@@ -30,8 +29,6 @@ st.set_page_config(
     page_title="Temporal Comparison",
     layout="wide"
 )
-render_help_button("temporal")
-apply_all_styles()
 
 st.title("Temporal Comparison")
 st.caption("Temporal, spatial, and statistical comparison of inequality indicators")
