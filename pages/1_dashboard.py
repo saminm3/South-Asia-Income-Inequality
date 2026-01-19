@@ -570,12 +570,12 @@ if use_economic_apis:
                             title="GDP Growth Trends (%)",
                             xaxis_title="Year",
                             yaxis_title="GDP Growth Rate (%)",
-                            height=300,
+                            height=350,  # Increased height
                             paper_bgcolor='rgba(0,0,0,0)',
                             plot_bgcolor='rgba(0,0,0,0)',
                             font=dict(color='#e2e8f0'),
-                            legend=dict(orientation="h", y=-0.2),
-                            margin=dict(l=40, r=40, t=40, b=40),
+                            legend=dict(orientation="h", y=-0.3),  # Moved legend lower
+                            margin=dict(l=40, r=40, t=40, b=80),  # Increased bottom margin
                             xaxis=dict(
                                 dtick=5,  # Show tick every 5 years
                                 tickangle=-45,  # Rotate labels to prevent overlap
