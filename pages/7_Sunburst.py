@@ -12,6 +12,7 @@ from utils.loaders import load_all_indicators
 from utils.utils import format_value
 from utils.help_system import render_help_button
 from utils.sidebar import apply_all_styles
+
 st.set_page_config(
     page_title="Sunburst Explorer",
     page_icon="🌟",
@@ -19,12 +20,92 @@ st.set_page_config(
 )
 render_help_button("sunburst")
 apply_all_styles()
+
 # Load custom CSS
 try:
     with open('assets/dashboard.css') as f:
         st.markdown(f'<style>{f.read()}</style>', unsafe_allow_html=True)
 except FileNotFoundError:
     pass
+
+# ---------------------------------------------------------
+# Sunburst page-only UI styling (does not affect other pages)
+# ---------------------------------------------------------
+st.markdown("""
+<style>
+/* Headings spacing */
+h1, h2, h3 { letter-spacing: 0.2px; }
+
+/* Plotly chart container feel */
+div[data-testid="stPlotlyChart"] {
+    border-radius: 18px;
+    border: 1px solid rgba(139, 92, 246, 0.22);
+    background: linear-gradient(180deg, rgba(88, 28, 135, 0.08), rgba(17, 24, 39, 0.14));
+    padding: 10px 12px;
+}
+
+/* Alerts (st.info / st.warning / st.error) */
+div[data-testid="stAlert"] {
+    border-radius: 18px;
+    border: 1px solid rgba(139, 92, 246, 0.45);
+    background: linear-gradient(90deg, rgba(88, 28, 135, 0.38), rgba(30, 41, 59, 0.35));
+    color: #e5e7eb;
+}
+div[data-testid="stAlert"] p { color: #e5e7eb; }
+
+/* Expanders */
+div[data-testid="stExpander"] {
+    border-radius: 16px;
+    border: 1px solid rgba(139, 92, 246, 0.35);
+    background: linear-gradient(180deg, rgba(88, 28, 135, 0.14), rgba(17, 24, 39, 0.18));
+}
+div[data-testid="stExpander"] summary {
+    font-weight: 600;
+    color: #e5e7eb;
+    padding: 12px 14px;
+}
+div[data-testid="stExpander"] summary svg { color: #a78bfa !important; }
+div[data-testid="stExpander"] div[role="region"] {
+    padding: 10px 14px 14px 14px;
+}
+
+/* Dataframe styling */
+div[data-testid="stDataFrame"] {
+    border-radius: 16px;
+    border: 1px solid rgba(139, 92, 246, 0.30);
+    background: linear-gradient(180deg, rgba(88, 28, 135, 0.10), rgba(17, 24, 39, 0.16));
+    padding: 10px;
+}
+div[data-testid="stDataFrame"] thead tr th {
+    background-color: rgba(88, 28, 135, 0.50) !important;
+    color: #ffffff !important;
+    font-weight: 600 !important;
+    border-bottom: 1px solid rgba(139, 92, 246, 0.35) !important;
+}
+div[data-testid="stDataFrame"] tbody tr td {
+    background-color: rgba(17, 24, 39, 0.32) !important;
+    color: #e5e7eb !important;
+    border-bottom: 1px solid rgba(139, 92, 246, 0.12) !important;
+}
+div[data-testid="stDataFrame"] tbody tr:hover td {
+    background-color: rgba(139, 92, 246, 0.12) !important;
+}
+
+/* Buttons (Spotlight Previous/Next) */
+div.stButton > button {
+    border-radius: 14px !important;
+    border: 1px solid rgba(139, 92, 246, 0.40) !important;
+    background: linear-gradient(90deg, rgba(88, 28, 135, 0.40), rgba(30, 41, 59, 0.35)) !important;
+    color: #ffffff !important;
+    font-weight: 600 !important;
+    padding: 0.6rem 0.9rem !important;
+}
+div.stButton > button:hover {
+    border-color: rgba(167, 139, 250, 0.70) !important;
+    filter: brightness(1.05);
+}
+</style>
+""", unsafe_allow_html=True)
 
 st.title("Sunburst Explorer")
 st.markdown("### Hierarchical view of indicators across South Asia (dominance view)")
@@ -97,6 +178,55 @@ if year_df.empty:
     st.warning("No data after applying Home selected countries.")
     st.stop()
 
+# ============================================================
+# ✅ ADDED: Coverage / data availability for the selected year
+# (Display only; does not change any calculations or visuals)
+# ============================================================
+expected_countries = home_countries if home_countries else sorted(year_df["country"].unique())
+present_countries = sorted(year_df["country"].unique())
+excluded_countries = sorted(list(set(expected_countries) - set(present_countries))) if home_countries else []
+
+country_coverage_table = (
+    year_df.groupby("country")
+    .agg(
+        indicators_available=("indicator", "nunique"),
+        data_points=("value", "count")
+    )
+    .reset_index()
+    .sort_values(["indicators_available", "data_points"], ascending=False)
+)
+
+total_indicators_in_year = int(year_df["indicator"].nunique()) if not year_df.empty else 0
+
+st.markdown(
+    f"""
+    <div style="
+        border-radius:16px;
+        border:1px solid rgba(139, 92, 246, 0.45);
+        background: linear-gradient(180deg, rgba(88, 28, 135, 0.22), rgba(17, 24, 39, 0.30));
+        padding:14px 16px;
+        margin-top: 8px;
+        margin-bottom: 12px;
+        color:#e5e7eb;
+    ">
+        <div style="font-weight:700; margin-bottom:6px;">Data availability (selected year)</div>
+        <div style="font-size:0.92rem; line-height:1.5;">
+            Selected year: <strong>{selected_year}</strong><br>
+            Countries in view: <strong>{len(present_countries)}</strong>
+            {f' (Excluded from Home selection: <strong>{len(excluded_countries)}</strong>)' if home_countries else ""}<br>
+            Indicators available in this year (overall): <strong>{total_indicators_in_year}</strong>
+        </div>
+        {f'<div style="margin-top:8px; font-size:0.92rem;"><strong>Excluded countries:</strong> {", ".join(excluded_countries)}</div>' if excluded_countries else ""}
+    </div>
+    """,
+    unsafe_allow_html=True
+)
+
+with st.expander("View country coverage details (selected year)"):
+    display_cov = country_coverage_table.copy()
+    display_cov.columns = ["Country", "Indicators available", "Data points"]
+    st.dataframe(display_cov, use_container_width=True, hide_index=True)
+
 # Normalize per indicator for fair sunburst sizing
 sunburst_df = year_df[["country", "indicator", "value"]].copy()
 sunburst_df = sunburst_df.dropna(subset=["value"])
@@ -167,11 +297,29 @@ fig.update_layout(
 
 st.plotly_chart(fig, use_container_width=True)
 
+# ============================================================
+# ✅ ADDED: Top dominant indicators (South Asia overall)
+# (Display only; does not change any calculations or visuals)
+# ============================================================
+top_indicators = (
+    sunburst_df.groupby("indicator")["normalized_value"]
+    .sum()
+    .sort_values(ascending=False)
+    .head(5)
+    .reset_index()
+)
+top_indicators.columns = ["Indicator", "Total dominance (sum of normalized)"]
+top_indicators["Total dominance (sum of normalized)"] = top_indicators["Total dominance (sum of normalized)"].round(1)
+
+with st.expander("Top dominant indicators (South Asia overall)"):
+    st.dataframe(top_indicators, use_container_width=True, hide_index=True)
+
 # --- IMPORTANT clarification to avoid confusion ---
 st.info(
-    " **Important:** Sunburst slice sizes show **indicator dominance after normalization**, "
-    "not direct inequality level and not causation. We use dominance of inequality-related indicators "
-    "(Gini / income-share / unemployment / poverty) to build a simple **inequality signal**."
+    "**Important:** Sunburst slice sizes represent **indicator dominance after normalization**, "
+    "not direct inequality levels and not causation. The inequality signal is derived from the relative "
+    "dominance of inequality-related indicators (for example, Gini, income-share measures, poverty, "
+    "and unemployment), and can be extended as additional indicators become available."
 )
 
 # ============================================================
@@ -184,8 +332,6 @@ countries_in_view = sorted(sunburst_df["country"].unique())
 if home_countries:
     countries_in_view = [c for c in home_countries if c in countries_in_view]
 
-# --- Build a simple inequality-signal score from dominance (NOT causation) ---
-# We score only *inequality-related* indicators when they are present.
 def norm_name(s: str) -> str:
     return str(s).strip().lower()
 
@@ -200,7 +346,6 @@ def is_ineq_indicator(ind: str) -> bool:
     t = norm_name(ind)
     return any(k in t for k in INEQ_KEYWORDS)
 
-# For each country: score = sum of normalized dominance for ineq indicators (capped to be stable)
 scores = []
 drivers_map = {}
 
@@ -211,7 +356,6 @@ for c in countries_in_view:
     ineq_part = cdf[cdf["is_ineq"]].copy()
     score = float(ineq_part["normalized_value"].sum()) if not ineq_part.empty else 0.0
 
-    # top drivers (ineq-related first; fallback to overall)
     if not ineq_part.empty:
         top_drivers = ineq_part.sort_values("normalized_value", ascending=False).head(3)["indicator"].tolist()
     else:
@@ -222,14 +366,11 @@ for c in countries_in_view:
 
 scores_df = pd.DataFrame(scores).sort_values("score", ascending=False).reset_index(drop=True)
 
-# Assign High/Moderate/Lower RELATIVE to selected countries
-# (If 1 country only -> Moderate)
 levels = {}
 if len(scores_df) <= 1:
     for c in countries_in_view:
         levels[c] = "Moderate"
 else:
-    # rank-based split
     for i, row in scores_df.iterrows():
         if i == 0:
             levels[row["country"]] = "High"
@@ -238,16 +379,17 @@ else:
         else:
             levels[row["country"]] = "Moderate"
 
-# Show a tiny summary line first (simple for non-technical)
 st.markdown(f"**For {selected_year}, among the selected countries:**")
 for c in countries_in_view:
     lvl = levels.get(c, "Moderate")
     emoji = "🔴" if lvl == "High" else ("🟠" if lvl == "Moderate" else "🟢")
     st.write(f"- {emoji} **{lvl} inequality signal:** {c}")
 
-st.caption("(This is a simple indicator-dominance signal using Gini / income-share / poverty / unemployment patterns — not causation.)")
+st.caption(
+    "This is a descriptive, dominance-based inequality signal derived from available "
+    "inequality-related indicators and should not be interpreted as causal."
+)
 
-# Expandable story per country (arrow click)
 for c in countries_in_view:
     lvl = levels.get(c, "Moderate")
     emoji = "🔴" if lvl == "High" else ("🟠" if lvl == "Moderate" else "🟢")
@@ -255,7 +397,6 @@ for c in countries_in_view:
     top_drivers = drivers_map.get(c, [])
     driver_text = ", ".join(top_drivers) if top_drivers else "available indicators"
 
-    # one-line insight (country name included)
     if lvl == "High":
         one_line = f"**{c} shows a HIGH inequality signal** because inequality-related indicators dominate the visualization ({driver_text}) despite development/economic indicators being present."
     elif lvl == "Moderate":
@@ -263,11 +404,11 @@ for c in countries_in_view:
     else:
         one_line = f"**{c} shows a LOWER inequality signal (relative)** because inequality-related dominance is weaker; the visualization is driven more by non-distribution indicators ({driver_text})."
 
-    with st.expander(f"{emoji} {c} — {lvl.upper()} inequality signal (click to read why)"):
+    with st.expander(f"{emoji} {c} — {lvl.upper()} inequality signal (click to view explanation)"):
         st.markdown("**Why (from the sunburst dominance):**")
         if top_drivers:
             for d in top_drivers:
-                st.write(f"- Prominent slice: **{d}**")
+                st.write(f"- Most dominant indicator: **{d}**")
         else:
             st.write("- No clear inequality-related indicators available for this country-year in the dataset.")
 
@@ -286,11 +427,13 @@ if not countries_in_view:
     st.warning("No countries available for Spotlight.")
     st.stop()
 
-# Session state for spotlight index
 if "spotlight_idx" not in st.session_state:
     st.session_state.spotlight_idx = 0
 
-colA, colB, colC = st.columns([1, 2, 1])
+colA, colB, colC = st.columns([1, 5.5, 1], gap="large")
+
+
+
 with colA:
     if st.button("⬅️ Previous"):
         st.session_state.spotlight_idx = (st.session_state.spotlight_idx - 1) % len(countries_in_view)
@@ -311,7 +454,6 @@ if c_df.empty:
     st.warning("No data for spotlight country.")
     st.stop()
 
-# Bubble chart: indicator bubbles sized by normalized dominance, colored by dominance
 bubble_df = c_df.sort_values("normalized_value", ascending=False).copy()
 bubble_df["indicator_short"] = bubble_df["indicator"].astype(str).str.slice(0, 45)
 
@@ -328,13 +470,11 @@ fig_bubble = px.scatter(
 fig_bubble.update_layout(height=540, xaxis_title="Normalized dominance (0–100)", yaxis_title="")
 st.plotly_chart(fig_bubble, use_container_width=True)
 
-# ✅ Explanation under bubble view (simple)
 st.info(
-    "How to read the bubble chart: **bigger bubble = more dominant indicator** for this country (after normalization). "
-    "It highlights what stands out most (e.g., income-share / Gini / unemployment), which we use to form a simple inequality signal."
+    "How to read the bubble chart: **a larger bubble indicates a more dominant indicator** for this country (after normalization). "
+    "It highlights which indicators stand out most and are used to derive a simple, descriptive inequality signal."
 )
 
-# Underlying data (optional)
 with st.expander("View underlying data (for this country)"):
     view = c_df[["indicator", "formatted_value", "normalized_value"]].copy()
     view.columns = ["Indicator", "Actual Value", "Dominance (0-100)"]
