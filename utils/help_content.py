@@ -393,8 +393,8 @@ HELP_CONTENT = {
     
     "search": {
         "title": " Smart Search - Quick Navigation",
-        "overview": "Keyboard-friendly search system for finding data, countries, indicators, and commands. Like VS Code's command palette for your dashboard.",
-        "features": [
+        "overview": "Keyboard-friendly search system for finding data, countries, indicators, and commands.",
+        "features" : [
             {
                 "name": "Multi-Category Search",
                 "description": "Search countries, indicators, years, commands, filters, and data"

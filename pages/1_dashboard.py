@@ -30,25 +30,27 @@ apply_all_styles()
 
 st.markdown("""
 <style>
-    /* REQUIREMENT #2: Resize sidebar to 200px */
+    /* SIDEBAR: 200px width */
     [data-testid="stSidebar"] {
         width: 200px !important;
         min-width: 200px !important;
         max-width: 200px !important;
     }
     
-    /* Main background - Dark navy matching the screenshot */
+    /* MAIN BACKGROUND: Much more purple gradient matching sidebar */
     .main {
-        background: #1a1f3a;
+        background: linear-gradient(135deg, #3d2352 0%, #2a1a47 50%, #1a1230 100%);
+        background-attachment: fixed;
     }
     
-    /* Remove default padding */
+    /* Block container */
     .block-container {
         padding-top: 2rem;
         padding-bottom: 2rem;
         padding-left: 3rem;
         padding-right: 3rem;
         max-width: 100%;
+        background: transparent;
     }
     
     /* Hide Streamlit branding */
@@ -56,17 +58,25 @@ st.markdown("""
     footer {visibility: hidden;}
     header {visibility: hidden;}
     
-    /* Metric cards - matching screenshot style */
+    /* METRIC CARDS: Much more purple glow theme */
     div[data-testid="metric-container"] {
-        background: #0f1419;
-        border: 1px solid rgba(59, 130, 246, 0.2);
+        background: linear-gradient(135deg, rgba(139, 92, 246, 0.15) 0%, rgba(99, 102, 241, 0.1) 100%);
+        border: 1px solid rgba(139, 92, 246, 0.4);
         border-radius: 12px;
         padding: 20px;
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+        box-shadow: 0 4px 20px rgba(139, 92, 246, 0.25), 0 0 40px rgba(139, 92, 246, 0.1);
+        backdrop-filter: blur(10px);
+        transition: all 0.3s ease;
+    }
+    
+    div[data-testid="metric-container"]:hover {
+        border-color: rgba(139, 92, 246, 0.6);
+        box-shadow: 0 4px 30px rgba(139, 92, 246, 0.35), 0 0 50px rgba(139, 92, 246, 0.15);
+        transform: translateY(-2px);
     }
     
     div[data-testid="metric-container"] > label {
-        color: #94a3b8 !important;
+        color: #a78bfa !important;
         font-size: 0.875rem !important;
         font-weight: 500 !important;
         text-transform: uppercase;
@@ -83,62 +93,77 @@ st.markdown("""
         font-size: 0.875rem !important;
     }
     
-    /* Headers */
+    /* HEADERS: White with glow */
     h1, h2, h3 {
         color: #ffffff !important;
         font-weight: 600 !important;
+        text-shadow: 0 0 20px rgba(139, 92, 246, 0.3);
     }
     
-    /* Selectbox styling */
+    /* SELECTBOX: More purple theme */
     div[data-baseweb="select"] {
-        background: rgba(20, 25, 45, 0.6) !important;
+        background: rgba(139, 92, 246, 0.15) !important;
+        border: 1px solid rgba(139, 92, 246, 0.4) !important;
         border-radius: 8px !important;
     }
     
-    /* Text color */
+    div[data-baseweb="select"]:hover {
+        border-color: rgba(139, 92, 246, 0.6) !important;
+        box-shadow: 0 0 15px rgba(139, 92, 246, 0.2) !important;
+    }
+    
+    /* TEXT COLORS */
     p, span, div {
         color: #e2e8f0;
     }
     
-    /* Scrollbar */
+    /* SCROLLBAR: Purple theme */
     ::-webkit-scrollbar {
         width: 8px;
         height: 8px;
     }
     
     ::-webkit-scrollbar-track {
-        background: rgba(15, 20, 25, 0.5);
+        background: rgba(30, 25, 56, 0.5);
     }
     
     ::-webkit-scrollbar-thumb {
-        background: rgba(100, 116, 139, 0.5);
+        background: rgba(139, 92, 246, 0.5);
         border-radius: 4px;
     }
     
     ::-webkit-scrollbar-thumb:hover {
-        background: rgba(100, 116, 139, 0.8);
+        background: rgba(139, 92, 246, 0.8);
     }
     
-    /* Custom card styles */
+    /* CUSTOM CARD STYLES: Much more purple glow */
     .stat-card {
-        background: #0f1419;
-        border: 1px solid rgba(59, 130, 246, 0.2);
+        background: linear-gradient(135deg, rgba(139, 92, 246, 0.15) 0%, rgba(99, 102, 241, 0.1) 100%);
+        border: 1px solid rgba(139, 92, 246, 0.4);
         border-radius: 12px;
         padding: 20px;
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+        box-shadow: 0 4px 20px rgba(139, 92, 246, 0.25);
         margin-bottom: 20px;
+        backdrop-filter: blur(10px);
     }
     
+    .stat-card:hover {
+        border-color: rgba(139, 92, 246, 0.6);
+        box-shadow: 0 4px 30px rgba(139, 92, 246, 0.35);
+    }
+    
+    /* SECTION HEADER: Purple accent */
     .section-header {
-        font-size: 1.1rem;
+        font-size: 1.5rem;
         font-weight: 600;
         color: #ffffff;
         margin: 30px 0 15px 0;
         padding-bottom: 10px;
-        border-bottom: 1px solid rgba(100, 116, 139, 0.2);
+        border-bottom: 2px solid rgba(139, 92, 246, 0.3);
+        text-shadow: 0 0 15px rgba(139, 92, 246, 0.3);
     }
     
-    /* REQUIREMENT #6: Breadcrumb styling */
+    /* BREADCRUMB: Purple links */
     .breadcrumb {
         padding: 0.5rem 0;
         margin-bottom: 1rem;
@@ -153,6 +178,27 @@ st.markdown("""
     
     .breadcrumb a:hover {
         color: #a78bfa;
+        text-shadow: 0 0 10px rgba(139, 92, 246, 0.5);
+    }
+    
+    /* BUTTONS: More purple theme */
+    .stButton > button {
+        background: rgba(139, 92, 246, 0.25);
+        border: 1px solid rgba(139, 92, 246, 0.4);
+        color: #ffffff;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+    
+    .stButton > button:hover {
+        background: rgba(139, 92, 246, 0.45);
+        border-color: #8b5cf6;
+        box-shadow: 0 0 25px rgba(139, 92, 246, 0.5);
+    }
+    
+    /* DIVIDER: Purple */
+    hr {
+        border-color: rgba(139, 92, 246, 0.3);
     }
 </style>
 """, unsafe_allow_html=True)
