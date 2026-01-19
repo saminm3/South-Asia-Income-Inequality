@@ -14,6 +14,7 @@ from utils.loaders import load_all_indicators
 from utils.utils import human_indicator
 from utils.help_system import render_help_button
 from utils.sidebar import apply_all_styles
+
 # ----------------------------
 # Page config
 # ----------------------------
@@ -34,7 +35,7 @@ try:
 except FileNotFoundError:
     pass
 
-# Professional text styling
+# Professional text styling + correlation page-only styling
 st.markdown("""
 <style>
 .story-text {
@@ -46,6 +47,112 @@ st.markdown("""
 .story-text .muted {
     color: #9ca3af;
     font-size: 0.85rem;
+}
+
+/* Correlation page alert box */
+.correlation-alert {
+    border-radius: 18px;
+    border: 1px solid rgba(139, 92, 246, 0.6);
+    background: linear-gradient(
+        90deg,
+        rgba(88, 28, 135, 0.45),
+        rgba(30, 41, 59, 0.40)
+    );
+    padding: 18px 20px;
+    margin-bottom: 20px;
+    color: #e5e7eb;
+    font-size: 0.95rem;
+}
+
+/* Key statistics metric cards */
+div[data-testid="stMetric"] {
+    border-radius: 16px;
+    border: 1px solid rgba(139, 92, 246, 0.35);
+    background: linear-gradient(
+        180deg,
+        rgba(88, 28, 135, 0.28),
+        rgba(17, 24, 39, 0.28)
+    );
+    padding: 14px 14px;
+}
+
+div[data-testid="stMetricLabel"] {
+    color: #cbd5e1 !important;
+    font-size: 0.90rem;
+}
+
+div[data-testid="stMetricValue"] {
+    color: #ffffff !important;
+    font-weight: 700;
+}
+
+div[data-testid="stMetricDelta"] {
+    color: #a78bfa !important;
+}
+
+/* Dataframe styling (correlation page only) */
+div[data-testid="stDataFrame"] {
+    border-radius: 16px;
+    border: 1px solid rgba(139, 92, 246, 0.35);
+    background: linear-gradient(
+        180deg,
+        rgba(88, 28, 135, 0.18),
+        rgba(17, 24, 39, 0.25)
+    );
+    padding: 10px;
+}
+
+/* ---- Styled expander (excluded years) ---- */
+div[data-testid="stExpander"] {
+    border-radius: 16px;
+    border: 1px solid rgba(139, 92, 246, 0.45);
+    background: linear-gradient(
+        180deg,
+        rgba(88, 28, 135, 0.22),
+        rgba(17, 24, 39, 0.30)
+    );
+    margin-top: 10px;
+}
+div[data-testid="stExpander"] summary {
+    font-weight: 600;
+    color: #e5e7eb;
+    padding: 12px 16px;
+}
+div[data-testid="stExpander"] summary svg {
+    color: #a78bfa !important;
+}
+div[data-testid="stExpander"] div[role="region"] {
+    padding: 10px 18px 16px 18px;
+    color: #e5e7eb;
+}
+div[data-testid="stExpander"] strong { color: #ffffff; }
+
+/* Table header */
+div[data-testid="stDataFrame"] thead tr th {
+    background-color: rgba(88, 28, 135, 0.55) !important;
+    color: #ffffff !important;
+    font-weight: 600;
+    border-bottom: 1px solid rgba(139, 92, 246, 0.4) !important;
+}
+
+/* Table body cells */
+div[data-testid="stDataFrame"] tbody tr td {
+    background-color: rgba(17, 24, 39, 0.35) !important;
+    color: #e5e7eb !important;
+    border-bottom: 1px solid rgba(139, 92, 246, 0.15) !important;
+}
+
+/* Hover effect */
+div[data-testid="stDataFrame"] tbody tr:hover td {
+    background-color: rgba(139, 92, 246, 0.15) !important;
+}
+
+/* Plotly chart container */
+div[data-testid="stPlotlyChart"] {
+    border-radius: 18px;
+    border: 1px solid rgba(139, 92, 246, 0.22);
+    background: linear-gradient(180deg, rgba(88, 28, 135, 0.08), rgba(17, 24, 39, 0.14));
+    padding: 10px 12px;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -75,9 +182,12 @@ if df.empty:
     st.stop()
 
 df = df.dropna(subset=["country", "year", "indicator", "value"]).copy()
-df["year"] = pd.to_numeric(df["year"], errors="coerce").astype(int)
+df["year"] = pd.to_numeric(df["year"], errors="coerce")
+df = df.dropna(subset=["year"])
+df["year"] = df["year"].astype(int)
+
 df["value"] = pd.to_numeric(df["value"], errors="coerce")
-df = df.dropna(subset=["year", "value"])
+df = df.dropna(subset=["value"])
 
 if home_countries:
     df = df[df["country"].isin(home_countries)]
@@ -159,16 +269,40 @@ plot_df = wide[["country", "year", x_indicator, y_indicator]].dropna()
 coverage = plot_df.groupby("country").size()
 countries_present = list(coverage.index)
 
+excluded_countries = []
+if home_countries:
+    excluded_countries = sorted(list(set(home_countries) - set(countries_present)))
+
+if excluded_countries:
+    excluded_list = ", ".join(sorted(excluded_countries))
+    st.markdown(
+        f"""
+        <div class="correlation-alert">
+            <strong>Some selected countries are excluded</strong> because there is no overlapping data for the chosen
+            X and Y indicators within the selected year range.<br><br>
+            <strong>Excluded countries:</strong> {excluded_list}
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+if plot_df.empty:
+    st.error("No overlapping data available for the selected indicators and filters.")
+    st.stop()
+
 # ----------------------------
 # Correlation
 # ----------------------------
 x = plot_df[x_indicator].values
 y = plot_df[y_indicator].values
+
 r, p = pearsonr(x, y)
 
 def strength_label(rv):
-    if abs(rv) >= 0.7: return "Strong"
-    if abs(rv) >= 0.4: return "Moderate"
+    if abs(rv) >= 0.7:
+        return "Strong"
+    if abs(rv) >= 0.4:
+        return "Moderate"
     return "Weak"
 
 strength = strength_label(r)
@@ -180,22 +314,39 @@ direction = "Positive" if r > 0 else "Negative"
 left, right = st.columns([2.2, 1])
 
 with left:
-    st.subheader("Scatter view (animated by year)")
+    st.subheader("Scatter view (year-wise observations)")
+
+    if home_year_range:
+        st.caption(
+            f"Analysis window: {home_year_range[0]}–{home_year_range[1]}. "
+            "Only years with overlapping data for the selected X and Y indicators are included."
+        )
+        full_years = set(range(home_year_range[0], home_year_range[1] + 1))
+        used_years = set(plot_df["year"].unique())
+        excluded_years = sorted(list(full_years - used_years))
+
+        with st.expander("View excluded years (due to missing data)"):
+            if excluded_years:
+                st.write("The following years are excluded because one or both indicators are missing:")
+                st.write(", ".join(map(str, excluded_years)))
+            else:
+                st.write("No years are excluded within the selected range.")
 
     fig = px.scatter(
-    plot_df,
-    x=x_indicator,
-    y=y_indicator,
-    color="country",
-    opacity=0.85,
-    title=f"{human_indicator(y_indicator)} vs {human_indicator(x_indicator)}"
-)
+        plot_df,
+        x=x_indicator,
+        y=y_indicator,
+        color="country",
+        opacity=0.85,
+        title=f"{human_indicator(y_indicator)} vs {human_indicator(x_indicator)}"
+    )
 
     if show_trend:
         z = np.polyfit(x, y, 1)
+        xs = np.linspace(x.min(), x.max(), 120)
         fig.add_scatter(
-            x=np.linspace(x.min(), x.max(), 120),
-            y=np.poly1d(z)(np.linspace(x.min(), x.max(), 120)),
+            x=xs,
+            y=np.poly1d(z)(xs),
             mode="lines",
             name="Trend"
         )
@@ -208,7 +359,7 @@ with left:
         use_container_width=True,
         config={
             "toImageButtonOptions": {
-                "format": "png",   # user can change to svg/jpeg/webp
+                "format": "png",
                 "filename": "inequality_correlation",
                 "scale": 2
             }
@@ -271,14 +422,124 @@ ranked["Average value"] = ranked["Average value"].round(3)
 st.dataframe(ranked, use_container_width=True, hide_index=True)
 
 # ----------------------------
+# Inequality trend and dispersion
+# ----------------------------
+st.markdown("---")
+st.subheader("Inequality trend and dispersion (2000–2023)")
+
+trend_rows = []
+total_years = None
+if home_year_range:
+    total_years = (home_year_range[1] - home_year_range[0] + 1)
+
+for c in sorted(countries_present):
+    sub = plot_df[plot_df["country"] == c].sort_values("year")
+    vals = sub[y_indicator].values
+    years = sub["year"].values
+
+    avg_val = float(np.mean(vals))
+    min_val = float(np.min(vals))
+    max_val = float(np.max(vals))
+    rng = max_val - min_val
+
+    slope = np.nan
+    trend_label = "Stable"
+    if len(sub) >= 2:
+        slope = float(np.polyfit(years, vals, 1)[0])
+        if slope > 0.0001:
+            trend_label = "Increasing"
+        elif slope < -0.0001:
+            trend_label = "Decreasing"
+
+    data_points = int(len(sub))
+
+    if total_years:
+        coverage_pct = (data_points / total_years) * 100.0
+    else:
+        coverage_pct = np.nan
+
+    if data_points >= 18:
+        reliability = "High"
+    elif data_points >= 10:
+        reliability = "Medium"
+    else:
+        reliability = "Low"
+
+    trend_rows.append({
+        "Country": c,
+        "Average value": round(avg_val, 3),
+        "Minimum": round(min_val, 3),
+        "Maximum": round(max_val, 3),
+        "Range": round(rng, 3),
+        "Trend slope (per year)": round(slope, 4) if not np.isnan(slope) else np.nan,
+        "Data points": data_points,
+        "Trend": trend_label,
+        "Coverage (%)": round(coverage_pct, 1) if not np.isnan(coverage_pct) else np.nan,
+        "Data reliability": reliability
+    })
+
+trend_df = pd.DataFrame(trend_rows)
+st.dataframe(trend_df, use_container_width=True, hide_index=True)
+
+# ----------------------------
 # Missing countries explanation
 # ----------------------------
+st.markdown("---")
 with st.expander("Why some countries are not shown"):
     st.write(
-        "A country appears only if both selected indicators (X and Y) "
-        "are available for the same years. Missing data removes the country "
-        "to preserve analytical accuracy."
+        "Countries appear only when both selected indicators (X and Y) are available in the same years. "
+        "If a country has missing values for either indicator, it is excluded from the correlation plot to avoid "
+        "misleading results."
     )
-    st.dataframe(coverage.rename("Data points").reset_index(), hide_index=True)
+
+    total_years_label = ""
+    if home_year_range:
+        total_years_label = f"Total years in selected range: {home_year_range[0]}–{home_year_range[1]}"
+
+    if total_years_label:
+        st.caption(total_years_label)
+
+    availability_rows = []
+    if home_year_range:
+        total_years = (home_year_range[1] - home_year_range[0] + 1)
+    else:
+        total_years = None
+
+    all_country_list = sorted(df["country"].unique())
+    if home_countries:
+        all_country_list = sorted(home_countries)
+
+    for c in all_country_list:
+        sub_all = wide[wide["country"] == c][["year", x_indicator, y_indicator]].copy()
+        sub_all = sub_all.dropna(subset=[x_indicator, y_indicator])
+
+        dp = int(len(sub_all))
+        cov = (dp / total_years * 100.0) if total_years else np.nan
+
+        if dp >= 18:
+            reliability = "High"
+        elif dp >= 10:
+            reliability = "Medium"
+        else:
+            reliability = "Low"
+
+        availability_rows.append({
+            "Country": c,
+            "Data points": dp,
+            "Coverage (%)": round(cov, 1) if not np.isnan(cov) else np.nan,
+            "Data reliability": reliability
+        })
+
+    availability_df = pd.DataFrame(availability_rows)
+    st.write("Data availability by country (based on the selected X and Y indicators)")
+    st.dataframe(availability_df, use_container_width=True, hide_index=True)
+
+    st.markdown("Interpretation guidance")
+    st.markdown(
+        """
+        - Coverage indicates the share of years with usable values for both indicators.
+        - Low coverage means correlations may be unstable and should be interpreted with caution.
+        """
+    )
 
 st.caption("Inequality Drivers — Correlation Explorer | South Asia Inequality Analysis Platform")

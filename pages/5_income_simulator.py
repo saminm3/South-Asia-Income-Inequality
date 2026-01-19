@@ -1,9 +1,10 @@
 import streamlit as st
 import pandas as pd
-import plotly.graph_objects as go
-import plotly.express as px
 import numpy as np
-from pathlib import Path
+import plotly.express as px
+import plotly.graph_objects as go
+from datetime import datetime
+import textwrap
 from utils.help_system import render_help_button
 from utils.sidebar import apply_all_styles
 from utils.data_loader import SouthAsiaDataLoader
@@ -32,145 +33,148 @@ except FileNotFoundError:
     pass
 
 # Custom CSS for Professional Look
-st.markdown("""
-<style>
-    .pro-card {
-        background: #1e2532;
-        border-radius: 12px;
-        padding: 24px;
-        border: 1px solid #2f3336;
-        margin-bottom: 20px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    }
-    
-    .input-group-label {
-        font-size: 0.85rem;
-        color: #8b98a5;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        margin-bottom: 8px;
-        font-weight: 600;
-    }
-    
-    .result-container {
-        text-align: center;
-        padding: 30px;
-        background: linear-gradient(180deg, rgba(30, 37, 50, 0.8) 0%, rgba(30, 37, 50, 0.4) 100%);
-        border-radius: 16px;
-        border: 1px solid #2f3336;
-        margin-bottom: 20px;
-    }
-    .metric-value-large {
-        font-size: 4rem;
-        font-weight: 800;
-        background: -webkit-linear-gradient(0deg, #1d9bf0, #00ba7c);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        line-height: 1.1;
-    }
-    .metric-label {
-        color: #8b98a5;
-        text-transform: uppercase;
-        font-size: 0.9rem;
-        letter-spacing: 1px;
-    }
-    .metric-group {
-        font-size: 1.5rem;
-        font-weight: 600;
-        margin-top: 10px;
-    }
-    
-    .insight-panel {
-        background: rgba(29, 155, 240, 0.05);
-        border-left: 4px solid #1d9bf0;
-        padding: 20px;
-        border-radius: 0 8px 8px 0;
-        margin-bottom: 15px;
-    }
-    
-    .insight-panel-success {
-        background: rgba(16, 185, 129, 0.05);
-        border-left: 4px solid #10b981;
-        padding: 20px;
-        border-radius: 0 8px 8px 0;
-        margin-bottom: 15px;
-    }
-    
-    .insight-panel-warning {
-        background: rgba(245, 158, 11, 0.05);
-        border-left: 4px solid #f59e0b;
-        padding: 20px;
-        border-radius: 0 8px 8px 0;
-        margin-bottom: 15px;
-    }
-    
-    .insight-title {
-        color: #ffffff;
-        font-weight: 600;
-        margin-bottom: 12px;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        font-size: 1.1rem;
-    }
-    
-    .section-header {
-        font-size: 1.3rem;
-        font-weight: 700;
-        color: #ffffff;
-        margin: 30px 0 15px 0;
-        padding-bottom: 10px;
-        border-bottom: 2px solid rgba(29, 155, 240, 0.3);
-    }
-    
-    .comparison-card {
-        background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(16, 185, 129, 0.1));
-        border: 2px solid rgba(59, 130, 246, 0.3);
-        border-radius: 16px;
-        padding: 30px;
-        margin: 20px 0;
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-    }
-    
-    .profile-badge {
-        display: inline-block;
-        padding: 8px 16px;
-        border-radius: 20px;
-        font-weight: 700;
-        font-size: 0.85rem;
-        letter-spacing: 1px;
-        text-transform: uppercase;
-    }
-    
-    .badge-primary {
-        background: linear-gradient(135deg, #3b82f6, #1d9bf0);
-        color: white;
-    }
-    
-    .badge-success {
-        background: linear-gradient(135deg, #10b981, #34d399);
-        color: white;
-    }
-    
-    .historical-card {
-        background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(239, 68, 68, 0.1));
-        border: 2px solid rgba(245, 158, 11, 0.3);
-        border-radius: 16px;
-        padding: 25px;
-        margin: 20px 0;
-    }
-    
-    .delta-badge {
-        padding: 4px 10px;
-        border-radius: 6px;
-        font-weight: 700;
-        font-size: 0.9rem;
-    }
-    
-    .delta-up { background: rgba(16, 185, 129, 0.2); color: #10b981; }
-    .delta-down { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
-</style>
-""", unsafe_allow_html=True)
+st.markdown("""<style>
+.pro-card {
+background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(139, 92, 246, 0.05));
+border-radius: 16px;
+padding: 24px;
+border: 1px solid rgba(139, 92, 246, 0.2);
+margin-bottom: 20px;
+box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+backdrop-filter: blur(8px);
+}
+.input-group-label {
+font-size: 0.85rem;
+color: #94a3b8;
+text-transform: uppercase;
+font-weight: 700;
+letter-spacing: 1px;
+margin-bottom: 12px;
+}
+.result-container {
+text-align: center;
+padding: 40px;
+background: linear-gradient(180deg, rgba(139, 92, 246, 0.15) 0%, rgba(139, 92, 246, 0.05) 100%);
+border-radius: 20px;
+border: 1px solid rgba(139, 92, 246, 0.3);
+margin-bottom: 30px;
+box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+}
+.metric-value-large {
+font-size: 5rem;
+font-weight: 800;
+background: linear-gradient(90deg, #8b5cf6 0%, #ec4899 50%, #06b6d4 100%);
+-webkit-background-clip: text;
+-webkit-text-fill-color: transparent;
+line-height: 1.1;
+margin: 10px 0;
+}
+.metric-label {
+color: #94a3b8;
+text-transform: uppercase;
+font-size: 1rem;
+letter-spacing: 2px;
+font-weight: 600;
+}
+.metric-group {
+font-size: 1.6rem;
+font-weight: 700;
+margin-top: 15px;
+color: #ffffff;
+}
+.section-header {
+font-size: 1.5rem;
+font-weight: 800;
+color: #ffffff;
+margin: 40px 0 20px 0;
+padding-bottom: 12px;
+border-bottom: 2px solid rgba(6, 182, 212, 0.4);
+display: flex;
+align-items: center;
+gap: 12px;
+}
+.comparison-card {
+background: linear-gradient(135deg, rgba(139, 92, 246, 0.12), rgba(6, 182, 212, 0.08));
+border: 2px solid rgba(139, 92, 246, 0.3);
+border-radius: 20px;
+padding: 35px;
+margin: 25px 0;
+box-shadow: 0 15px 45px rgba(0, 0, 0, 0.4);
+}
+.profile-badge {
+display: inline-block;
+padding: 10px 20px;
+border-radius: 25px;
+font-weight: 800;
+font-size: 0.9rem;
+letter-spacing: 1.5px;
+text-transform: uppercase;
+box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+.badge-primary { background: linear-gradient(135deg, #8b5cf6, #ec4899); color: white; border: 1px solid rgba(255, 255, 255, 0.2); }
+.badge-success { background: linear-gradient(135deg, #10b981, #06b6d4); color: white; border: 1px solid rgba(255, 255, 255, 0.2); }
+.insight-panel {
+background: rgba(139, 92, 246, 0.08);
+border-left: 4px solid #8b5cf6;
+padding: 24px;
+border-radius: 0 12px 12px 0;
+margin-bottom: 20px;
+border-top: 1px solid rgba(139, 92, 246, 0.1);
+border-right: 1px solid rgba(139, 92, 246, 0.1);
+border-bottom: 1px solid rgba(139, 92, 246, 0.1);
+}
+.insight-panel-success {
+background: rgba(16, 185, 129, 0.08);
+border-left: 4px solid #10b981;
+padding: 24px;
+border-radius: 0 12px 12px 0;
+margin-bottom: 20px;
+}
+.insight-panel-warning {
+background: rgba(245, 158, 11, 0.08);
+border-left: 4px solid #f59e0b;
+padding: 24px;
+border-radius: 0 12px 12px 0;
+margin-bottom: 20px;
+}
+.insight-title {
+color: #ffffff;
+font-weight: 700;
+margin-bottom: 14px;
+display: flex;
+align-items: center;
+gap: 10px;
+font-size: 1.15rem;
+}
+.historical-card {
+background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(239, 68, 68, 0.05));
+border: 1px solid rgba(245, 158, 11, 0.3);
+border-radius: 16px;
+padding: 25px;
+margin: 20px 0;
+backdrop-filter: blur(8px);
+}
+.delta-badge {
+padding: 6px 14px;
+border-radius: 8px;
+font-weight: 800;
+font-size: 0.95rem;
+box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+.delta-up { background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); }
+.delta-down { background: rgba(239, 68, 68, 0.15); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3); }
+</style>""", unsafe_allow_html=True)
+
+# HERO SECTION - ALIGNED WITH HOME.PY
+st.markdown("""<div style="text-align: center; margin-bottom: 3rem; padding-top: 1rem;">
+<h1 style="font-size: 3.5rem; margin-bottom: 1rem; background: linear-gradient(90deg, #8b5cf6 0%, #ec4899 50%, #06b6d4 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-weight: 800;">
+Interactive Income Simulator
+</h1>
+<p style="font-size: 1.3rem; color: #94a3b8; margin-top: 0; font-weight: 500;">
+Personalized Economic Modeling & Comparative Analytics
+</p>
+<div style="width: 80px; height: 4px; background: linear-gradient(90deg, #8b5cf6, #ec4899); margin: 20px auto; border-radius: 2px;"></div>
+</div>""", unsafe_allow_html=True)
 
 # Country data
 COUNTRY_DATA = {
@@ -485,14 +489,7 @@ def generate_insights(sp_p, breakdown_components, sp_country, sp_gender, sp_loca
 
 # ============= MAIN APP =============
 
-st.markdown("""
-<div class="dashboard-header">
-    <h1 style="display: flex; align-items: center; gap: 10px;">
-        <span style="font-size: 2.5rem;">💸</span> Income Simulator
-    </h1>
-    <p>Understand how socio-economic factors shape your economic position in South Asia. Build your profile, run the simulation, and get personalized insights in plain language.</p>
-</div>
-""", unsafe_allow_html=True)
+# Removed old header section as it's replaced by the new HERO SECTION above
 
 # Track simulator mode in session state
 if 'simulator_mode' not in st.session_state:
@@ -553,13 +550,11 @@ mode_display = {
 }
 
 # Display selected mode info
-st.markdown(f"""
-<div style="text-align: center; margin: 20px 0; padding: 15px; background: rgba(29, 155, 240, 0.1); border-radius: 10px; border: 1px solid #1d9bf0;">
-    <span style="color: #1d9bf0; font-weight: 600; font-size: 1.1rem;">
-        Active Mode: {mode_display.get(st.session_state.simulator_mode)} Simulator
-    </span>
-</div>
-""", unsafe_allow_html=True)
+st.markdown(f"""<div style="text-align: center; margin: 20px 0; padding: 15px; background: rgba(139, 92, 246, 0.1); border-radius: 12px; border: 1px solid rgba(139, 92, 246, 0.3);">
+<span style="color: #ffffff; font-weight: 700; font-size: 1.1rem; letter-spacing: 0.5px;">
+<span style="color: #8b5cf6;">ACTIVE MODE:</span> {mode_display.get(st.session_state.simulator_mode).upper()}
+</span>
+</div>""", unsafe_allow_html=True)
 
 st.markdown("---")
 
@@ -573,13 +568,10 @@ if st.session_state.simulator_mode == "individual":
     col_input, col_preview = st.columns([2, 1], gap="large")
 
     with col_input:
-        st.markdown('<div class="pro-card">', unsafe_allow_html=True)
-        
         st.markdown('<div class="input-group-label">🌍 Country</div>', unsafe_allow_html=True)
         sp_country = st.selectbox("Select your country", list(COUNTRY_DATA.keys()), key="sp_country", label_visibility="collapsed")
         
-        st.markdown("---")
-        st.markdown('<div class="input-group-label">🎓 Education & Skills</div>', unsafe_allow_html=True)
+        st.markdown('<div class="input-group-label" style="margin-top: 25px;">🎓 Education & Skills</div>', unsafe_allow_html=True)
         
         col_edu1, col_edu2 = st.columns(2)
         with col_edu1:
@@ -587,8 +579,7 @@ if st.session_state.simulator_mode == "individual":
         with col_edu2:
             sp_digital = st.slider("Digital Proficiency (%)", 0, 100, 50, key="sp_digital")
         
-        st.markdown("---")
-        st.markdown('<div class="input-group-label">👤 Demographics</div>', unsafe_allow_html=True)
+        st.markdown('<div class="input-group-label" style="margin-top: 25px;">👤 Demographics</div>', unsafe_allow_html=True)
         
         col_demo1, col_demo2 = st.columns(2)
         with col_demo1:
@@ -598,28 +589,23 @@ if st.session_state.simulator_mode == "individual":
             sp_location = st.selectbox("Location Type", ["Rural", "Urban"], key="sp_location")
             sp_credit = st.checkbox("Has Bank Account / Credit Access", value=False, key="sp_credit")
         
-        st.markdown("---")
-        st.markdown('<div class="input-group-label">💼 Occupation</div>', unsafe_allow_html=True)
+        st.markdown('<div class="input-group-label" style="margin-top: 25px;">💼 Occupation</div>', unsafe_allow_html=True)
         sp_occ = st.selectbox("Primary Work Sector", ["Agriculture", "Industry", "Services", "Public Sector", "Unemployed"], index=2, key="sp_occ", label_visibility="collapsed")
-        
-        st.markdown('</div>', unsafe_allow_html=True)
 
     with col_preview:
-        st.markdown('<div class="pro-card">', unsafe_allow_html=True)
-        st.markdown("### 👤 Your Profile")
-        st.markdown(f"""
-        <div style="line-height: 2.2; color: #e2e8f0; font-size: 0.95rem;">
-            <b style="color: #1d9bf0;">Country:</b> {sp_country}<br>
-            <b style="color: #1d9bf0;">Education:</b> {sp_edu} years<br>
-            <b style="color: #1d9bf0;">Digital Skills:</b> {sp_digital}%<br>
-            <b style="color: #1d9bf0;">Gender:</b> {sp_gender}<br>
-            <b style="color: #1d9bf0;">Age:</b> {sp_age}<br>
-            <b style="color: #1d9bf0;">Location:</b> {sp_location}<br>
-            <b style="color: #1d9bf0;">Credit:</b> {'Yes ✓' if sp_credit else 'No ✗'}<br>
-            <b style="color: #1d9bf0;">Occupation:</b> {sp_occ}
-        </div>
-        """, unsafe_allow_html=True)
-        st.markdown('</div>', unsafe_allow_html=True)
+        # Profile Preview Card - Flattened
+        st.markdown(f"""<div class="pro-card" style="border: 2px solid rgba(139, 92, 246, 0.4);">
+<div class="input-group-label" style="text-align: center; margin-bottom: 20px; color: #8b5cf6;">👤 Profile Preview</div>
+<div style="line-height: 2.2; color: #e2e8f0; font-size: 0.95rem;">
+<b style="color: #8b5cf6; font-weight: 700;">Country:</b> {sp_country}<br>
+<b style="color: #8b5cf6; font-weight: 700;">Education:</b> {sp_edu} yrs<br>
+<b style="color: #8b5cf6; font-weight: 700;">Skills:</b> {sp_digital}% proficiency<br>
+<b style="color: #8b5cf6; font-weight: 700;">Gender:</b> {sp_gender}<br>
+<b style="color: #8b5cf6; font-weight: 700;">Location:</b> {sp_location}<br>
+<b style="color: #8b5cf6; font-weight: 700;">Credit:</b> {'Yes' if sp_credit else 'No'}<br>
+<b style="color: #8b5cf6; font-weight: 700;">Occupation:</b> {sp_occ}
+</div>
+</div>""", unsafe_allow_html=True)
 
     # Calculate
     g_val = 1 if sp_gender == "Female" else 0
@@ -645,23 +631,23 @@ if st.session_state.simulator_mode == "individual":
     result_col1, result_col2 = st.columns([1, 1], gap="large")
 
     with result_col1:
-        st.markdown(f"""
-        <div class="result-container">
-            <p class="metric-label">Your Economic Percentile</p>
-            <div class="metric-value-large">{sp_p:.1f}<span style="font-size:2rem; vertical-align:super;">th</span></div>
-            <div class="metric-group" style="color: {color};">{group}</div>
-            <p style="color: #e2e8f0; margin-top: 20px; font-size: 1.05rem; line-height: 1.6;">
-                This means you rank <b>higher than {sp_p:.1f}%</b> of people in {sp_country}.<br><br>
-                <span style="color: #8b98a5;">In simpler terms: Out of every 100 people, you'd be in a better economic position than about <b>{int(sp_p)}</b> of them.</span>
-            </p>
-        </div>
-        """ + (f"""
-        <div style="background: rgba(239, 68, 68, 0.1); padding: 15px; border-radius: 12px; border: 1px solid #ef4444; margin-bottom: 20px;">
-            <p style="color: #fca5a5; font-size: 0.8rem; margin: 0; text-transform: uppercase;">Live Poverty Benchmark</p>
-            <h4 style="color: #ffffff; margin: 5px 0;">{sp_poverty['status']}</h4>
-            <p style="color: #e2e8f0; font-size: 0.85rem;">Positioned <b>{abs(sp_poverty['distance']):.1f}%</b> { 'above' if sp_poverty['distance'] > 0 else 'below' } the national poverty line.</p>
-        </div>
-        """ if sp_poverty else ""), unsafe_allow_html=True)
+        # Create flat HTML string to avoid markdown indentation issues
+        res_html = f"""<div class="result-container">
+<p class="metric-label">Your Economic Percentile</p>
+<div class="metric-value-large">{sp_p:.1f}<span style="font-size: 2rem;">th</span></div>
+<div class="metric-group" style="color: {color};">{group.upper()}</div>
+<p style="color: #94a3b8; margin-top: 25px; font-size: 1.1rem; line-height: 1.7; max-width: 600px; margin-left: auto; margin-right: auto;">
+This means you rank <b>higher than {sp_p:.1f}%</b> of people in {sp_country}. Out of every 100 people, your profile indicates a better economic position than about <b>{int(sp_p)}</b> of them.
+</p>
+</div>"""
+        if sp_poverty:
+            res_html += f"""
+<div style="background: rgba(239, 68, 68, 0.1); padding: 25px; border-radius: 16px; border: 1px solid rgba(239, 68, 68, 0.3); margin-bottom: 30px; text-align: center;">
+<p style="color: #fca5a5; font-size: 0.9rem; margin: 0; text-transform: uppercase; font-weight: 700; letter-spacing: 1.5px;">Live Poverty Benchmark</p>
+<h2 style="color: #ffffff; margin: 10px 0; font-weight: 800;">{sp_poverty['status']}</h2>
+<p style="color: #e2e8f0; font-size: 1.05rem;">Positioned <b>{abs(sp_poverty['distance']):.1f}%</b> {'above' if sp_poverty['distance'] > 0 else 'below'} the national poverty line.</p>
+</div>"""
+        st.markdown(res_html, unsafe_allow_html=True)
         
         # LIVE CURRENCY CONVERTER (DENSE DATA FEATURE)
         currencies = {"Bangladesh": "BDT", "India": "INR", "Pakistan": "PKR", "Sri Lanka": "LKR", "Nepal": "NPR"}
@@ -675,13 +661,11 @@ if st.session_state.simulator_mode == "individual":
         est_usd = base_ppp * (1.2 ** ((sp_p - 50)/10))
         est_local = est_usd * rate
         
-        st.markdown(f"""
-        <div style="background: rgba(29, 155, 240, 0.05); padding: 15px; border-radius: 12px; border: 1px dashed #1d9bf0;">
-            <p style="color: #8b98a5; font-size: 0.8rem; margin: 0;">Relative Standing Monthly Estimate (Live {curr_code})</p>
-            <h4 style="color: #1d9bf0; margin: 5px 0;">{est_local:,.0f} {curr_code}</h4>
-            <p style="color: #5c6d7e; font-size: 0.75rem;">Converted via Live API 1 USD ≈ {rate:.1f} {curr_code}</p>
-        </div>
-        """, unsafe_allow_html=True)
+        st.markdown(f"""<div style="background: rgba(29, 155, 240, 0.05); padding: 15px; border-radius: 12px; border: 1px dashed #1d9bf0;">
+<p style="color: #8b98a5; font-size: 0.8rem; margin: 0;">Relative Standing Monthly Estimate (Live {curr_code})</p>
+<h4 style="color: #1d9bf0; margin: 5px 0;">{est_local:,.0f} {curr_code}</h4>
+<p style="color: #5c6d7e; font-size: 0.75rem;">Converted via Live API 1 USD ≈ {rate:.1f} {curr_code}</p>
+</div>""", unsafe_allow_html=True)
 
     with result_col2:
         st.plotly_chart(render_gauge(sp_p, "Your Economic Position", height=300), use_container_width=True)
@@ -697,88 +681,77 @@ if st.session_state.simulator_mode == "individual":
     for idx, insight in enumerate(insights):
         with insight_cols[idx % 2]:
             panel_class = f"insight-panel-{insight['type']}" if insight['type'] in ['success', 'warning'] else "insight-panel"
-            st.markdown(f"""
-            <div class="{panel_class}">
-                <div class="insight-title">{insight['icon']} {insight['title']}</div>
-                <p style="color: #e2e8f0; font-size: 0.95rem; line-height: 1.6; margin: 0;">{insight['text']}</p>
-            </div>
-            """, unsafe_allow_html=True)
+            st.markdown(f"""<div class="{panel_class}">
+<div class="insight-title">{insight['icon']} {insight['title']}</div>
+<p style="color: #e2e8f0; font-size: 0.95rem; line-height: 1.6; margin: 0;">{insight['text']}</p>
+</div>""", unsafe_allow_html=True)
 
     # Recommendations
     if recommendations:
-        st.markdown('<p class="section-header">🎯 Personalized Recommendations</p>', unsafe_allow_html=True)
-        st.markdown('<div class="pro-card">', unsafe_allow_html=True)
-        st.markdown('<p style="color: #8b98a5; margin-bottom: 15px;">Based on your profile, here are the most impactful actions to improve your economic position:</p>', unsafe_allow_html=True)
+        st.markdown('<p class="section-header" style="margin-top: 50px;">🎯 Personalized Recommendations</p>', unsafe_allow_html=True)
+        st.markdown('<p style="color: #94a3b8; font-size: 1.1rem; margin-bottom: 25px;">Based on your profile, here are the most impactful actions to improve your economic position:</p>', unsafe_allow_html=True)
         
         for i, rec in enumerate(recommendations, 1):
             priority_color = "#ef4444" if rec['priority'] == "HIGH" else "#f59e0b"
-            st.markdown(f"""
-            <div style="background: rgba(255,255,255,0.03); padding: 15px; border-radius: 8px; margin-bottom: 12px; border-left: 3px solid {priority_color};">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                    <b style="color: #ffffff; font-size: 1.05rem;">{i}. {rec['action']}</b>
-                    <span style="background: {priority_color}; color: white; padding: 4px 12px; border-radius: 12px; font-size: 0.75rem; font-weight: 600;">{rec['priority']}</span>
-                </div>
-                <p style="color: #e2e8f0; margin: 0; line-height: 1.6;">{rec['detail']}</p>
-            </div>
-            """, unsafe_allow_html=True)
-        
-        st.markdown('</div>', unsafe_allow_html=True)
+            st.markdown(f"""<div style="background: rgba(255,255,255,0.03); padding: 20px; border-radius: 12px; margin-bottom: 15px; border-left: 4px solid {priority_color}; border: 1px solid rgba(255,255,255,0.05); border-left-width: 4px;">
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+<b style="color: #ffffff; font-size: 1.1rem;">{i}. {rec['action']}</b>
+<span style="background: {priority_color}; color: white; padding: 5px 15px; border-radius: 20px; font-size: 0.8rem; font-weight: 700;">{rec['priority']}</span>
+</div>
+<p style="color: #cbd5e1; margin: 0; line-height: 1.7; font-size: 1rem;">{rec['detail']}</p>
+</div>""", unsafe_allow_html=True)
 
     # ============= STEP 4: VISUALIZATIONS =============
 
-    st.markdown('<p class="section-header">🔍 Step 5: Understanding Your Score</p>', unsafe_allow_html=True)
+    st.markdown('<p class="section-header" style="margin-top: 50px;">🔍 Step 5: Understanding Your Score</p>', unsafe_allow_html=True)
 
     viz_col1, viz_col2 = st.columns([1, 1], gap="large")
 
     with viz_col1:
-        st.markdown('<div class="pro-card">', unsafe_allow_html=True)
         st.markdown("### 🏗️ What's Building Your Score?")
-        st.markdown('<p style="color: #8b98a5; font-size: 0.9rem; margin-bottom: 15px;">Size shows how much each factor adds. Bigger = more impact.</p>', unsafe_allow_html=True)
+        st.markdown('<p style="color: #94a3b8; font-size: 1rem; margin-bottom: 20px;">The size of each block indicates its contribution to your final percentile.</p>', unsafe_allow_html=True)
         
         tree_data = [{"Factor": k, "Contribution": v} for k, v in breakdown_components.items() if v > 0]
         
         if tree_data:
             df_tree = pd.DataFrame(tree_data)
-            fig_tree = px.treemap(df_tree, path=['Factor'], values='Contribution', color='Contribution', color_continuous_scale='Tealgrn')
-            fig_tree.update_traces(textinfo="label+value", textfont=dict(size=13, color='white'))
-            fig_tree.update_layout(paper_bgcolor='rgba(0,0,0,0)', font={'color': '#e2e8f0'}, height=320, margin=dict(t=5, l=5, r=5, b=5))
+            fig_tree = px.treemap(df_tree, path=['Factor'], values='Contribution', color='Contribution', color_continuous_scale='Purples')
+            fig_tree.update_traces(textinfo="label+value", textfont=dict(size=14, color='white'))
+            fig_tree.update_layout(paper_bgcolor='rgba(0,0,0,0)', font={'color': '#e2e8f0'}, height=350, margin=dict(t=5, l=5, r=5, b=5))
             st.plotly_chart(fig_tree, use_container_width=True)
-        
-        st.markdown('</div>', unsafe_allow_html=True)
 
     with viz_col2:
-        st.markdown('<div class="pro-card">', unsafe_allow_html=True)
-        st.markdown("### 📈 How Education Changes Everything")
-        st.markdown('<p style="color: #8b98a5; font-size: 0.9rem; margin-bottom: 15px;">Shows how your position changes with education. Red star = you now.</p>', unsafe_allow_html=True)
+        st.markdown("### 📈 The Education Lever")
+        st.markdown('<p style="color: #94a3b8; font-size: 1rem; margin-bottom: 20px;">Visualizing how increasing your years of education shifts your economic standing.</p>', unsafe_allow_html=True)
         
         edu_range = list(range(0, 21, 2))
         scores_by_edu = []
         for e in edu_range:
             score, _, _ = calculate_percentile(sp_country, e, sp_digital, g_val, u_val, sp_occ, sp_credit, sp_age)
-            scores_by_edu.append({"Education Years": e, "Percentile": score})
+            scores_by_edu.append({"Years": e, "Percentile": score})
         
         df_edu = pd.DataFrame(scores_by_edu)
-        fig_line = px.line(df_edu, x='Education Years', y='Percentile', markers=True)
-        fig_line.add_scatter(x=[sp_edu], y=[sp_p], mode='markers', marker=dict(size=16, color='#ef4444', symbol='star'), name='You Are Here')
-        fig_line.update_traces(line_color='#1d9bf0', line_width=3, selector=dict(mode='lines'))
+        fig_line = px.line(df_edu, x='Years', y='Percentile', markers=True)
+        fig_line.add_scatter(x=[sp_edu], y=[sp_p], mode='markers', marker=dict(size=18, color='#ec4899', symbol='star', line=dict(color='white', width=2)), name='Current State')
+        fig_line.update_traces(line_color='#8b5cf6', line_width=4, selector=dict(mode='lines'))
         fig_line.update_layout(
-            paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font={'color': '#e2e8f0'}, height=320,
-            xaxis=dict(title="Years of Education", showgrid=True, gridcolor='rgba(255,255,255,0.1)'),
-            yaxis=dict(title="Economic Percentile", showgrid=True, gridcolor='rgba(255,255,255,0.1)'),
-            margin=dict(t=10, l=10, r=10, b=10)
+            paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font={'color': '#e2e8f0'}, height=350,
+            xaxis=dict(title="Years of Education", showgrid=True, gridcolor='rgba(255,255,255,0.05)'),
+            yaxis=dict(title="Economic Percentile", showgrid=True, gridcolor='rgba(255,255,255,0.05)', range=[0, 100]),
+            margin=dict(t=10, l=10, r=10, b=10),
+            showlegend=False
         )
         st.plotly_chart(fig_line, use_container_width=True)
-        st.markdown('</div>', unsafe_allow_html=True)
 
     # Factor table
-    st.markdown('<div class="pro-card">', unsafe_allow_html=True)
-    st.markdown("#### 📋 Detailed Factor Contribution")
+    st.markdown('<p class="section-header" style="margin-top: 50px;">📋 Detailed Factor Contribution</p>', unsafe_allow_html=True)
+    st.markdown('<p style="color: #94a3b8; font-size: 1.1rem; margin-bottom: 25px;">A granular look at how each attribute influenced your final simulation result.</p>', unsafe_allow_html=True)
+    
     factor_df = pd.DataFrame([
         {"Factor": k, "Points Added": f"{v:+.1f}", "Impact": "🟢 Positive" if v > 0 else ("🔴 Negative" if v < 0 else "⚪ Neutral")}
         for k, v in breakdown_components.items()
     ])
     st.dataframe(factor_df, use_container_width=True, hide_index=True)
-    st.markdown('</div>', unsafe_allow_html=True)
 
 # ============= COMPARISON MODE =============
 elif st.session_state.simulator_mode == "comparison":
@@ -795,23 +768,20 @@ elif st.session_state.simulator_mode == "comparison":
     profile_col1, profile_col2 = st.columns([1, 1], gap="large")
     
     with profile_col1:
-        st.markdown('<div class="pro-card" style="border: 2px solid #3b82f6;">', unsafe_allow_html=True)
-        st.markdown('<div style="text-align: center; margin-bottom: 20px;"><span class="profile-badge badge-primary">Profile A</span></div>', unsafe_allow_html=True)
+        st.markdown('<div class="input-group-label" style="text-align: center; margin-bottom: 20px; color: #8b5cf6;">🔹 Profile A Settings</div>', unsafe_allow_html=True)
         
         # PROFILE A INPUTS
         st.markdown('<div class="input-group-label">🌍 Country</div>', unsafe_allow_html=True)
         profile_a_country = st.selectbox("Country", list(COUNTRY_DATA.keys()), key="profile_a_country", label_visibility="collapsed")
         
-        st.markdown("---")
-        st.markdown('<div class="input-group-label">🎓 Education & Skills</div>', unsafe_allow_html=True)
+        st.markdown('<div class="input-group-label" style="margin-top: 25px;">🎓 Education & Skills</div>', unsafe_allow_html=True)
         col_a1, col_a2 = st.columns(2)
         with col_a1:
             profile_a_edu = st.slider("Education (yrs)", 0, 20, 12, key="profile_a_edu")
         with col_a2:
             profile_a_digital = st.slider("Digital (%)", 0, 100, 50, key="profile_a_digital")
         
-        st.markdown("---")
-        st.markdown('<div class="input-group-label">👤 Demographics</div>', unsafe_allow_html=True)
+        st.markdown('<div class="input-group-label" style="margin-top: 25px;">👤 Demographics</div>', unsafe_allow_html=True)
         col_a3, col_a4 = st.columns(2)
         with col_a3:
             profile_a_gender = st.selectbox("Gender", ["Male", "Female"], key="profile_a_gender")
@@ -820,30 +790,24 @@ elif st.session_state.simulator_mode == "comparison":
             profile_a_location = st.selectbox("Location", ["Rural", "Urban"], key="profile_a_location")
             profile_a_credit = st.checkbox("Credit Access", value=False, key="profile_a_credit")
         
-        st.markdown("---")
-        st.markdown('<div class="input-group-label">💼 Occupation</div>', unsafe_allow_html=True)
-        profile_a_occ = st.selectbox("Sector", ["Agriculture", "Industry", "Services", "Public Sector", "Unemployed"], index=2, key="profile_a_occ", label_visibility="collapsed")
-        
-        st.markdown('</div>', unsafe_allow_html=True)
+        st.markdown('<div class="input-group-label" style="margin-top: 25px;">💼 Occupation</div>', unsafe_allow_html=True)
+        profile_a_occ = st.selectbox("Work Sector", ["Agriculture", "Industry", "Services", "Public Sector", "Unemployed"], index=2, key="profile_a_occ", label_visibility="collapsed")
     
     with profile_col2:
-        st.markdown('<div class="pro-card" style="border: 2px solid #10b981;">', unsafe_allow_html=True)
-        st.markdown('<div style="text-align: center; margin-bottom: 20px;"><span class="profile-badge badge-success">Profile B</span></div>', unsafe_allow_html=True)
+        st.markdown('<div class="input-group-label" style="text-align: center; margin-bottom: 20px; color: #10b981;">🔸 Profile B Settings</div>', unsafe_allow_html=True)
         
         # PROFILE B INPUTS - COMPLETELY INDEPENDENT
         st.markdown('<div class="input-group-label">🌍 Country</div>', unsafe_allow_html=True)
         profile_b_country = st.selectbox("Country", list(COUNTRY_DATA.keys()), key="profile_b_country", label_visibility="collapsed")
         
-        st.markdown("---")
-        st.markdown('<div class="input-group-label">🎓 Education & Skills</div>', unsafe_allow_html=True)
+        st.markdown('<div class="input-group-label" style="margin-top: 25px;">🎓 Education & Skills</div>', unsafe_allow_html=True)
         col_b1, col_b2 = st.columns(2)
         with col_b1:
             profile_b_edu = st.slider("Education (yrs)", 0, 20, 12, key="profile_b_edu")
         with col_b2:
             profile_b_digital = st.slider("Digital (%)", 0, 100, 50, key="profile_b_digital")
         
-        st.markdown("---")
-        st.markdown('<div class="input-group-label">👤 Demographics</div>', unsafe_allow_html=True)
+        st.markdown('<div class="input-group-label" style="margin-top: 25px;">👤 Demographics</div>', unsafe_allow_html=True)
         col_b3, col_b4 = st.columns(2)
         with col_b3:
             profile_b_gender = st.selectbox("Gender", ["Male", "Female"], key="profile_b_gender")
@@ -852,11 +816,8 @@ elif st.session_state.simulator_mode == "comparison":
             profile_b_location = st.selectbox("Location", ["Rural", "Urban"], key="profile_b_location")
             profile_b_credit = st.checkbox("Credit Access", value=False, key="profile_b_credit")
         
-        st.markdown("---")
-        st.markdown('<div class="input-group-label">💼 Occupation</div>', unsafe_allow_html=True)
-        profile_b_occ = st.selectbox("Sector", ["Agriculture", "Industry", "Services", "Public Sector", "Unemployed"], index=2, key="profile_b_occ", label_visibility="collapsed")
-        
-        st.markdown('</div>', unsafe_allow_html=True)
+        st.markdown('<div class="input-group-label" style="margin-top: 25px;">💼 Occupation</div>', unsafe_allow_html=True)
+        profile_b_occ = st.selectbox("Work Sector", ["Agriculture", "Industry", "Services", "Public Sector", "Unemployed"], index=2, key="profile_b_occ", label_visibility="collapsed")
     
     # Calculate both profiles with Live API Data support
     live_a = None
@@ -898,64 +859,46 @@ elif st.session_state.simulator_mode == "comparison":
     summary_col1, summary_col2 = st.columns([1, 1], gap="large")
     
     with summary_col1:
-        st.markdown('<div class="pro-card" style="border: 2px solid #3b82f6;">', unsafe_allow_html=True)
-        st.markdown('<div style="text-align: center; margin-bottom: 20px;"><span class="profile-badge badge-primary">Profile A Results</span></div>', unsafe_allow_html=True)
-        
-        st.markdown(f"""
-        <div style="background: rgba(59, 130, 246, 0.1); padding: 20px; border-radius: 10px; margin-bottom: 15px;">
-            <div style="text-align: center;">
-                <div style="font-size: 3.5rem; font-weight: 800; color: #60a5fa; margin: 10px 0;">{profile_a_p:.1f}<span style="font-size: 1.5rem;">th</span></div>
-                <div style="color: #8b98a5; font-size: 0.9rem;">PERCENTILE</div>
-            </div>
-        </div>
-        """ + (f"""
-        <div style="text-align: center; background: rgba(239, 68, 68, 0.1); padding: 8px; border-radius: 8px; border: 1px solid rgba(239, 68, 68, 0.3); margin-bottom: 15px;">
-            <span style="color: #fca5a5; font-size: 0.75rem; font-weight: 700; text-transform: uppercase;">Live: {profile_a_pov['status']}</span>
-        </div>
-        """ if profile_a_pov else ""), unsafe_allow_html=True)
-        
-        st.markdown(f"""
-        <div style="line-height: 2; color: #e2e8f0; font-size: 0.9rem;">
-            <b style="color: #60a5fa;">Country:</b> {profile_a_country}<br>
-            <b style="color: #60a5fa;">Education:</b> {profile_a_edu} years<br>
-            <b style="color: #60a5fa;">Digital:</b> {profile_a_digital}%<br>
-            <b style="color: #60a5fa;">Gender:</b> {profile_a_gender}<br>
-            <b style="color: #60a5fa;">Location:</b> {profile_a_location}<br>
-            <b style="color: #60a5fa;">Credit:</b> {'Yes' if profile_a_credit else 'No'}<br>
-            <b style="color: #60a5fa;">Occupation:</b> {profile_a_occ}
-        </div>
-        """, unsafe_allow_html=True)
-        st.markdown('</div>', unsafe_allow_html=True)
+        card_a = f"""<div class="pro-card" style="border: 2px solid rgba(139, 92, 246, 0.4);">
+<div style="text-align: center; margin-bottom: 25px;"><span class="profile-badge badge-primary">Profile A Results</span></div>
+<div style="background: rgba(139, 92, 246, 0.15); padding: 25px; border-radius: 12px; margin-bottom: 20px; text-align: center; border: 1px solid rgba(139, 92, 246, 0.2);">
+<div style="font-size: 4rem; font-weight: 800; color: #ffffff; margin: 10px 0; background: linear-gradient(90deg, #8b5cf6, #ec4899); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">{profile_a_p:.1f}<span style="font-size: 1.5rem;">th</span></div>
+<div style="color: #94a3b8; font-size: 0.95rem; font-weight: 700; letter-spacing: 1px;">PERCENTILE</div>
+</div>"""
+        if profile_a_pov:
+            card_a += f"""<div style='text-align: center; background: rgba(239, 68, 68, 0.1); padding: 10px; border-radius: 20px; border: 1px solid rgba(239, 68, 68, 0.3); margin-bottom: 20px;'><span style='color: #fca5a5; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;'>Live: {profile_a_pov['status']}</span></div>"""
+        card_a += f"""<div style="line-height: 2.2; color: #e2e8f0; font-size: 0.95rem;">
+<b style="color: #8b5cf6; font-weight: 700;">Country:</b> {profile_a_country}<br>
+<b style="color: #8b5cf6; font-weight: 700;">Education:</b> {profile_a_edu} years<br>
+<b style="color: #8b5cf6; font-weight: 700;">Digital:</b> {profile_a_digital}%<br>
+<b style="color: #8b5cf6; font-weight: 700;">Gender:</b> {profile_a_gender}<br>
+<b style="color: #8b5cf6; font-weight: 700;">Location:</b> {profile_a_location}<br>
+<b style="color: #8b5cf6; font-weight: 700;">Credit:</b> {'Yes' if profile_a_credit else 'No'}<br>
+<b style="color: #8b5cf6; font-weight: 700;">Occupation:</b> {profile_a_occ}
+</div>
+</div>"""
+        st.markdown(card_a, unsafe_allow_html=True)
     
     with summary_col2:
-        st.markdown('<div class="pro-card" style="border: 2px solid #10b981;">', unsafe_allow_html=True)
-        st.markdown('<div style="text-align: center; margin-bottom: 20px;"><span class="profile-badge badge-success">Profile B Results</span></div>', unsafe_allow_html=True)
-        
-        st.markdown(f"""
-        <div style="background: rgba(16, 185, 129, 0.1); padding: 20px; border-radius: 10px; margin-bottom: 15px;">
-            <div style="text-align: center;">
-                <div style="font-size: 3.5rem; font-weight: 800; color: #34d399; margin: 10px 0;">{profile_b_p:.1f}<span style="font-size: 1.5rem;">th</span></div>
-                <div style="color: #8b98a5; font-size: 0.9rem;">PERCENTILE</div>
-            </div>
-        </div>
-        """ + (f"""
-        <div style="text-align: center; background: rgba(16, 185, 129, 0.1); padding: 8px; border-radius: 8px; border: 1px solid rgba(16, 185, 129, 0.3); margin-bottom: 15px;">
-            <span style="color: #34d399; font-size: 0.75rem; font-weight: 700; text-transform: uppercase;">Live: {profile_b_pov['status']}</span>
-        </div>
-        """ if profile_b_pov else ""), unsafe_allow_html=True)
-        
-        st.markdown(f"""
-        <div style="line-height: 2; color: #e2e8f0; font-size: 0.9rem;">
-            <b style="color: #34d399;">Country:</b> {profile_b_country}<br>
-            <b style="color: #34d399;">Education:</b> {profile_b_edu} years<br>
-            <b style="color: #34d399;">Digital:</b> {profile_b_digital}%<br>
-            <b style="color: #34d399;">Gender:</b> {profile_b_gender}<br>
-            <b style="color: #34d399;">Location:</b> {profile_b_location}<br>
-            <b style="color: #34d399;">Credit:</b> {'Yes' if profile_b_credit else 'No'}<br>
-            <b style="color: #34d399;">Occupation:</b> {profile_b_occ}
-        </div>
-        """, unsafe_allow_html=True)
-        st.markdown('</div>', unsafe_allow_html=True)
+        card_b = f"""<div class="pro-card" style="border: 2px solid rgba(6, 182, 212, 0.4);">
+<div style="text-align: center; margin-bottom: 25px;"><span class="profile-badge badge-success">Profile B Results</span></div>
+<div style="background: rgba(6, 182, 212, 0.15); padding: 25px; border-radius: 12px; margin-bottom: 20px; text-align: center; border: 1px solid rgba(6, 182, 212, 0.2);">
+<div style="font-size: 4rem; font-weight: 800; color: #ffffff; margin: 10px 0; background: linear-gradient(90deg, #10b981, #06b6d4); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">{profile_b_p:.1f}<span style="font-size: 1.5rem;">th</span></div>
+<div style="color: #94a3b8; font-size: 0.95rem; font-weight: 700; letter-spacing: 1px;">PERCENTILE</div>
+</div>"""
+        if profile_b_pov:
+            card_b += f"""<div style='text-align: center; background: rgba(16, 185, 129, 0.1); padding: 10px; border-radius: 20px; border: 1px solid rgba(16, 185, 129, 0.3); margin-bottom: 20px;'><span style='color: #34d399; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;'>Live: {profile_b_pov['status']}</span></div>"""
+        card_b += f"""<div style="line-height: 2.2; color: #e2e8f0; font-size: 0.95rem;">
+<b style="color: #10b981; font-weight: 700;">Country:</b> {profile_b_country}<br>
+<b style="color: #10b981; font-weight: 700;">Education:</b> {profile_b_edu} years<br>
+<b style="color: #10b981; font-weight: 700;">Digital:</b> {profile_b_digital}%<br>
+<b style="color: #10b981; font-weight: 700;">Gender:</b> {profile_b_gender}<br>
+<b style="color: #10b981; font-weight: 700;">Location:</b> {profile_b_location}<br>
+<b style="color: #10b981; font-weight: 700;">Credit:</b> {'Yes' if profile_b_credit else 'No'}<br>
+<b style="color: #10b981; font-weight: 700;">Occupation:</b> {profile_b_occ}
+</div>
+</div>"""
+        st.markdown(card_b, unsafe_allow_html=True)
     
     # Visual Comparison Dashboard
     st.markdown("---")
@@ -1027,7 +970,8 @@ elif st.session_state.simulator_mode == "comparison":
         st.plotly_chart(fig_donut_b, use_container_width=True)
     
     # Detailed factor comparison
-    st.markdown("### 📊 Factor-by-Factor Breakdown")
+    st.markdown('<p class="section-header" style="margin-top: 50px;">📋 Detailed Factor-by-Factor Breakdown</p>', unsafe_allow_html=True)
+    st.markdown('<p style="color: #94a3b8; font-size: 1.1rem; margin-bottom: 25px;">Comparing the specific weight of each attribute across both simulated profiles.</p>', unsafe_allow_html=True)
     
     # Create comparison dataframe
     comparison_data = []
@@ -1043,7 +987,8 @@ elif st.session_state.simulator_mode == "comparison":
     st.dataframe(comp_df, use_container_width=True, hide_index=True)
     
     # Multi-dimensional radar chart comparison
-    st.markdown("### 🕸️ Multi-Dimensional Comparison")
+    st.markdown('<p class="section-header" style="margin-top: 50px;">🕸️ Multi-Dimensional Score Comparison</p>', unsafe_allow_html=True)
+    st.markdown('<p style="color: #94a3b8; font-size: 1.1rem; margin-bottom: 25px;">Visualizing the relative strengths and trade-offs of both profiles across five key dimensions.</p>', unsafe_allow_html=True)
     
     categories = ['Education\n(Years)', 'Digital Skills\n(%)', 'Occupation\n(Points)', 'Urban\n(Points)', 'Credit\n(Points)']
     
@@ -1131,35 +1076,42 @@ elif st.session_state.simulator_mode == "comparison":
 else:
     st.markdown('<p class="section-header">⏳ Step 2: Configure Historical Comparison</p>', unsafe_allow_html=True)
     
-    st.markdown("""
-    <div class="historical-card">
-        <h3 style="text-align: center; color: #f59e0b; margin-bottom: 10px;">🗓️ Historical Evolution Tool</h3>
-        <p style="text-align: center; color: #8b98a5; margin-bottom: 20px;">Observe how the <b>same profile attributes</b> would result in different social standings across two distinct time periods.</p>
-    </div>
-    """, unsafe_allow_html=True)
+    st.markdown("""<div class="historical-card">
+<h3 style="text-align: center; color: #f59e0b; margin-bottom: 10px;">🗓️ Historical Evolution Tool</h3>
+<p style="text-align: center; color: #8b98a5; margin-bottom: 20px;">Observe how the <b>same profile attributes</b> would result in different social standings across two distinct time periods.</p>
+</div>""", unsafe_allow_html=True)
 
     # SHARED ATTRIBUTES FOR BOTH YEARS
     st.markdown("#### 🛠️ Fixed Profile Attributes")
     col_attr1, col_attr2 = st.columns([2, 1], gap="large")
     
     with col_attr1:
-        st.markdown('<div class="pro-card">', unsafe_allow_html=True)
-        h_country = st.selectbox("Compare data for:", list(COUNTRY_DATA.keys()), key="h_country")
+        st.markdown('<div class="input-group-label">🌍 Country Selection</div>', unsafe_allow_html=True)
+        h_country = st.selectbox("Compare data for:", list(COUNTRY_DATA.keys()), key="h_country", label_visibility="collapsed")
         
+        st.markdown('<div class="input-group-label" style="margin-top: 25px;">🛠️ Profile Attributes</div>', unsafe_allow_html=True)
         c1, c2 = st.columns(2)
         with c1:
-            h_edu = st.slider("Shared Education (yrs)", 0, 20, 12, key="h_edu")
-            h_gender = st.selectbox("Shared Gender", ["Male", "Female"], key="h_gender")
+            h_edu = st.slider("Education (yrs)", 0, 20, 12, key="h_edu")
+            h_gender = st.selectbox("Gender", ["Male", "Female"], key="h_gender")
         with c2:
-            h_digital = st.slider("Shared Digital Skills (%)", 0, 100, 50, key="h_digital")
-            h_loc = st.selectbox("Shared Location", ["Rural", "Urban"], key="h_loc")
+            h_digital = st.slider("Digital Skills (%)", 0, 100, 50, key="h_digital")
+            h_loc = st.selectbox("Location", ["Rural", "Urban"], key="h_loc")
         
-        h_occ = st.selectbox("Shared Occupation", ["Agriculture", "Industry", "Services", "Public Sector", "Unemployed"], index=2, key="h_occ")
-        st.markdown('</div>', unsafe_allow_html=True)
+        st.markdown('<div class="input-group-label" style="margin-top: 25px;">💼 Primary Sector</div>', unsafe_allow_html=True)
+        h_occ = st.selectbox("Occupation", ["Agriculture", "Industry", "Services", "Public Sector", "Unemployed"], index=2, key="h_occ", label_visibility="collapsed")
 
     with col_attr2:
-        st.markdown('<div class="pro-card" style="border: 2px solid #f59e0b; height: 100%;">', unsafe_allow_html=True)
-        st.markdown("### 📅 Select Timeframes")
+        st.markdown(f"""
+        <div class="pro-card" style="border: 1px solid rgba(245, 158, 11, 0.3);">
+            <div class="input-group-label" style="text-align: center; margin-bottom: 20px; color: #f59e0b;">⏳ Select Eras</div>
+            <div style="line-height: 2.5; color: #e2e8f0; font-size: 0.95rem;">
+                <b style="color: #f59e0b; font-weight: 700;">Start Year:</b> 2000 (Base)<br>
+                <b style="color: #f59e0b; font-weight: 700;">End Year:</b> 2023 (Current)
+            </div>
+            <p style="font-size: 0.85rem; color: #94a3b8; margin-top: 15px;">The simulator compares your profile across these two distinct economic eras.</p>
+        </div>
+        """, unsafe_allow_html=True)
         # Get year range from data
         year_1 = st.selectbox("Select Year 1 (Baseline)", list(range(2000, 2024)), index=1, key="year_1")
         year_2 = st.selectbox("Select Year 2 (Comparison)", list(range(2000, 2024)), index=23, key="year_2")
@@ -1171,7 +1123,6 @@ else:
             </p>
         </div>
         """, unsafe_allow_html=True)
-        st.markdown('</div>', unsafe_allow_html=True)
 
     # CALCULATIONS
     h_g_val = 1 if h_gender == "Female" else 0
@@ -1273,7 +1224,7 @@ else:
         hovertemplate="<b>%{x}</b><br>Percentile: %{y:.1f}<extra></extra>"
     )
 
-    fig_trend.update_traces(line=dict(width=4, color='#1d9bf0', shape='spline'))
+    fig_trend.update_traces(line=dict(width=4, color='#8b5cf6', shape='spline'))
     
     fig_trend.update_layout(
         paper_bgcolor='rgba(0,0,0,0)',
@@ -1303,36 +1254,33 @@ else:
     st.info(f"💡 **Analysis:** Between {year_1} and {year_2}, {h_country}'s economic landscape transformed significantly. In {year_1}, with lower internet penetration and schooling rates, your profile attributes were far more 'exclusive', granting a higher relative bonus. By {year_2}, as these resources became more common, the 'scarcity premium' for basic education and digital access declined, but the overall economic floor (Base Strength) rose due to GDP growth.")
     
     # ERA COMPARISON TABLE
-    st.markdown("### 🏛️ Era Analysis")
+    st.markdown('<p class="section-header" style="margin-top: 50px;">🏛️ Deep Era Analysis</p>', unsafe_allow_html=True)
+    st.markdown('<p style="color: #94a3b8; font-size: 1.1rem; margin-bottom: 25px;">Comparing the socio-economic reality of the selected profile across two distinct points in time.</p>', unsafe_allow_html=True)
     era_col1, era_col2 = st.columns(2)
     
     with era_col1:
-        st.markdown(f"""
-        <div style="background: rgba(59, 130, 246, 0.05); padding: 15px; border-radius: 8px; border: 1px dashed #3b82f6;">
-            <h5 style="color: #3b82f6;">The {year_1} Context</h5>
-            <p style="font-size: 0.85rem; color: #8b98a5;">
-                In this era, a person with your profile was an <b>outlier</b>. Low national averages meant your education and skills placed you in an elite bracket. 
-                Economic opportunities were concentrated, making your "scarcity value" exceptionally high.
-            </p>
-        </div>
-        """, unsafe_allow_html=True)
+        st.markdown(f"""<div style="background: rgba(139, 92, 246, 0.08); padding: 20px; border-radius: 12px; border: 1px solid rgba(139, 92, 246, 0.3);">
+<h5 style="color: #8b5cf6; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px;">The {year_1} Context</h5>
+<p style="font-size: 0.9rem; color: #94a3b8;">
+In this era, a person with your profile was an <b>outlier</b>. Low national averages meant your education and skills placed you in an elite bracket. 
+Economic opportunities were concentrated, making your "scarcity value" exceptionally high.
+</p>
+</div>""", unsafe_allow_html=True)
         
     with era_col2:
-        st.markdown(f"""
-        <div style="background: rgba(16, 185, 129, 0.05); padding: 15px; border-radius: 8px; border: 1px dashed #10b981;">
-            <h5 style="color: #10b981;">The {year_2} Context</h5>
-            <p style="font-size: 0.85rem; color: #8b98a5;">
-                By {year_2}, the middle class had expanded. Your skills are now more <b>standardized</b>. While the country is wealthier (higher base), 
-                you face more competition from others with similar profiles, requiring higher specialization to maintain the same relative lead.
-            </p>
-        </div>
-        """, unsafe_allow_html=True)
+        st.markdown(f"""<div style="background: rgba(16, 185, 129, 0.08); padding: 20px; border-radius: 12px; border: 1px solid rgba(16, 185, 129, 0.3);">
+<h5 style="color: #10b981; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px;">The {year_2} Progress</h5>
+<p style="font-size: 0.9rem; color: #94a3b8;">
+By {year_2}, the middle class had expanded. Your skills are now more <b>standardized</b>. While the country is wealthier (higher base), 
+you face more competition from others with similar profiles, requiring higher specialization to maintain the same relative lead.
+</p>
+</div>""", unsafe_allow_html=True)
 
 # Footer
 st.divider()
-st.markdown("""
+st.markdown(textwrap.dedent("""
 <div style="text-align: center; color: #8b98a5; font-size: 0.85rem; padding: 20px 0;">
     <b>Income Simulator v5.0</b> | Modernized with Mode Selection, Independent Profile Inputs & Enhanced Comparison Tools<br>
     Calibrated for South Asian socio-economic contexts | Educational purposes only
 </div>
-""", unsafe_allow_html=True)
+"""), unsafe_allow_html=True)
