@@ -1,0 +1,5 @@
+Dataset,Total Records,Countries,Indicators,Year Range,File Size (KB)
+world_development_indicators,7158,7,52,2000-2024,629.3
+education_statistics,401,7,4,2000-2020,38.1
+wid_inequality_data,750,6,0,2000-2024,28.2
+jobs_data,16620,8,165,2000-2016,1678.8

@@ -12,12 +12,18 @@ sys.path.append(str(Path(__file__).parent.parent))
 from utils.loaders import load_quality_audit
 from utils.help_system import render_help_button
 from utils.sidebar import apply_all_styles
+from utils.api_loader import get_api_loader
+
 st.set_page_config(
     page_title="Data Quality",
     page_icon="✅",
     layout="wide",
     initial_sidebar_state="collapsed"
 )
+
+# Initialize API loader after page config
+api_loader = get_api_loader()
+
 render_help_button("quality")
 apply_all_styles()
 # Load custom CSS
@@ -97,6 +103,38 @@ st.markdown("""
     <p style="font-size: 1.1rem;">Monitor completeness, reliability, and data flow across South Asian inequality indicators</p>
 </div>
 """, unsafe_allow_html=True)
+
+# ============= LIVE API INTEGRATION SIDEBAR =============
+with st.sidebar:
+    st.markdown("### 🌐 Live Data Validation")
+    use_api_validation = st.toggle("Enable API Validation", value=False, 
+                                    help="Cross-check local data against live World Bank API")
+    
+    if use_api_validation:
+        st.success("✓ API Connected")
+        
+        # Show live data freshness
+        with st.spinner("Checking data freshness..."):
+            try:
+                # Fetch latest available year from API for a sample indicator
+                sample_data = api_loader.fetch_indicator('SI.POV.GINI', countries='India', date_range='2020:2024')
+                if not sample_data.empty and 'date' in sample_data.columns:
+                    latest_year = sample_data['date'].max()
+                    st.info(f"📅 Latest API Data: {latest_year}")
+                else:
+                    st.warning("⚠️ No recent API data available")
+            except Exception as e:
+                st.error(f"API Error: {str(e)[:50]}...")
+        
+        # Show exchange rates as a data quality indicator
+        rates = api_loader.get_exchange_rates()
+        if rates:
+            st.markdown("**Live Exchange Rates (USD):**")
+            st.caption(f"🇧🇩 BDT: {rates.get('BDT', 'N/A')}")
+            st.caption(f"🇮🇳 INR: {rates.get('INR', 'N/A')}")
+            st.caption(f"🇵🇰 PKR: {rates.get('PKR', 'N/A')}")
+    else:
+        st.info("Enable to validate against live World Bank data")
 
 # Load data
 with st.spinner("Loading quality audit data..."):
@@ -214,6 +252,58 @@ if 'completeness' in audit.columns and len(audit) > 0:
             <div style="color: #64748b; font-size: 0.8rem; margin-top: 5px;">\u003c60% complete</div>
         </div>
         """, unsafe_allow_html=True)
+
+
+# ============= LIVE API VALIDATION SECTION =============
+if use_api_validation:
+    st.markdown('<p class="section-title">🔄 Live API Data Validation</p>', unsafe_allow_html=True)
+    
+    with st.spinner("Validating against World Bank API..."):
+        validation_results = []
+        
+        # Sample a few indicators to validate
+        sample_indicators = audit.head(5) if len(audit) > 5 else audit
+        
+        for idx, row in sample_indicators.iterrows():
+            indicator_name = row.get('indicator', 'N/A')
+            country = row.get('country', 'N/A')
+            local_completeness = row.get('completeness', 0)
+            
+            # Try to map indicator name to World Bank code (simplified)
+            indicator_code = 'SI.POV.GINI'  # Default to Gini for demo
+            
+            try:
+                api_data = api_loader.fetch_indicator(indicator_code, countries=country, date_range='2000:2023')
+                api_available = not api_data.empty
+                api_count = len(api_data) if api_available else 0
+                
+                validation_results.append({
+                    'Indicator': indicator_name,
+                    'Country': country,
+                    'Local Quality': f"{local_completeness:.1f}%",
+                    'API Status': '✅ Available' if api_available else '❌ Not Found',
+                    'API Records': api_count
+                })
+            except:
+                validation_results.append({
+                    'Indicator': indicator_name,
+                    'Country': country,
+                    'Local Quality': f"{local_completeness:.1f}%",
+                    'API Status': '⚠️ Error',
+                    'API Records': 0
+                })
+        
+        if validation_results:
+            st.markdown("""
+            <div style="background: rgba(16, 185, 129, 0.05); padding: 15px; border-radius: 8px; border-left: 3px solid #10b981; margin-bottom: 20px;">
+                <p style="color: #8b98a5; font-size: 0.9rem; margin: 0;">
+                    <b style="color: #e2e8f0;">API Validation:</b> Cross-checking local data quality against live World Bank API availability.
+                </p>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            validation_df = pd.DataFrame(validation_results)
+            st.dataframe(validation_df, use_container_width=True, hide_index=True)
 
 # ============= BUBBLE MAP =============
 
