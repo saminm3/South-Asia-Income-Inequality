@@ -40,10 +40,9 @@ apply_all_styles()
 st.markdown("""
 <style>
     /* SIDEBAR: 200px width */
+    /* SIDEBAR: Default width */
     [data-testid="stSidebar"] {
-        width: 200px !important;
-        min-width: 200px !important;
-        max-width: 200px !important;
+        /* Allow natural width */
     }
     
     /* Main background - Dark navy matching the screenshot */
