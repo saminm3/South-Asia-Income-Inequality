@@ -24,7 +24,7 @@ st.set_page_config(
     page_title="...",
     page_icon="...",
     layout="wide",
-    initial_sidebar_state="collapsed"  # ADD THIS LINE
+    initial_sidebar_state="expanded"  # Sidebar visible by default
 )
 render_help_button("map")
 apply_all_styles()
