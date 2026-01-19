@@ -575,7 +575,12 @@ if use_economic_apis:
                             plot_bgcolor='rgba(0,0,0,0)',
                             font=dict(color='#e2e8f0'),
                             legend=dict(orientation="h", y=-0.2),
-                            margin=dict(l=40, r=40, t=40, b=40)
+                            margin=dict(l=40, r=40, t=40, b=40),
+                            xaxis=dict(
+                                dtick=5,  # Show tick every 5 years
+                                tickangle=-45,  # Rotate labels to prevent overlap
+                                tickfont=dict(size=11)
+                            )
                         )
                         
                         st.plotly_chart(fig_forecast, use_container_width=True)
