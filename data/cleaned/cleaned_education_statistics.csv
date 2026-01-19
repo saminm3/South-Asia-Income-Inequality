@@ -1,0 +1,402 @@
+Country,Country Code,Year,Series Name,Series Code,Value
+Afghanistan,AFG,2010,Government expenditure on education as % of GDP (%),SE.XPD.TOTL.GD.ZS,3.47945
+Afghanistan,AFG,2011,Government expenditure on education as % of GDP (%),SE.XPD.TOTL.GD.ZS,3.46201
+Afghanistan,AFG,2012,Government expenditure on education as % of GDP (%),SE.XPD.TOTL.GD.ZS,2.6042
+Afghanistan,AFG,2013,Government expenditure on education as % of GDP (%),SE.XPD.TOTL.GD.ZS,3.45446
+Afghanistan,AFG,2014,Government expenditure on education as % of GDP (%),SE.XPD.TOTL.GD.ZS,3.69522
+Afghanistan,AFG,2015,Government expenditure on education as % of GDP (%),SE.XPD.TOTL.GD.ZS,3.2558
+Afghanistan,AFG,2016,Government expenditure on education as % of GDP (%),SE.XPD.TOTL.GD.ZS,4.22836
+Afghanistan,AFG,2017,Government expenditure on education as % of GDP (%),SE.XPD.TOTL.GD.ZS,4.05887
+Afghanistan,AFG,2000,"Gross enrolment ratio, primary, female (%)",SE.PRM.ENRR.FE,0.0
+Afghanistan,AFG,2001,"Gross enrolment ratio, primary, female (%)",SE.PRM.ENRR.FE,0.0
+Afghanistan,AFG,2002,"Gross enrolment ratio, primary, female (%)",SE.PRM.ENRR.FE,42.82885
+Afghanistan,AFG,2003,"Gross enrolment ratio, primary, female (%)",SE.PRM.ENRR.FE,66.69796
+Afghanistan,AFG,2004,"Gross enrolment ratio, primary, female (%)",SE.PRM.ENRR.FE,62.591
+Afghanistan,AFG,2005,"Gross enrolment ratio, primary, female (%)",SE.PRM.ENRR.FE,71.81207
+Afghanistan,AFG,2006,"Gross enrolment ratio, primary, female (%)",SE.PRM.ENRR.FE,77.6684
+Afghanistan,AFG,2007,"Gross enrolment ratio, primary, female (%)",SE.PRM.ENRR.FE,74.82184
+Afghanistan,AFG,2008,"Gross enrolment ratio, primary, female (%)",SE.PRM.ENRR.FE,77.98242
+Afghanistan,AFG,2009,"Gross enrolment ratio, primary, female (%)",SE.PRM.ENRR.FE,76.51035
+Afghanistan,AFG,2010,"Gross enrolment ratio, primary, female (%)",SE.PRM.ENRR.FE,80.63546
+Afghanistan,AFG,2011,"Gross enrolment ratio, primary, female (%)",SE.PRM.ENRR.FE,80.93683
+Afghanistan,AFG,2012,"Gross enrolment ratio, primary, female (%)",SE.PRM.ENRR.FE,86.32884
+Afghanistan,AFG,2013,"Gross enrolment ratio, primary, female (%)",SE.PRM.ENRR.FE,85.90214
+Afghanistan,AFG,2014,"Gross enrolment ratio, primary, female (%)",SE.PRM.ENRR.FE,86.7296
+Afghanistan,AFG,2015,"Gross enrolment ratio, primary, female (%)",SE.PRM.ENRR.FE,83.50442
+Afghanistan,AFG,2016,"Gross enrolment ratio, primary, female (%)",SE.PRM.ENRR.FE,82.55836
+Afghanistan,AFG,2017,"Gross enrolment ratio, primary, female (%)",SE.PRM.ENRR.FE,82.08028
+Afghanistan,AFG,2018,"Gross enrolment ratio, primary, female (%)",SE.PRM.ENRR.FE,82.85025
+Afghanistan,AFG,2000,"Gross enrolment ratio, primary, gender parity index (GPI)",SE.ENR.PRIM.FM.ZS,0.0
+Afghanistan,AFG,2001,"Gross enrolment ratio, primary, gender parity index (GPI)",SE.ENR.PRIM.FM.ZS,0.0
+Afghanistan,AFG,2002,"Gross enrolment ratio, primary, gender parity index (GPI)",SE.ENR.PRIM.FM.ZS,0.45693
+Afghanistan,AFG,2003,"Gross enrolment ratio, primary, gender parity index (GPI)",SE.ENR.PRIM.FM.ZS,0.5622
+Afghanistan,AFG,2004,"Gross enrolment ratio, primary, gender parity index (GPI)",SE.ENR.PRIM.FM.ZS,0.43282
+Afghanistan,AFG,2005,"Gross enrolment ratio, primary, gender parity index (GPI)",SE.ENR.PRIM.FM.ZS,0.58334
+Afghanistan,AFG,2006,"Gross enrolment ratio, primary, gender parity index (GPI)",SE.ENR.PRIM.FM.ZS,0.62357
+Afghanistan,AFG,2007,"Gross enrolment ratio, primary, gender parity index (GPI)",SE.ENR.PRIM.FM.ZS,0.61379
+Afghanistan,AFG,2008,"Gross enrolment ratio, primary, gender parity index (GPI)",SE.ENR.PRIM.FM.ZS,0.63642
+Afghanistan,AFG,2009,"Gross enrolment ratio, primary, gender parity index (GPI)",SE.ENR.PRIM.FM.ZS,0.6575
+Afghanistan,AFG,2010,"Gross enrolment ratio, primary, gender parity index (GPI)",SE.ENR.PRIM.FM.ZS,0.67981
+Afghanistan,AFG,2011,"Gross enrolment ratio, primary, gender parity index (GPI)",SE.ENR.PRIM.FM.ZS,0.71258
+Afghanistan,AFG,2012,"Gross enrolment ratio, primary, gender parity index (GPI)",SE.ENR.PRIM.FM.ZS,0.72026
+Afghanistan,AFG,2013,"Gross enrolment ratio, primary, gender parity index (GPI)",SE.ENR.PRIM.FM.ZS,0.70286
+Afghanistan,AFG,2014,"Gross enrolment ratio, primary, gender parity index (GPI)",SE.ENR.PRIM.FM.ZS,0.69825
+Afghanistan,AFG,2015,"Gross enrolment ratio, primary, gender parity index (GPI)",SE.ENR.PRIM.FM.ZS,0.68081
+Afghanistan,AFG,2016,"Gross enrolment ratio, primary, gender parity index (GPI)",SE.ENR.PRIM.FM.ZS,0.67937
+Afghanistan,AFG,2017,"Gross enrolment ratio, primary, gender parity index (GPI)",SE.ENR.PRIM.FM.ZS,0.67617
+Afghanistan,AFG,2018,"Gross enrolment ratio, primary, gender parity index (GPI)",SE.ENR.PRIM.FM.ZS,0.66691
+Bangladesh,BGD,2000,Government expenditure on education as % of GDP (%),SE.XPD.TOTL.GD.ZS,2.12508
+Bangladesh,BGD,2001,Government expenditure on education as % of GDP (%),SE.XPD.TOTL.GD.ZS,2.17193
+Bangladesh,BGD,2002,Government expenditure on education as % of GDP (%),SE.XPD.TOTL.GD.ZS,2.01715
+Bangladesh,BGD,2003,Government expenditure on education as % of GDP (%),SE.XPD.TOTL.GD.ZS,2.06939
+Bangladesh,BGD,2004,Government expenditure on education as % of GDP (%),SE.XPD.TOTL.GD.ZS,1.94014
+Bangladesh,BGD,2006,Government expenditure on education as % of GDP (%),SE.XPD.TOTL.GD.ZS,2.13129
+Bangladesh,BGD,2007,Government expenditure on education as % of GDP (%),SE.XPD.TOTL.GD.ZS,2.20222
+Bangladesh,BGD,2008,Government expenditure on education as % of GDP (%),SE.XPD.TOTL.GD.ZS,2.05457
+Bangladesh,BGD,2009,Government expenditure on education as % of GDP (%),SE.XPD.TOTL.GD.ZS,1.93942
+Bangladesh,BGD,2011,Government expenditure on education as % of GDP (%),SE.XPD.TOTL.GD.ZS,2.1327
+Bangladesh,BGD,2012,Government expenditure on education as % of GDP (%),SE.XPD.TOTL.GD.ZS,2.1755
+Bangladesh,BGD,2013,Government expenditure on education as % of GDP (%),SE.XPD.TOTL.GD.ZS,1.96616
+Bangladesh,BGD,2016,Government expenditure on education as % of GDP (%),SE.XPD.TOTL.GD.ZS,1.53554
+Bangladesh,BGD,2019,Government expenditure on education as % of GDP (%),SE.XPD.TOTL.GD.ZS,1.32632
+Bangladesh,BGD,2005,"Gross enrolment ratio, primary, female (%)",SE.PRM.ENRR.FE,103.95454
+Bangladesh,BGD,2006,"Gross enrolment ratio, primary, female (%)",SE.PRM.ENRR.FE,105.25839
+Bangladesh,BGD,2007,"Gross enrolment ratio, primary, female (%)",SE.PRM.ENRR.FE,105.24104
+Bangladesh,BGD,2008,"Gross enrolment ratio, primary, female (%)",SE.PRM.ENRR.FE,102.59263
+Bangladesh,BGD,2009,"Gross enrolment ratio, primary, female (%)",SE.PRM.ENRR.FE,105.38209
+Bangladesh,BGD,2010,"Gross enrolment ratio, primary, female (%)",SE.PRM.ENRR.FE,109.25345
+Bangladesh,BGD,2017,"Gross enrolment ratio, primary, female (%)",SE.PRM.ENRR.FE,119.05796
+Bangladesh,BGD,2018,"Gross enrolment ratio, primary, female (%)",SE.PRM.ENRR.FE,120.75175
+Bangladesh,BGD,2005,"Gross enrolment ratio, primary, gender parity index (GPI)",SE.ENR.PRIM.FM.ZS,1.0455
+Bangladesh,BGD,2006,"Gross enrolment ratio, primary, gender parity index (GPI)",SE.ENR.PRIM.FM.ZS,1.0559
+Bangladesh,BGD,2007,"Gross enrolment ratio, primary, gender parity index (GPI)",SE.ENR.PRIM.FM.ZS,1.07234
+Bangladesh,BGD,2008,"Gross enrolment ratio, primary, gender parity index (GPI)",SE.ENR.PRIM.FM.ZS,1.0619
+Bangladesh,BGD,2009,"Gross enrolment ratio, primary, gender parity index (GPI)",SE.ENR.PRIM.FM.ZS,1.04786
+Bangladesh,BGD,2010,"Gross enrolment ratio, primary, gender parity index (GPI)",SE.ENR.PRIM.FM.ZS,1.06251
+Bangladesh,BGD,2017,"Gross enrolment ratio, primary, gender parity index (GPI)",SE.ENR.PRIM.FM.ZS,1.07176
+Bangladesh,BGD,2018,"Gross enrolment ratio, primary, gender parity index (GPI)",SE.ENR.PRIM.FM.ZS,1.07471
+Bangladesh,BGD,2005,"Out-of-school children of primary school age, both sexes (number)",SE.PRM.UNER,439726.0
+Bangladesh,BGD,2006,"Out-of-school children of primary school age, both sexes (number)",SE.PRM.UNER,521821.0
+Bangladesh,BGD,2008,"Out-of-school children of primary school age, both sexes (number)",SE.PRM.UNER,687353.0
+Bangladesh,BGD,2009,"Out-of-school children of primary school age, both sexes (number)",SE.PRM.UNER,660951.0
+Bangladesh,BGD,2010,"Out-of-school children of primary school age, both sexes (number)",SE.PRM.UNER,803773.0
+Bhutan,BTN,2000,Government expenditure on education as % of GDP (%),SE.XPD.TOTL.GD.ZS,5.51379
+Bhutan,BTN,2001,Government expenditure on education as % of GDP (%),SE.XPD.TOTL.GD.ZS,5.91573
+Bhutan,BTN,2004,Government expenditure on education as % of GDP (%),SE.XPD.TOTL.GD.ZS,6.60907
+Bhutan,BTN,2005,Government expenditure on education as % of GDP (%),SE.XPD.TOTL.GD.ZS,7.28715
+Bhutan,BTN,2008,Government expenditure on education as % of GDP (%),SE.XPD.TOTL.GD.ZS,4.91159
+Bhutan,BTN,2009,Government expenditure on education as % of GDP (%),SE.XPD.TOTL.GD.ZS,4.74174
+Bhutan,BTN,2010,Government expenditure on education as % of GDP (%),SE.XPD.TOTL.GD.ZS,4.12473
+Bhutan,BTN,2011,Government expenditure on education as % of GDP (%),SE.XPD.TOTL.GD.ZS,4.76523
+Bhutan,BTN,2013,Government expenditure on education as % of GDP (%),SE.XPD.TOTL.GD.ZS,5.72275
+Bhutan,BTN,2014,Government expenditure on education as % of GDP (%),SE.XPD.TOTL.GD.ZS,6.0449
+Bhutan,BTN,2015,Government expenditure on education as % of GDP (%),SE.XPD.TOTL.GD.ZS,7.5901
+Bhutan,BTN,2016,Government expenditure on education as % of GDP (%),SE.XPD.TOTL.GD.ZS,6.99333
+Bhutan,BTN,2017,Government expenditure on education as % of GDP (%),SE.XPD.TOTL.GD.ZS,7.22574
+Bhutan,BTN,2018,Government expenditure on education as % of GDP (%),SE.XPD.TOTL.GD.ZS,6.85084
+Bhutan,BTN,2000,"Gross enrolment ratio, primary, female (%)",SE.PRM.ENRR.FE,71.12827
+Bhutan,BTN,2001,"Gross enrolment ratio, primary, female (%)",SE.PRM.ENRR.FE,74.34742
+Bhutan,BTN,2002,"Gross enrolment ratio, primary, female (%)",SE.PRM.ENRR.FE,77.46347
+Bhutan,BTN,2003,"Gross enrolment ratio, primary, female (%)",SE.PRM.ENRR.FE,81.74066
+Bhutan,BTN,2004,"Gross enrolment ratio, primary, female (%)",SE.PRM.ENRR.FE,86.67045
+Bhutan,BTN,2005,"Gross enrolment ratio, primary, female (%)",SE.PRM.ENRR.FE,89.8837
+Bhutan,BTN,2006,"Gross enrolment ratio, primary, female (%)",SE.PRM.ENRR.FE,93.99925
+Bhutan,BTN,2007,"Gross enrolment ratio, primary, female (%)",SE.PRM.ENRR.FE,97.57617
+Bhutan,BTN,2008,"Gross enrolment ratio, primary, female (%)",SE.PRM.ENRR.FE,101.51905
+Bhutan,BTN,2009,"Gross enrolment ratio, primary, female (%)",SE.PRM.ENRR.FE,106.11353
+Bhutan,BTN,2010,"Gross enrolment ratio, primary, female (%)",SE.PRM.ENRR.FE,109.44818
+Bhutan,BTN,2011,"Gross enrolment ratio, primary, female (%)",SE.PRM.ENRR.FE,111.66232
+Bhutan,BTN,2012,"Gross enrolment ratio, primary, female (%)",SE.PRM.ENRR.FE,112.7385
+Bhutan,BTN,2013,"Gross enrolment ratio, primary, female (%)",SE.PRM.ENRR.FE,107.47085
+Bhutan,BTN,2014,"Gross enrolment ratio, primary, female (%)",SE.PRM.ENRR.FE,106.22304
+Bhutan,BTN,2015,"Gross enrolment ratio, primary, female (%)",SE.PRM.ENRR.FE,104.80431
+Bhutan,BTN,2016,"Gross enrolment ratio, primary, female (%)",SE.PRM.ENRR.FE,102.90592
+Bhutan,BTN,2017,"Gross enrolment ratio, primary, female (%)",SE.PRM.ENRR.FE,101.26469
+Bhutan,BTN,2018,"Gross enrolment ratio, primary, female (%)",SE.PRM.ENRR.FE,100.22383
+Bhutan,BTN,2020,"Gross enrolment ratio, primary, female (%)",SE.PRM.ENRR.FE,106.63319
+Bhutan,BTN,2000,"Gross enrolment ratio, primary, gender parity index (GPI)",SE.ENR.PRIM.FM.ZS,0.87698
+Bhutan,BTN,2001,"Gross enrolment ratio, primary, gender parity index (GPI)",SE.ENR.PRIM.FM.ZS,0.8977
+Bhutan,BTN,2002,"Gross enrolment ratio, primary, gender parity index (GPI)",SE.ENR.PRIM.FM.ZS,0.91541
+Bhutan,BTN,2003,"Gross enrolment ratio, primary, gender parity index (GPI)",SE.ENR.PRIM.FM.ZS,0.94491
+Bhutan,BTN,2004,"Gross enrolment ratio, primary, gender parity index (GPI)",SE.ENR.PRIM.FM.ZS,0.97217
+Bhutan,BTN,2005,"Gross enrolment ratio, primary, gender parity index (GPI)",SE.ENR.PRIM.FM.ZS,0.97482
+Bhutan,BTN,2006,"Gross enrolment ratio, primary, gender parity index (GPI)",SE.ENR.PRIM.FM.ZS,0.98848
+Bhutan,BTN,2007,"Gross enrolment ratio, primary, gender parity index (GPI)",SE.ENR.PRIM.FM.ZS,0.9932
+Bhutan,BTN,2008,"Gross enrolment ratio, primary, gender parity index (GPI)",SE.ENR.PRIM.FM.ZS,1.01129
+Bhutan,BTN,2009,"Gross enrolment ratio, primary, gender parity index (GPI)",SE.ENR.PRIM.FM.ZS,1.01815
+Bhutan,BTN,2010,"Gross enrolment ratio, primary, gender parity index (GPI)",SE.ENR.PRIM.FM.ZS,1.02275
+Bhutan,BTN,2011,"Gross enrolment ratio, primary, gender parity index (GPI)",SE.ENR.PRIM.FM.ZS,1.01408
+Bhutan,BTN,2012,"Gross enrolment ratio, primary, gender parity index (GPI)",SE.ENR.PRIM.FM.ZS,1.01488
+Bhutan,BTN,2013,"Gross enrolment ratio, primary, gender parity index (GPI)",SE.ENR.PRIM.FM.ZS,1.00978
+Bhutan,BTN,2014,"Gross enrolment ratio, primary, gender parity index (GPI)",SE.ENR.PRIM.FM.ZS,1.01405
+Bhutan,BTN,2015,"Gross enrolment ratio, primary, gender parity index (GPI)",SE.ENR.PRIM.FM.ZS,1.01085
+Bhutan,BTN,2016,"Gross enrolment ratio, primary, gender parity index (GPI)",SE.ENR.PRIM.FM.ZS,1.00472
+Bhutan,BTN,2017,"Gross enrolment ratio, primary, gender parity index (GPI)",SE.ENR.PRIM.FM.ZS,0.99865
+Bhutan,BTN,2018,"Gross enrolment ratio, primary, gender parity index (GPI)",SE.ENR.PRIM.FM.ZS,1.00166
+Bhutan,BTN,2020,"Gross enrolment ratio, primary, gender parity index (GPI)",SE.ENR.PRIM.FM.ZS,1.01541
+Bhutan,BTN,2000,"Out-of-school children of primary school age, both sexes (number)",SE.PRM.UNER,47316.0
+Bhutan,BTN,2001,"Out-of-school children of primary school age, both sexes (number)",SE.PRM.UNER,44522.0
+Bhutan,BTN,2005,"Out-of-school children of primary school age, both sexes (number)",SE.PRM.UNER,32516.0
+Bhutan,BTN,2006,"Out-of-school children of primary school age, both sexes (number)",SE.PRM.UNER,27775.0
+Bhutan,BTN,2008,"Out-of-school children of primary school age, both sexes (number)",SE.PRM.UNER,20625.0
+Bhutan,BTN,2009,"Out-of-school children of primary school age, both sexes (number)",SE.PRM.UNER,15353.0
+Bhutan,BTN,2010,"Out-of-school children of primary school age, both sexes (number)",SE.PRM.UNER,12718.0
+Bhutan,BTN,2011,"Out-of-school children of primary school age, both sexes (number)",SE.PRM.UNER,11078.0
+Bhutan,BTN,2012,"Out-of-school children of primary school age, both sexes (number)",SE.PRM.UNER,8424.0
+Bhutan,BTN,2013,"Out-of-school children of primary school age, both sexes (number)",SE.PRM.UNER,8830.0
+Bhutan,BTN,2015,"Out-of-school children of primary school age, both sexes (number)",SE.PRM.UNER,9398.0
+Bhutan,BTN,2016,"Out-of-school children of primary school age, both sexes (number)",SE.PRM.UNER,9687.0
+Bhutan,BTN,2017,"Out-of-school children of primary school age, both sexes (number)",SE.PRM.UNER,9574.0
+Bhutan,BTN,2018,"Out-of-school children of primary school age, both sexes (number)",SE.PRM.UNER,7456.0
+Bhutan,BTN,2020,"Out-of-school children of primary school age, both sexes (number)",SE.PRM.UNER,3252.0
+India,IND,2000,Government expenditure on education as % of GDP (%),SE.XPD.TOTL.GD.ZS,4.32479
+India,IND,2003,Government expenditure on education as % of GDP (%),SE.XPD.TOTL.GD.ZS,3.61341
+India,IND,2004,Government expenditure on education as % of GDP (%),SE.XPD.TOTL.GD.ZS,3.35254
+India,IND,2005,Government expenditure on education as % of GDP (%),SE.XPD.TOTL.GD.ZS,3.18875
+India,IND,2006,Government expenditure on education as % of GDP (%),SE.XPD.TOTL.GD.ZS,3.14285
+India,IND,2009,Government expenditure on education as % of GDP (%),SE.XPD.TOTL.GD.ZS,3.27825
+India,IND,2010,Government expenditure on education as % of GDP (%),SE.XPD.TOTL.GD.ZS,3.37769
+India,IND,2011,Government expenditure on education as % of GDP (%),SE.XPD.TOTL.GD.ZS,3.79618
+India,IND,2012,Government expenditure on education as % of GDP (%),SE.XPD.TOTL.GD.ZS,3.8675
+India,IND,2013,Government expenditure on education as % of GDP (%),SE.XPD.TOTL.GD.ZS,3.84467
+India,IND,2000,"Gross enrolment ratio, primary, female (%)",SE.PRM.ENRR.FE,86.76234
+India,IND,2001,"Gross enrolment ratio, primary, female (%)",SE.PRM.ENRR.FE,87.15018
+India,IND,2002,"Gross enrolment ratio, primary, female (%)",SE.PRM.ENRR.FE,88.68851
+India,IND,2003,"Gross enrolment ratio, primary, female (%)",SE.PRM.ENRR.FE,101.92667
+India,IND,2007,"Gross enrolment ratio, primary, female (%)",SE.PRM.ENRR.FE,109.61158
+India,IND,2008,"Gross enrolment ratio, primary, female (%)",SE.PRM.ENRR.FE,111.85216
+India,IND,2009,"Gross enrolment ratio, primary, female (%)",SE.PRM.ENRR.FE,111.28928
+India,IND,2010,"Gross enrolment ratio, primary, female (%)",SE.PRM.ENRR.FE,110.69512
+India,IND,2011,"Gross enrolment ratio, primary, female (%)",SE.PRM.ENRR.FE,110.31036
+India,IND,2012,"Gross enrolment ratio, primary, female (%)",SE.PRM.ENRR.FE,111.97443
+India,IND,2013,"Gross enrolment ratio, primary, female (%)",SE.PRM.ENRR.FE,117.12038
+India,IND,2014,"Gross enrolment ratio, primary, female (%)",SE.PRM.ENRR.FE,114.01876
+India,IND,2015,"Gross enrolment ratio, primary, female (%)",SE.PRM.ENRR.FE,114.78057
+India,IND,2016,"Gross enrolment ratio, primary, female (%)",SE.PRM.ENRR.FE,123.55514
+India,IND,2017,"Gross enrolment ratio, primary, female (%)",SE.PRM.ENRR.FE,121.12737
+India,IND,2019,"Gross enrolment ratio, primary, female (%)",SE.PRM.ENRR.FE,97.81434
+India,IND,2000,"Gross enrolment ratio, primary, gender parity index (GPI)",SE.ENR.PRIM.FM.ZS,0.85883
+India,IND,2001,"Gross enrolment ratio, primary, gender parity index (GPI)",SE.ENR.PRIM.FM.ZS,0.8684
+India,IND,2002,"Gross enrolment ratio, primary, gender parity index (GPI)",SE.ENR.PRIM.FM.ZS,0.88545
+India,IND,2003,"Gross enrolment ratio, primary, gender parity index (GPI)",SE.ENR.PRIM.FM.ZS,0.98615
+India,IND,2007,"Gross enrolment ratio, primary, gender parity index (GPI)",SE.ENR.PRIM.FM.ZS,0.993
+India,IND,2008,"Gross enrolment ratio, primary, gender parity index (GPI)",SE.ENR.PRIM.FM.ZS,1.01991
+India,IND,2009,"Gross enrolment ratio, primary, gender parity index (GPI)",SE.ENR.PRIM.FM.ZS,1.03223
+India,IND,2010,"Gross enrolment ratio, primary, gender parity index (GPI)",SE.ENR.PRIM.FM.ZS,1.02797
+India,IND,2011,"Gross enrolment ratio, primary, gender parity index (GPI)",SE.ENR.PRIM.FM.ZS,1.03525
+India,IND,2012,"Gross enrolment ratio, primary, gender parity index (GPI)",SE.ENR.PRIM.FM.ZS,1.03883
+India,IND,2013,"Gross enrolment ratio, primary, gender parity index (GPI)",SE.ENR.PRIM.FM.ZS,1.11811
+India,IND,2014,"Gross enrolment ratio, primary, gender parity index (GPI)",SE.ENR.PRIM.FM.ZS,1.11393
+India,IND,2015,"Gross enrolment ratio, primary, gender parity index (GPI)",SE.ENR.PRIM.FM.ZS,1.11618
+India,IND,2016,"Gross enrolment ratio, primary, gender parity index (GPI)",SE.ENR.PRIM.FM.ZS,1.16104
+India,IND,2017,"Gross enrolment ratio, primary, gender parity index (GPI)",SE.ENR.PRIM.FM.ZS,1.14725
+India,IND,2019,"Gross enrolment ratio, primary, gender parity index (GPI)",SE.ENR.PRIM.FM.ZS,1.01958
+India,IND,2000,"Out-of-school children of primary school age, both sexes (number)",SE.PRM.UNER,19457444.0
+India,IND,2001,"Out-of-school children of primary school age, both sexes (number)",SE.PRM.UNER,19595255.0
+India,IND,2002,"Out-of-school children of primary school age, both sexes (number)",SE.PRM.UNER,19909725.0
+India,IND,2003,"Out-of-school children of primary school age, both sexes (number)",SE.PRM.UNER,14109172.0
+India,IND,2007,"Out-of-school children of primary school age, both sexes (number)",SE.PRM.UNER,4019535.0
+India,IND,2008,"Out-of-school children of primary school age, both sexes (number)",SE.PRM.UNER,3974854.0
+India,IND,2009,"Out-of-school children of primary school age, both sexes (number)",SE.PRM.UNER,5641942.0
+India,IND,2010,"Out-of-school children of primary school age, both sexes (number)",SE.PRM.UNER,4922041.0
+India,IND,2011,"Out-of-school children of primary school age, both sexes (number)",SE.PRM.UNER,5445603.0
+India,IND,2012,"Out-of-school children of primary school age, both sexes (number)",SE.PRM.UNER,3838679.0
+India,IND,2013,"Out-of-school children of primary school age, both sexes (number)",SE.PRM.UNER,2887748.0
+Nepal,NPL,2000,Government expenditure on education as % of GDP (%),SE.XPD.TOTL.GD.ZS,2.97515
+Nepal,NPL,2001,Government expenditure on education as % of GDP (%),SE.XPD.TOTL.GD.ZS,3.70838
+Nepal,NPL,2002,Government expenditure on education as % of GDP (%),SE.XPD.TOTL.GD.ZS,3.15284
+Nepal,NPL,2003,Government expenditure on education as % of GDP (%),SE.XPD.TOTL.GD.ZS,3.11435
+Nepal,NPL,2004,Government expenditure on education as % of GDP (%),SE.XPD.TOTL.GD.ZS,3.17194
+Nepal,NPL,2005,Government expenditure on education as % of GDP (%),SE.XPD.TOTL.GD.ZS,3.36464
+Nepal,NPL,2006,Government expenditure on education as % of GDP (%),SE.XPD.TOTL.GD.ZS,3.60536
+Nepal,NPL,2007,Government expenditure on education as % of GDP (%),SE.XPD.TOTL.GD.ZS,3.51721
+Nepal,NPL,2008,Government expenditure on education as % of GDP (%),SE.XPD.TOTL.GD.ZS,3.80517
+Nepal,NPL,2009,Government expenditure on education as % of GDP (%),SE.XPD.TOTL.GD.ZS,4.66376
+Nepal,NPL,2010,Government expenditure on education as % of GDP (%),SE.XPD.TOTL.GD.ZS,3.63172
+Nepal,NPL,2011,Government expenditure on education as % of GDP (%),SE.XPD.TOTL.GD.ZS,3.84262
+Nepal,NPL,2012,Government expenditure on education as % of GDP (%),SE.XPD.TOTL.GD.ZS,3.76117
+Nepal,NPL,2013,Government expenditure on education as % of GDP (%),SE.XPD.TOTL.GD.ZS,3.47465
+Nepal,NPL,2014,Government expenditure on education as % of GDP (%),SE.XPD.TOTL.GD.ZS,3.99302
+Nepal,NPL,2015,Government expenditure on education as % of GDP (%),SE.XPD.TOTL.GD.ZS,3.70359
+Nepal,NPL,2016,Government expenditure on education as % of GDP (%),SE.XPD.TOTL.GD.ZS,4.44099
+Nepal,NPL,2017,Government expenditure on education as % of GDP (%),SE.XPD.TOTL.GD.ZS,5.51837
+Nepal,NPL,2018,Government expenditure on education as % of GDP (%),SE.XPD.TOTL.GD.ZS,5.10207
+Nepal,NPL,2000,"Gross enrolment ratio, primary, female (%)",SE.PRM.ENRR.FE,103.86898
+Nepal,NPL,2001,"Gross enrolment ratio, primary, female (%)",SE.PRM.ENRR.FE,101.20099
+Nepal,NPL,2002,"Gross enrolment ratio, primary, female (%)",SE.PRM.ENRR.FE,107.21635
+Nepal,NPL,2003,"Gross enrolment ratio, primary, female (%)",SE.PRM.ENRR.FE,106.78774
+Nepal,NPL,2004,"Gross enrolment ratio, primary, female (%)",SE.PRM.ENRR.FE,107.92284
+Nepal,NPL,2005,"Gross enrolment ratio, primary, female (%)",SE.PRM.ENRR.FE,109.15095
+Nepal,NPL,2006,"Gross enrolment ratio, primary, female (%)",SE.PRM.ENRR.FE,124.62976
+Nepal,NPL,2007,"Gross enrolment ratio, primary, female (%)",SE.PRM.ENRR.FE,127.24555
+Nepal,NPL,2008,"Gross enrolment ratio, primary, female (%)",SE.PRM.ENRR.FE,126.91349
+Nepal,NPL,2009,"Gross enrolment ratio, primary, female (%)",SE.PRM.ENRR.FE,141.29966
+Nepal,NPL,2010,"Gross enrolment ratio, primary, female (%)",SE.PRM.ENRR.FE,149.94553
+Nepal,NPL,2011,"Gross enrolment ratio, primary, female (%)",SE.PRM.ENRR.FE,156.02757
+Nepal,NPL,2012,"Gross enrolment ratio, primary, female (%)",SE.PRM.ENRR.FE,154.64813
+Nepal,NPL,2013,"Gross enrolment ratio, primary, female (%)",SE.PRM.ENRR.FE,151.26811
+Nepal,NPL,2014,"Gross enrolment ratio, primary, female (%)",SE.PRM.ENRR.FE,148.4647
+Nepal,NPL,2015,"Gross enrolment ratio, primary, female (%)",SE.PRM.ENRR.FE,148.56431
+Nepal,NPL,2016,"Gross enrolment ratio, primary, female (%)",SE.PRM.ENRR.FE,148.17456
+Nepal,NPL,2017,"Gross enrolment ratio, primary, female (%)",SE.PRM.ENRR.FE,145.2117
+Nepal,NPL,2019,"Gross enrolment ratio, primary, female (%)",SE.PRM.ENRR.FE,143.45337
+Nepal,NPL,2000,"Gross enrolment ratio, primary, gender parity index (GPI)",SE.ENR.PRIM.FM.ZS,0.77323
+Nepal,NPL,2001,"Gross enrolment ratio, primary, gender parity index (GPI)",SE.ENR.PRIM.FM.ZS,0.824
+Nepal,NPL,2002,"Gross enrolment ratio, primary, gender parity index (GPI)",SE.ENR.PRIM.FM.ZS,0.84496
+Nepal,NPL,2003,"Gross enrolment ratio, primary, gender parity index (GPI)",SE.ENR.PRIM.FM.ZS,0.87155
+Nepal,NPL,2004,"Gross enrolment ratio, primary, gender parity index (GPI)",SE.ENR.PRIM.FM.ZS,0.87572
+Nepal,NPL,2005,"Gross enrolment ratio, primary, gender parity index (GPI)",SE.ENR.PRIM.FM.ZS,0.9129
+Nepal,NPL,2006,"Gross enrolment ratio, primary, gender parity index (GPI)",SE.ENR.PRIM.FM.ZS,0.96129
+Nepal,NPL,2007,"Gross enrolment ratio, primary, gender parity index (GPI)",SE.ENR.PRIM.FM.ZS,0.99924
+Nepal,NPL,2008,"Gross enrolment ratio, primary, gender parity index (GPI)",SE.ENR.PRIM.FM.ZS,1.02561
+Nepal,NPL,2009,"Gross enrolment ratio, primary, gender parity index (GPI)",SE.ENR.PRIM.FM.ZS,1.05202
+Nepal,NPL,2010,"Gross enrolment ratio, primary, gender parity index (GPI)",SE.ENR.PRIM.FM.ZS,1.07617
+Nepal,NPL,2011,"Gross enrolment ratio, primary, gender parity index (GPI)",SE.ENR.PRIM.FM.ZS,1.08158
+Nepal,NPL,2012,"Gross enrolment ratio, primary, gender parity index (GPI)",SE.ENR.PRIM.FM.ZS,1.08791
+Nepal,NPL,2013,"Gross enrolment ratio, primary, gender parity index (GPI)",SE.ENR.PRIM.FM.ZS,1.08203
+Nepal,NPL,2014,"Gross enrolment ratio, primary, gender parity index (GPI)",SE.ENR.PRIM.FM.ZS,1.07381
+Nepal,NPL,2015,"Gross enrolment ratio, primary, gender parity index (GPI)",SE.ENR.PRIM.FM.ZS,1.06181
+Nepal,NPL,2016,"Gross enrolment ratio, primary, gender parity index (GPI)",SE.ENR.PRIM.FM.ZS,1.05182
+Nepal,NPL,2017,"Gross enrolment ratio, primary, gender parity index (GPI)",SE.ENR.PRIM.FM.ZS,1.01812
+Nepal,NPL,2019,"Gross enrolment ratio, primary, gender parity index (GPI)",SE.ENR.PRIM.FM.ZS,1.01866
+Nepal,NPL,2000,"Out-of-school children of primary school age, both sexes (number)",SE.PRM.UNER,882973.0
+Nepal,NPL,2003,"Out-of-school children of primary school age, both sexes (number)",SE.PRM.UNER,688699.0
+Nepal,NPL,2004,"Out-of-school children of primary school age, both sexes (number)",SE.PRM.UNER,677338.0
+Nepal,NPL,2011,"Out-of-school children of primary school age, both sexes (number)",SE.PRM.UNER,22049.0
+Nepal,NPL,2012,"Out-of-school children of primary school age, both sexes (number)",SE.PRM.UNER,2895.0
+Nepal,NPL,2014,"Out-of-school children of primary school age, both sexes (number)",SE.PRM.UNER,30866.0
+Nepal,NPL,2015,"Out-of-school children of primary school age, both sexes (number)",SE.PRM.UNER,49866.0
+Nepal,NPL,2016,"Out-of-school children of primary school age, both sexes (number)",SE.PRM.UNER,49332.0
+Nepal,NPL,2017,"Out-of-school children of primary school age, both sexes (number)",SE.PRM.UNER,101223.0
+Nepal,NPL,2019,"Out-of-school children of primary school age, both sexes (number)",SE.PRM.UNER,103384.0
+Pakistan,PAK,2000,Government expenditure on education as % of GDP (%),SE.XPD.TOTL.GD.ZS,1.83782
+Pakistan,PAK,2004,Government expenditure on education as % of GDP (%),SE.XPD.TOTL.GD.ZS,1.76759
+Pakistan,PAK,2005,Government expenditure on education as % of GDP (%),SE.XPD.TOTL.GD.ZS,2.04972
+Pakistan,PAK,2006,Government expenditure on education as % of GDP (%),SE.XPD.TOTL.GD.ZS,2.39551
+Pakistan,PAK,2007,Government expenditure on education as % of GDP (%),SE.XPD.TOTL.GD.ZS,2.63527
+Pakistan,PAK,2008,Government expenditure on education as % of GDP (%),SE.XPD.TOTL.GD.ZS,2.74623
+Pakistan,PAK,2009,Government expenditure on education as % of GDP (%),SE.XPD.TOTL.GD.ZS,2.59078
+Pakistan,PAK,2010,Government expenditure on education as % of GDP (%),SE.XPD.TOTL.GD.ZS,2.28687
+Pakistan,PAK,2011,Government expenditure on education as % of GDP (%),SE.XPD.TOTL.GD.ZS,2.22175
+Pakistan,PAK,2012,Government expenditure on education as % of GDP (%),SE.XPD.TOTL.GD.ZS,2.13628
+Pakistan,PAK,2013,Government expenditure on education as % of GDP (%),SE.XPD.TOTL.GD.ZS,2.49344
+Pakistan,PAK,2014,Government expenditure on education as % of GDP (%),SE.XPD.TOTL.GD.ZS,2.46593
+Pakistan,PAK,2015,Government expenditure on education as % of GDP (%),SE.XPD.TOTL.GD.ZS,2.65002
+Pakistan,PAK,2016,Government expenditure on education as % of GDP (%),SE.XPD.TOTL.GD.ZS,3.00292
+Pakistan,PAK,2017,Government expenditure on education as % of GDP (%),SE.XPD.TOTL.GD.ZS,2.89952
+Pakistan,PAK,2000,"Gross enrolment ratio, primary, female (%)",SE.PRM.ENRR.FE,57.06668
+Pakistan,PAK,2001,"Gross enrolment ratio, primary, female (%)",SE.PRM.ENRR.FE,57.01294
+Pakistan,PAK,2002,"Gross enrolment ratio, primary, female (%)",SE.PRM.ENRR.FE,57.13639
+Pakistan,PAK,2003,"Gross enrolment ratio, primary, female (%)",SE.PRM.ENRR.FE,60.91778
+Pakistan,PAK,2004,"Gross enrolment ratio, primary, female (%)",SE.PRM.ENRR.FE,64.91
+Pakistan,PAK,2005,"Gross enrolment ratio, primary, female (%)",SE.PRM.ENRR.FE,70.34328
+Pakistan,PAK,2006,"Gross enrolment ratio, primary, female (%)",SE.PRM.ENRR.FE,68.56943
+Pakistan,PAK,2007,"Gross enrolment ratio, primary, female (%)",SE.PRM.ENRR.FE,75.29171
+Pakistan,PAK,2008,"Gross enrolment ratio, primary, female (%)",SE.PRM.ENRR.FE,75.90518
+Pakistan,PAK,2009,"Gross enrolment ratio, primary, female (%)",SE.PRM.ENRR.FE,77.07291
+Pakistan,PAK,2010,"Gross enrolment ratio, primary, female (%)",SE.PRM.ENRR.FE,77.63804
+Pakistan,PAK,2011,"Gross enrolment ratio, primary, female (%)",SE.PRM.ENRR.FE,74.51299
+Pakistan,PAK,2012,"Gross enrolment ratio, primary, female (%)",SE.PRM.ENRR.FE,74.64866
+Pakistan,PAK,2013,"Gross enrolment ratio, primary, female (%)",SE.PRM.ENRR.FE,73.89344
+Pakistan,PAK,2014,"Gross enrolment ratio, primary, female (%)",SE.PRM.ENRR.FE,77.39932
+Pakistan,PAK,2015,"Gross enrolment ratio, primary, female (%)",SE.PRM.ENRR.FE,78.25324
+Pakistan,PAK,2016,"Gross enrolment ratio, primary, female (%)",SE.PRM.ENRR.FE,83.88247
+Pakistan,PAK,2017,"Gross enrolment ratio, primary, female (%)",SE.PRM.ENRR.FE,83.70682
+Pakistan,PAK,2018,"Gross enrolment ratio, primary, female (%)",SE.PRM.ENRR.FE,86.11134
+Pakistan,PAK,2019,"Gross enrolment ratio, primary, female (%)",SE.PRM.ENRR.FE,87.8961
+Pakistan,PAK,2000,"Gross enrolment ratio, primary, gender parity index (GPI)",SE.ENR.PRIM.FM.ZS,0.67972
+Pakistan,PAK,2001,"Gross enrolment ratio, primary, gender parity index (GPI)",SE.ENR.PRIM.FM.ZS,0.68023
+Pakistan,PAK,2002,"Gross enrolment ratio, primary, gender parity index (GPI)",SE.ENR.PRIM.FM.ZS,0.68116
+Pakistan,PAK,2003,"Gross enrolment ratio, primary, gender parity index (GPI)",SE.ENR.PRIM.FM.ZS,0.72661
+Pakistan,PAK,2004,"Gross enrolment ratio, primary, gender parity index (GPI)",SE.ENR.PRIM.FM.ZS,0.73291
+Pakistan,PAK,2005,"Gross enrolment ratio, primary, gender parity index (GPI)",SE.ENR.PRIM.FM.ZS,0.76874
+Pakistan,PAK,2006,"Gross enrolment ratio, primary, gender parity index (GPI)",SE.ENR.PRIM.FM.ZS,0.79134
+Pakistan,PAK,2007,"Gross enrolment ratio, primary, gender parity index (GPI)",SE.ENR.PRIM.FM.ZS,0.83322
+Pakistan,PAK,2008,"Gross enrolment ratio, primary, gender parity index (GPI)",SE.ENR.PRIM.FM.ZS,0.84302
+Pakistan,PAK,2009,"Gross enrolment ratio, primary, gender parity index (GPI)",SE.ENR.PRIM.FM.ZS,0.85446
+Pakistan,PAK,2010,"Gross enrolment ratio, primary, gender parity index (GPI)",SE.ENR.PRIM.FM.ZS,0.85318
+Pakistan,PAK,2011,"Gross enrolment ratio, primary, gender parity index (GPI)",SE.ENR.PRIM.FM.ZS,0.85951
+Pakistan,PAK,2012,"Gross enrolment ratio, primary, gender parity index (GPI)",SE.ENR.PRIM.FM.ZS,0.87165
+Pakistan,PAK,2013,"Gross enrolment ratio, primary, gender parity index (GPI)",SE.ENR.PRIM.FM.ZS,0.8697
+Pakistan,PAK,2014,"Gross enrolment ratio, primary, gender parity index (GPI)",SE.ENR.PRIM.FM.ZS,0.8535
+Pakistan,PAK,2015,"Gross enrolment ratio, primary, gender parity index (GPI)",SE.ENR.PRIM.FM.ZS,0.85593
+Pakistan,PAK,2016,"Gross enrolment ratio, primary, gender parity index (GPI)",SE.ENR.PRIM.FM.ZS,0.85398
+Pakistan,PAK,2017,"Gross enrolment ratio, primary, gender parity index (GPI)",SE.ENR.PRIM.FM.ZS,0.86301
+Pakistan,PAK,2018,"Gross enrolment ratio, primary, gender parity index (GPI)",SE.ENR.PRIM.FM.ZS,0.84441
+Pakistan,PAK,2019,"Gross enrolment ratio, primary, gender parity index (GPI)",SE.ENR.PRIM.FM.ZS,0.85915
+Pakistan,PAK,2002,"Out-of-school children of primary school age, both sexes (number)",SE.PRM.UNER,9135943.0
+Pakistan,PAK,2003,"Out-of-school children of primary school age, both sexes (number)",SE.PRM.UNER,8982285.0
+Pakistan,PAK,2004,"Out-of-school children of primary school age, both sexes (number)",SE.PRM.UNER,7522515.0
+Pakistan,PAK,2006,"Out-of-school children of primary school age, both sexes (number)",SE.PRM.UNER,8397869.0
+Pakistan,PAK,2007,"Out-of-school children of primary school age, both sexes (number)",SE.PRM.UNER,7610816.0
+Pakistan,PAK,2008,"Out-of-school children of primary school age, both sexes (number)",SE.PRM.UNER,7657486.0
+Pakistan,PAK,2009,"Out-of-school children of primary school age, both sexes (number)",SE.PRM.UNER,7607285.0
+Pakistan,PAK,2011,"Out-of-school children of primary school age, both sexes (number)",SE.PRM.UNER,8244086.0
+Pakistan,PAK,2012,"Out-of-school children of primary school age, both sexes (number)",SE.PRM.UNER,8409718.0
+Pakistan,PAK,2013,"Out-of-school children of primary school age, both sexes (number)",SE.PRM.UNER,7428900.0
+Pakistan,PAK,2014,"Out-of-school children of primary school age, both sexes (number)",SE.PRM.UNER,6581788.0
+Pakistan,PAK,2016,"Out-of-school children of primary school age, both sexes (number)",SE.PRM.UNER,6633175.0
+Sri Lanka,LKA,2009,Government expenditure on education as % of GDP (%),SE.XPD.TOTL.GD.ZS,2.0559
+Sri Lanka,LKA,2010,Government expenditure on education as % of GDP (%),SE.XPD.TOTL.GD.ZS,1.71774
+Sri Lanka,LKA,2011,Government expenditure on education as % of GDP (%),SE.XPD.TOTL.GD.ZS,1.80861
+Sri Lanka,LKA,2012,Government expenditure on education as % of GDP (%),SE.XPD.TOTL.GD.ZS,1.49617
+Sri Lanka,LKA,2013,Government expenditure on education as % of GDP (%),SE.XPD.TOTL.GD.ZS,1.62107
+Sri Lanka,LKA,2014,Government expenditure on education as % of GDP (%),SE.XPD.TOTL.GD.ZS,1.93288
+Sri Lanka,LKA,2015,Government expenditure on education as % of GDP (%),SE.XPD.TOTL.GD.ZS,2.22875
+Sri Lanka,LKA,2016,Government expenditure on education as % of GDP (%),SE.XPD.TOTL.GD.ZS,3.4492
+Sri Lanka,LKA,2017,Government expenditure on education as % of GDP (%),SE.XPD.TOTL.GD.ZS,2.79925
+Sri Lanka,LKA,2018,Government expenditure on education as % of GDP (%),SE.XPD.TOTL.GD.ZS,2.12421
+Sri Lanka,LKA,2001,"Gross enrolment ratio, primary, female (%)",SE.PRM.ENRR.FE,106.93053
+Sri Lanka,LKA,2002,"Gross enrolment ratio, primary, female (%)",SE.PRM.ENRR.FE,105.40116
+Sri Lanka,LKA,2003,"Gross enrolment ratio, primary, female (%)",SE.PRM.ENRR.FE,102.49141
+Sri Lanka,LKA,2004,"Gross enrolment ratio, primary, female (%)",SE.PRM.ENRR.FE,100.8334
+Sri Lanka,LKA,2005,"Gross enrolment ratio, primary, female (%)",SE.PRM.ENRR.FE,99.28779
+Sri Lanka,LKA,2006,"Gross enrolment ratio, primary, female (%)",SE.PRM.ENRR.FE,98.44568
+Sri Lanka,LKA,2007,"Gross enrolment ratio, primary, female (%)",SE.PRM.ENRR.FE,97.69085
+Sri Lanka,LKA,2008,"Gross enrolment ratio, primary, female (%)",SE.PRM.ENRR.FE,96.60648
+Sri Lanka,LKA,2009,"Gross enrolment ratio, primary, female (%)",SE.PRM.ENRR.FE,94.04776
+Sri Lanka,LKA,2010,"Gross enrolment ratio, primary, female (%)",SE.PRM.ENRR.FE,98.24813
+Sri Lanka,LKA,2011,"Gross enrolment ratio, primary, female (%)",SE.PRM.ENRR.FE,97.51822
+Sri Lanka,LKA,2012,"Gross enrolment ratio, primary, female (%)",SE.PRM.ENRR.FE,98.76951
+Sri Lanka,LKA,2013,"Gross enrolment ratio, primary, female (%)",SE.PRM.ENRR.FE,99.42777
+Sri Lanka,LKA,2014,"Gross enrolment ratio, primary, female (%)",SE.PRM.ENRR.FE,100.18917
+Sri Lanka,LKA,2015,"Gross enrolment ratio, primary, female (%)",SE.PRM.ENRR.FE,100.57343
+Sri Lanka,LKA,2016,"Gross enrolment ratio, primary, female (%)",SE.PRM.ENRR.FE,100.37505
+Sri Lanka,LKA,2017,"Gross enrolment ratio, primary, female (%)",SE.PRM.ENRR.FE,99.90265
+Sri Lanka,LKA,2018,"Gross enrolment ratio, primary, female (%)",SE.PRM.ENRR.FE,99.61806
+Sri Lanka,LKA,2001,"Gross enrolment ratio, primary, gender parity index (GPI)",SE.ENR.PRIM.FM.ZS,0.98435
+Sri Lanka,LKA,2002,"Gross enrolment ratio, primary, gender parity index (GPI)",SE.ENR.PRIM.FM.ZS,0.98811
+Sri Lanka,LKA,2003,"Gross enrolment ratio, primary, gender parity index (GPI)",SE.ENR.PRIM.FM.ZS,0.99447
+Sri Lanka,LKA,2004,"Gross enrolment ratio, primary, gender parity index (GPI)",SE.ENR.PRIM.FM.ZS,1.06619
+Sri Lanka,LKA,2005,"Gross enrolment ratio, primary, gender parity index (GPI)",SE.ENR.PRIM.FM.ZS,0.99453
+Sri Lanka,LKA,2006,"Gross enrolment ratio, primary, gender parity index (GPI)",SE.ENR.PRIM.FM.ZS,0.99092
+Sri Lanka,LKA,2007,"Gross enrolment ratio, primary, gender parity index (GPI)",SE.ENR.PRIM.FM.ZS,0.98807
+Sri Lanka,LKA,2008,"Gross enrolment ratio, primary, gender parity index (GPI)",SE.ENR.PRIM.FM.ZS,0.98646
+Sri Lanka,LKA,2009,"Gross enrolment ratio, primary, gender parity index (GPI)",SE.ENR.PRIM.FM.ZS,0.98221
+Sri Lanka,LKA,2010,"Gross enrolment ratio, primary, gender parity index (GPI)",SE.ENR.PRIM.FM.ZS,0.97522
+Sri Lanka,LKA,2011,"Gross enrolment ratio, primary, gender parity index (GPI)",SE.ENR.PRIM.FM.ZS,0.96063
+Sri Lanka,LKA,2012,"Gross enrolment ratio, primary, gender parity index (GPI)",SE.ENR.PRIM.FM.ZS,0.97666
+Sri Lanka,LKA,2013,"Gross enrolment ratio, primary, gender parity index (GPI)",SE.ENR.PRIM.FM.ZS,0.97622
+Sri Lanka,LKA,2014,"Gross enrolment ratio, primary, gender parity index (GPI)",SE.ENR.PRIM.FM.ZS,0.97728
+Sri Lanka,LKA,2015,"Gross enrolment ratio, primary, gender parity index (GPI)",SE.ENR.PRIM.FM.ZS,0.97894
+Sri Lanka,LKA,2016,"Gross enrolment ratio, primary, gender parity index (GPI)",SE.ENR.PRIM.FM.ZS,0.97871
+Sri Lanka,LKA,2017,"Gross enrolment ratio, primary, gender parity index (GPI)",SE.ENR.PRIM.FM.ZS,0.98571
+Sri Lanka,LKA,2018,"Gross enrolment ratio, primary, gender parity index (GPI)",SE.ENR.PRIM.FM.ZS,0.9893
+Sri Lanka,LKA,2001,"Out-of-school children of primary school age, both sexes (number)",SE.PRM.UNER,1967.0
+Sri Lanka,LKA,2002,"Out-of-school children of primary school age, both sexes (number)",SE.PRM.UNER,1255.0
+Sri Lanka,LKA,2003,"Out-of-school children of primary school age, both sexes (number)",SE.PRM.UNER,6193.0
+Sri Lanka,LKA,2004,"Out-of-school children of primary school age, both sexes (number)",SE.PRM.UNER,51040.0
+Sri Lanka,LKA,2005,"Out-of-school children of primary school age, both sexes (number)",SE.PRM.UNER,45427.0
+Sri Lanka,LKA,2006,"Out-of-school children of primary school age, both sexes (number)",SE.PRM.UNER,54462.0
+Sri Lanka,LKA,2007,"Out-of-school children of primary school age, both sexes (number)",SE.PRM.UNER,61528.0
+Sri Lanka,LKA,2008,"Out-of-school children of primary school age, both sexes (number)",SE.PRM.UNER,76994.0
+Sri Lanka,LKA,2009,"Out-of-school children of primary school age, both sexes (number)",SE.PRM.UNER,115909.0
+Sri Lanka,LKA,2010,"Out-of-school children of primary school age, both sexes (number)",SE.PRM.UNER,89067.0
+Sri Lanka,LKA,2011,"Out-of-school children of primary school age, both sexes (number)",SE.PRM.UNER,87520.0
+Sri Lanka,LKA,2012,"Out-of-school children of primary school age, both sexes (number)",SE.PRM.UNER,83509.0
+Sri Lanka,LKA,2013,"Out-of-school children of primary school age, both sexes (number)",SE.PRM.UNER,61328.0
+Sri Lanka,LKA,2014,"Out-of-school children of primary school age, both sexes (number)",SE.PRM.UNER,45261.0
+Sri Lanka,LKA,2015,"Out-of-school children of primary school age, both sexes (number)",SE.PRM.UNER,16394.0
+Sri Lanka,LKA,2016,"Out-of-school children of primary school age, both sexes (number)",SE.PRM.UNER,16400.0
+Sri Lanka,LKA,2017,"Out-of-school children of primary school age, both sexes (number)",SE.PRM.UNER,12419.0
+Sri Lanka,LKA,2018,"Out-of-school children of primary school age, both sexes (number)",SE.PRM.UNER,9296.0

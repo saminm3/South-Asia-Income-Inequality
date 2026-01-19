@@ -16,6 +16,9 @@ from utils.utils import human_indicator, format_value
 from utils.exports import export_data_menu
 from utils.help_system import render_help_button
 from utils.sidebar import apply_all_styles
+from utils.api_loader import get_api_loader
+from utils.imf_api_loader import get_imf_loader
+from utils.un_data_loader import get_un_loader
 
 
 st.set_page_config(
@@ -24,6 +27,12 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="collapsed"
 )
+
+# Initialize API loaders after page config
+api_loader = get_api_loader()
+imf_loader = get_imf_loader()
+un_loader = get_un_loader()
+
 render_help_button("dashboard")
 apply_all_styles()
 # ═══════════════════════════════════════════════════════════════════
@@ -37,7 +46,7 @@ st.markdown("""
         max-width: 200px !important;
     }
     
-    /* MAIN BACKGROUND: Much more purple gradient matching sidebar */
+    /* Main background - Dark navy matching the screenshot */
     .main {
         background: linear-gradient(135deg, #3d2352 0%, #2a1a47 50%, #1a1230 100%);
         background-attachment: fixed;
@@ -245,6 +254,117 @@ if filtered_df.empty:
     st.warning("⚠️ No data available for selected filters")
     st.stop()
 
+
+# ═══════════════════════════════════════════════════════════════════
+# API ENRICHMENT SECTION
+# ═══════════════════════════════════════════════════════════════════
+
+with st.sidebar:
+    st.markdown("---")
+    st.markdown("### 🌐 Live Data Enrichment")
+    use_api_enrichment = st.toggle("Enable API Data Overlay", value=False,
+                                    help="Overlay live World Bank API data on plots for comparison")
+    
+    if use_api_enrichment:
+        st.success("✓ API Active")
+        
+        # Select which metric to fetch live
+        api_metric = st.selectbox(
+            "Live Metric",
+            ["Gini Index", "GDP per Capita", "Poverty Rate"],
+            help="Choose which live indicator to overlay"
+        )
+        
+        # Mapping to World Bank codes
+        metric_mapping = {
+            "Gini Index": "SI.POV.GINI",
+            "GDP per Capita": "NY.GDP.PCAP.CD",
+            "Poverty Rate": "SI.POV.NAHC"
+        }
+        
+        api_indicator_code = metric_mapping[api_metric]
+        
+        # Show live status
+        with st.spinner("Fetching live data..."):
+            try:
+                # Get latest year's data for all countries
+                latest_year_data = []
+                for country in config['countries']:
+                    api_data = api_loader.fetch_indicator(
+                        api_indicator_code,
+                        countries=country,
+                        date_range=f"{config['year_range'][1]-2}:{config['year_range'][1]}"
+                    )
+                    if not api_data.empty and 'date' in api_data.columns:
+                        latest_api_year = api_data['date'].max()
+                        latest_year_data.append((country, latest_api_year))
+                
+                if latest_year_data:
+                    st.info(f"📅 Latest API: {max([y for _, y in latest_year_data])}")
+                    
+                    # Check if API has newer data than local
+                    api_max_year = max([y for _, y in latest_year_data])
+                    local_max_year = int(filtered_df['year'].max())
+                    
+                    if api_max_year > local_max_year:
+                        years_behind = api_max_year - local_max_year
+                        st.warning(f"⚠️ Local data is {years_behind} year(s) behind API")
+                    else:
+                        st.success("✓ Data is current")
+                        
+            except Exception as e:
+                st.error(f"API Error: {str(e)[:40]}...")
+        
+        # Exchange rates info
+        rates = api_loader.get_exchange_rates()
+        if rates:
+            st.caption("**Live FX Rates:**")
+            st.caption(f"🇧🇩 {rates.get('BDT', 'N/A')} | 🇮🇳 {rates.get('INR', 'N/A')}")
+    else:
+        st.info("Enable to overlay live World Bank data")
+    
+    # Economic APIs Section
+    st.markdown("---")
+    st.markdown("### 📈 Economic Forecasts & Social Indicators")
+    
+    use_economic_apis = st.toggle("Enable Economic APIs", value=False,
+                                   help="Add IMF forecasts and UN social indicators")
+    
+    if use_economic_apis:
+        st.success("✓ Economic APIs Active")
+        
+        # IMF Forecasts
+        use_imf = st.checkbox("IMF Forecasts", value=True, help="GDP growth and inflation projections")
+        
+        # UN Indicators
+        use_un = st.checkbox("UN Social Indicators", value=True, help="HDI, Gender Inequality, Education")
+        
+        if use_imf:
+            st.caption("📊 GDP Growth & Inflation")
+        if use_un:
+            st.caption("🌍 HDI & Social Metrics")
+    else:
+        st.info("Enable for economic forecasts and social data")
+
+# Store API enrichment state for use in visualizations
+if 'api_enrichment' not in st.session_state:
+    st.session_state.api_enrichment = {}
+
+st.session_state.api_enrichment['enabled'] = use_api_enrichment
+if use_api_enrichment:
+    st.session_state.api_enrichment['metric'] = api_metric
+    st.session_state.api_enrichment['code'] = api_indicator_code
+
+# Store economic APIs state
+if 'economic_apis' not in st.session_state:
+    st.session_state.economic_apis = {}
+
+st.session_state.economic_apis['enabled'] = use_economic_apis
+if use_economic_apis:
+    st.session_state.economic_apis['use_imf'] = use_imf
+    st.session_state.economic_apis['use_un'] = use_un
+
+
 # ═══════════════════════════════════════════════════════════════════
 # REQUIREMENT #6: BREADCRUMB NAVIGATION (NO BACK BUTTON)
 # ═══════════════════════════════════════════════════════════════════
@@ -336,6 +456,199 @@ with col5:
         label="Data Range",
         value=f"{config['year_range'][1] - config['year_range'][0] + 1} Years"
     )
+
+# ═══════════════════════════════════════════════════════════════════
+# API-DRIVEN INSIGHTS (APPEARS WHEN API ENRICHMENT IS ENABLED)
+# ═══════════════════════════════════════════════════════════════════
+
+if use_api_enrichment:
+    st.markdown("---")
+    st.markdown("### 🤖 Live API-Driven Insights")
+    
+    insights_col1, insights_col2 = st.columns(2)
+    
+    with insights_col1:
+        st.markdown("""
+        <div style="background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(16, 185, 129, 0.1)); 
+                    padding: 20px; border-radius: 12px; border-left: 4px solid #3b82f6;">
+            <h4 style="color: #ffffff; margin-top: 0;">📊 Real-Time Data Status</h4>
+        """, unsafe_allow_html=True)
+        
+        # Fetch and display live comparison
+        try:
+            with st.spinner("Analyzing live data..."):
+                # Get live data for best performer
+                if best_country != "N/A":
+                    live_best = api_loader.fetch_indicator(
+                        api_indicator_code,
+                        countries=best_country,
+                        date_range=f"{latest_year-1}:{latest_year}"
+                    )
+                    
+                    if not live_best.empty and 'value' in live_best.columns:
+                        live_value = live_best['value'].iloc[-1]
+                        local_value = best_value
+                        difference = abs(live_value - local_value)
+                        
+                        if difference < 1.0:
+                            st.success(f"✅ {best_country}: Local & API data match (Δ {difference:.2f})")
+                        else:
+                            st.warning(f"⚠️ {best_country}: {difference:.2f} point discrepancy detected")
+                    else:
+                        st.info(f"ℹ️ No recent API data for {best_country}")
+        except Exception as e:
+            st.error(f"Error fetching live comparison: {str(e)[:50]}...")
+        
+        st.markdown("</div>", unsafe_allow_html=True)
+    
+    with insights_col2:
+        st.markdown("""
+        <div style="background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(239, 68, 68, 0.1)); 
+                    padding: 20px; border-radius: 12px; border-left: 4px solid #f59e0b;">
+            <h4 style="color: #ffffff; margin-top: 0;">💡 AI-Powered Recommendations</h4>
+        """, unsafe_allow_html=True)
+        
+        # Generate insights based on data
+        if yoy_pct < -2:
+            st.success(f"🎯 Positive trend: {abs(yoy_pct):.1f}% improvement year-over-year")
+        elif yoy_pct > 2:
+            st.warning(f"⚠️ Concerning: {yoy_pct:.1f}% increase in inequality")
+        else:
+            st.info(f"📊 Stable: {abs(yoy_pct):.1f}% change - monitoring recommended")
+        
+        # Data quality recommendation
+        if data_coverage < 70:
+            st.warning(f"⚠️ Data coverage at {data_coverage:.0f}% - consider refreshing from API")
+        else:
+            st.success(f"✅ Good coverage at {data_coverage:.0f}%")
+        
+        st.markdown("</div>", unsafe_allow_html=True)
+
+#  ═══════════════════════════════════════════════════════════════════
+# ECONOMIC FORECASTS & SOCIAL INDICATORS (NEW SECTION)
+# ═══════════════════════════════════════════════════════════════════
+
+if use_economic_apis:
+    st.markdown("---")
+    st.markdown("### 📈 Economic Forecasts & Social Indicators")
+    
+    forecast_col1, forecast_col2 = st.columns(2)
+    
+    # IMF Forecasts
+    if use_imf:
+        with forecast_col1:
+            st.markdown("""
+            <div style="background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(251, 146, 60, 0.1)); 
+                        padding: 20px; border-radius: 12px; border-left: 4px solid #f59e0b;">
+                <h4 style="color: #ffffff; margin-top: 0;">📊 Historical GDP Growth (2000-2023)</h4>
+            """, unsafe_allow_html=True)
+            
+            with st.spinner("Fetching historical growth data..."):
+                try:
+                    # Fetch GDP growth historical data
+                    gdp_forecasts = imf_loader.get_gdp_growth(
+                        countries=config['countries'],
+                        start_year=2000,
+                        end_year=2023
+                    )
+                    
+                    if not gdp_forecasts.empty:
+                        # Create trend chart
+                        fig_forecast = go.Figure()
+                        
+                        for country in gdp_forecasts['country'].unique():
+                            country_data = gdp_forecasts[gdp_forecasts['country'] == country]
+                            fig_forecast.add_trace(go.Scatter(
+                                x=country_data['year'],
+                                y=country_data['value'],
+                                mode='lines+markers',
+                                name=country,
+                                line=dict(width=3),
+                                marker=dict(size=8)
+                            ))
+                        
+                        fig_forecast.update_layout(
+                            title="GDP Growth Trends (%)",
+                            xaxis_title="Year",
+                            yaxis_title="GDP Growth Rate (%)",
+                            height=300,
+                            paper_bgcolor='rgba(0,0,0,0)',
+                            plot_bgcolor='rgba(0,0,0,0)',
+                            font=dict(color='#e2e8f0'),
+                            legend=dict(orientation="h", y=-0.2),
+                            margin=dict(l=40, r=40, t=40, b=40)
+                        )
+                        
+                        st.plotly_chart(fig_forecast, use_container_width=True)
+                        
+                        # Summary statistics
+                        latest_avail_year = gdp_forecasts['year'].max()
+                        avg_growth_latest = gdp_forecasts[gdp_forecasts['year'] == latest_avail_year]['value'].mean()
+                        if not pd.isna(avg_growth_latest):
+                            st.info(f"💡 **Regional Avg ({latest_avail_year}):** {avg_growth_latest:.1f}% GDP Growth")
+                    else:
+                        st.warning("ℹ️ IMF forecast data unavailable")
+                        
+                except Exception as e:
+                    st.error(f"Error loading IMF data: {str(e)[:50]}...")
+            
+            st.markdown("</div>", unsafe_allow_html=True)
+    
+    # UN Social Indicators
+    if use_un:
+        with forecast_col2:
+            st.markdown("""
+            <div style="background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(96, 165, 250, 0.1)); 
+                        padding: 20px; border-radius: 12px; border-left: 4px solid #3b82f6;">
+                <h4 style="color: #ffffff; margin-top: 0;">🌍 UN Social Indicators (2023)</h4>
+            """, unsafe_allow_html=True)
+            
+            try:
+                # Fetch HDI data
+                hdi_data = un_loader.get_hdi_data(config['countries'])
+                
+                if not hdi_data.empty:
+                    # Create HDI bar chart
+                    hdi_sorted = hdi_data.sort_values('value', ascending=True)
+                    
+                    fig_hdi = go.Figure(go.Bar(
+                        x=hdi_sorted['value'],
+                        y=hdi_sorted['country'],
+                        orientation='h',
+                        marker=dict(
+                            color=hdi_sorted['value'],
+                            colorscale='Viridis',
+                            showscale=False
+                        ),
+                        text=hdi_sorted['value'].apply(lambda x: f"{x:.3f}"),
+                        textposition='outside'
+                    ))
+                    
+                    fig_hdi.update_layout(
+                        title="Human Development Index (HDI)",
+                        xaxis_title="HDI Value",
+                        yaxis_title="",
+                        height=300,
+                        paper_bgcolor='rgba(0,0,0,0)',
+                        plot_bgcolor='rgba(0,0,0,0)',
+                        font=dict(color='#e2e8f0'),
+                        margin=dict(l=100, r=80, t=40, b=40),
+                        xaxis=dict(range=[0, 1])
+                    )
+                    
+                    st.plotly_chart(fig_hdi, use_container_width=True)
+                    
+                    # HDI Categories
+                    categories = hdi_data['category'].value_counts()
+                    category_text = " | ".join([f"{cat}: {count}" for cat, count in categories.items()])
+                    st.info(f"📊 **Categories:** {category_text}")
+                else:
+                    st.warning("ℹ️ UN HDI data unavailable")
+                    
+            except Exception as e:
+                st.error(f"Error loading UN data: {str(e)[:50]}...")
+            
+            st.markdown("</div>", unsafe_allow_html=True)
 
 # ═══════════════════════════════════════════════════════════════════
 # MAIN VISUALIZATION SECTION

@@ -1,0 +1,751 @@
+Country,Country_Code,Year,Percentile,Indicator,Value
+Afghanistan,AF,2000,p0p100,spllin,0.00030000001
+Afghanistan,AF,2000,p0p50,sptinc,0.1912
+Afghanistan,AF,2000,p0p50,shweal,0.0475
+Afghanistan,AF,2000,pall,anweal,11183.0405
+Afghanistan,AF,2000,pall,wnweal,4.755100000000001
+Afghanistan,AF,2001,p0p100,spllin,0.00039999999
+Afghanistan,AF,2001,p0p50,sptinc,0.1912
+Afghanistan,AF,2001,p0p50,shweal,0.0475
+Afghanistan,AF,2001,pall,anweal,10754.3312
+Afghanistan,AF,2001,pall,wnweal,4.8886
+Afghanistan,AF,2002,p0p100,spllin,0.00039999999
+Afghanistan,AF,2002,p0p50,sptinc,0.1912
+Afghanistan,AF,2002,p0p50,shweal,0.0475
+Afghanistan,AF,2002,pall,anweal,14367.3534
+Afghanistan,AF,2002,pall,wnweal,4.6581
+Afghanistan,AF,2003,p0p100,spllin,0.00039999999
+Afghanistan,AF,2003,p0p50,sptinc,0.1912
+Afghanistan,AF,2003,p0p50,shweal,0.0475
+Afghanistan,AF,2003,pall,anweal,15595.9878
+Afghanistan,AF,2003,pall,wnweal,4.487200000000001
+Afghanistan,AF,2004,p0p100,spllin,0.00039999999
+Afghanistan,AF,2004,p0p50,sptinc,0.1912
+Afghanistan,AF,2004,p0p50,shweal,0.0475
+Afghanistan,AF,2004,pall,anweal,12662.4877
+Afghanistan,AF,2004,pall,wnweal,3.6981
+Afghanistan,AF,2005,p0p100,spllin,0.00050000002
+Afghanistan,AF,2005,p0p50,sptinc,0.1912
+Afghanistan,AF,2005,p0p50,shweal,0.0475
+Afghanistan,AF,2005,pall,anweal,14336.2358
+Afghanistan,AF,2005,pall,wnweal,4.0443
+Afghanistan,AF,2006,p0p100,spllin,0.0019
+Afghanistan,AF,2006,p0p50,sptinc,0.1912
+Afghanistan,AF,2006,p0p50,shweal,0.0475
+Afghanistan,AF,2006,pall,anweal,22309.3175
+Afghanistan,AF,2006,pall,wnweal,6.0522
+Afghanistan,AF,2007,p0p100,spllin,0.0035999999
+Afghanistan,AF,2007,p0p50,sptinc,0.1912
+Afghanistan,AF,2007,p0p50,shweal,0.0475
+Afghanistan,AF,2007,pall,anweal,26653.194
+Afghanistan,AF,2007,pall,wnweal,5.9695
+Afghanistan,AF,2008,p0p100,spllin,0.0059000002
+Afghanistan,AF,2008,p0p50,sptinc,0.1912
+Afghanistan,AF,2008,p0p50,shweal,0.0475
+Afghanistan,AF,2008,pall,anweal,25403.1972
+Afghanistan,AF,2008,pall,wnweal,5.9935
+Afghanistan,AF,2009,p0p100,spllin,0.0098000001
+Afghanistan,AF,2009,p0p50,sptinc,0.1982
+Afghanistan,AF,2009,p0p50,shweal,0.0478
+Afghanistan,AF,2009,pall,anweal,28993.0447
+Afghanistan,AF,2009,pall,wnweal,6.4474
+Afghanistan,AF,2010,p0p100,spllin,0.0139
+Afghanistan,AF,2010,p0p50,sptinc,0.1986
+Afghanistan,AF,2010,p0p50,shweal,0.0479
+Afghanistan,AF,2010,pall,anweal,29276.8123
+Afghanistan,AF,2010,pall,wnweal,6.3875
+Afghanistan,AF,2011,p0p100,spllin,0.018200001
+Afghanistan,AF,2011,p0p50,sptinc,0.2058
+Afghanistan,AF,2011,p0p50,shweal,0.0481
+Afghanistan,AF,2011,pall,anweal,30279.0467
+Afghanistan,AF,2011,pall,wnweal,6.4713
+Afghanistan,AF,2012,p0p100,spllin,0.022399999
+Afghanistan,AF,2012,p0p50,sptinc,0.21
+Afghanistan,AF,2012,p0p50,shweal,0.0483
+Afghanistan,AF,2012,pall,anweal,32890.5694
+Afghanistan,AF,2012,pall,wnweal,6.6924
+Afghanistan,AF,2013,p0p100,spllin,0.0308
+Afghanistan,AF,2013,p0p50,sptinc,0.2075
+Afghanistan,AF,2013,p0p50,shweal,0.0482
+Afghanistan,AF,2013,pall,anweal,33095.4458
+Afghanistan,AF,2013,pall,wnweal,6.5896
+Afghanistan,AF,2014,p0p100,spllin,0.039900001
+Afghanistan,AF,2014,p0p50,sptinc,0.206
+Afghanistan,AF,2014,p0p50,shweal,0.0481
+Afghanistan,AF,2014,pall,anweal,32579.3185
+Afghanistan,AF,2014,pall,wnweal,6.629300000000001
+Afghanistan,AF,2015,p0p100,spllin,0.043400001
+Afghanistan,AF,2015,p0p50,sptinc,0.2058
+Afghanistan,AF,2015,p0p50,shweal,0.048
+Afghanistan,AF,2015,pall,anweal,30594.2641
+Afghanistan,AF,2015,pall,wnweal,6.558800000000001
+Afghanistan,AF,2016,p0p100,spllin,0.0469
+Afghanistan,AF,2016,p0p50,sptinc,0.2028
+Afghanistan,AF,2016,p0p50,shweal,0.0479
+Afghanistan,AF,2016,pall,anweal,30443.1814
+Afghanistan,AF,2016,pall,wnweal,6.6504
+Afghanistan,AF,2017,p0p100,spllin,0.0504
+Afghanistan,AF,2017,p0p50,sptinc,0.1992
+Afghanistan,AF,2017,p0p50,shweal,0.0478
+Afghanistan,AF,2017,pall,anweal,30900.2599
+Afghanistan,AF,2017,pall,wnweal,6.8536
+Afghanistan,AF,2018,p0p100,spllin,0.0539
+Afghanistan,AF,2018,p0p50,sptinc,0.1992
+Afghanistan,AF,2018,p0p50,shweal,0.0478
+Afghanistan,AF,2018,pall,anweal,29837.9851
+Afghanistan,AF,2018,pall,wnweal,6.7701
+Afghanistan,AF,2019,p0p100,spllin,0.057500001
+Afghanistan,AF,2019,p0p50,sptinc,0.1992
+Afghanistan,AF,2019,p0p50,shweal,0.0478
+Afghanistan,AF,2019,pall,anweal,32934.8044
+Afghanistan,AF,2019,pall,wnweal,7.0389
+Afghanistan,AF,2020,p0p100,spllin,0.061000001
+Afghanistan,AF,2020,p0p50,sptinc,0.1992
+Afghanistan,AF,2020,p0p50,shweal,0.0478
+Afghanistan,AF,2020,pall,anweal,34232.6856
+Afghanistan,AF,2020,pall,wnweal,7.630100000000001
+Afghanistan,AF,2021,p0p100,spllin,0.050999999
+Afghanistan,AF,2021,p0p50,sptinc,0.1992
+Afghanistan,AF,2021,p0p50,shweal,0.0478
+Afghanistan,AF,2021,pall,anweal,26787.0619
+Afghanistan,AF,2021,pall,wnweal,7.566400000000001
+Afghanistan,AF,2022,p0p100,spllin,0.041000001
+Afghanistan,AF,2022,p0p50,sptinc,0.1992
+Afghanistan,AF,2022,p0p50,shweal,0.0478
+Afghanistan,AF,2022,pall,anweal,23113.8332
+Afghanistan,AF,2022,pall,wnweal,7.6645
+Afghanistan,AF,2023,p0p100,spllin,0.030999999
+Afghanistan,AF,2023,p0p50,sptinc,0.1992
+Afghanistan,AF,2023,p0p50,shweal,0.0478
+Afghanistan,AF,2023,pall,anweal,23914.8707
+Afghanistan,AF,2023,pall,wnweal,7.718100000000001
+Afghanistan,AF,2024,p0p100,spllin,0.021
+Afghanistan,AF,2024,p0p50,sptinc,0.1992
+Afghanistan,AF,2024,p0p50,shweal,0.0478
+Afghanistan,AF,2024,pall,anweal,26206.6357
+Afghanistan,AF,2024,pall,wnweal,7.718100000000001
+Bangladesh,BD,2000,p0p100,spllin,0.1928
+Bangladesh,BD,2000,p0p50,sptinc,0.1761
+Bangladesh,BD,2000,p0p50,shweal,0.0462
+Bangladesh,BD,2000,pall,anweal,12907.4048
+Bangladesh,BD,2000,pall,wnweal,4.0069
+Bangladesh,BD,2001,p0p100,spllin,0.19490001
+Bangladesh,BD,2001,p0p50,sptinc,0.1757
+Bangladesh,BD,2001,p0p50,shweal,0.0462
+Bangladesh,BD,2001,pall,anweal,13908.3741
+Bangladesh,BD,2001,pall,wnweal,4.233000000000001
+Bangladesh,BD,2002,p0p100,spllin,0.19660001
+Bangladesh,BD,2002,p0p50,sptinc,0.1731
+Bangladesh,BD,2002,p0p50,shweal,0.0461
+Bangladesh,BD,2002,pall,anweal,14387.7503
+Bangladesh,BD,2002,pall,wnweal,4.2682
+Bangladesh,BD,2003,p0p100,spllin,0.1983
+Bangladesh,BD,2003,p0p50,sptinc,0.1697
+Bangladesh,BD,2003,p0p50,shweal,0.0458
+Bangladesh,BD,2003,pall,anweal,15365.5053
+Bangladesh,BD,2003,pall,wnweal,4.408700000000001
+Bangladesh,BD,2004,p0p100,spllin,0.1983
+Bangladesh,BD,2004,p0p50,sptinc,0.1692
+Bangladesh,BD,2004,p0p50,shweal,0.0458
+Bangladesh,BD,2004,pall,anweal,16070.1936
+Bangladesh,BD,2004,pall,wnweal,4.4351
+Bangladesh,BD,2005,p0p100,spllin,0.19840001
+Bangladesh,BD,2005,p0p50,sptinc,0.168
+Bangladesh,BD,2005,p0p50,shweal,0.0457
+Bangladesh,BD,2005,pall,anweal,17444.1051
+Bangladesh,BD,2005,pall,wnweal,4.644600000000001
+Bangladesh,BD,2006,p0p100,spllin,0.2005
+Bangladesh,BD,2006,p0p50,sptinc,0.1696
+Bangladesh,BD,2006,p0p50,shweal,0.0459
+Bangladesh,BD,2006,pall,anweal,18082.5342
+Bangladesh,BD,2006,pall,wnweal,4.5937
+Bangladesh,BD,2007,p0p100,spllin,0.2124
+Bangladesh,BD,2007,p0p50,sptinc,0.1703
+Bangladesh,BD,2007,p0p50,shweal,0.0461
+Bangladesh,BD,2007,pall,anweal,18577.0539
+Bangladesh,BD,2007,pall,wnweal,4.4305
+Bangladesh,BD,2008,p0p100,spllin,0.2254
+Bangladesh,BD,2008,p0p50,sptinc,0.1774
+Bangladesh,BD,2008,p0p50,shweal,0.0464
+Bangladesh,BD,2008,pall,anweal,19993.1346
+Bangladesh,BD,2008,pall,wnweal,4.5116
+Bangladesh,BD,2009,p0p100,spllin,0.2393
+Bangladesh,BD,2009,p0p50,sptinc,0.1807
+Bangladesh,BD,2009,p0p50,shweal,0.0467
+Bangladesh,BD,2009,pall,anweal,20931.9018
+Bangladesh,BD,2009,pall,wnweal,4.4987
+Bangladesh,BD,2010,p0p100,spllin,0.25690001
+Bangladesh,BD,2010,p0p50,sptinc,0.179
+Bangladesh,BD,2010,p0p50,shweal,0.0467
+Bangladesh,BD,2010,pall,anweal,22856.7883
+Bangladesh,BD,2010,pall,wnweal,4.6238
+Bangladesh,BD,2011,p0p100,spllin,0.2588
+Bangladesh,BD,2011,p0p50,sptinc,0.1822
+Bangladesh,BD,2011,p0p50,shweal,0.0468
+Bangladesh,BD,2011,pall,anweal,23841.3726
+Bangladesh,BD,2011,pall,wnweal,4.5241
+Bangladesh,BD,2012,p0p100,spllin,0.26089999
+Bangladesh,BD,2012,p0p50,sptinc,0.1833
+Bangladesh,BD,2012,p0p50,shweal,0.0469
+Bangladesh,BD,2012,pall,anweal,25053.1337
+Bangladesh,BD,2012,pall,wnweal,4.488300000000001
+Bangladesh,BD,2013,p0p100,spllin,0.26300001
+Bangladesh,BD,2013,p0p50,sptinc,0.1846
+Bangladesh,BD,2013,p0p50,shweal,0.047
+Bangladesh,BD,2013,pall,anweal,26683.5517
+Bangladesh,BD,2013,pall,wnweal,4.5279
+Bangladesh,BD,2014,p0p100,spllin,0.25240001
+Bangladesh,BD,2014,p0p50,sptinc,0.1867
+Bangladesh,BD,2014,p0p50,shweal,0.0472
+Bangladesh,BD,2014,pall,anweal,28359.5774
+Bangladesh,BD,2014,pall,wnweal,4.5278
+Bangladesh,BD,2015,p0p100,spllin,0.24169999
+Bangladesh,BD,2015,p0p50,sptinc,0.1899
+Bangladesh,BD,2015,p0p50,shweal,0.0473
+Bangladesh,BD,2015,pall,anweal,31465.2377
+Bangladesh,BD,2015,pall,wnweal,4.686900000000001
+Bangladesh,BD,2016,p0p100,spllin,0.23109999
+Bangladesh,BD,2016,p0p50,sptinc,0.1906
+Bangladesh,BD,2016,p0p50,shweal,0.0474
+Bangladesh,BD,2016,pall,anweal,34189.5847
+Bangladesh,BD,2016,pall,wnweal,4.8064
+Bangladesh,BD,2017,p0p100,spllin,0.22040001
+Bangladesh,BD,2017,p0p50,sptinc,0.1905
+Bangladesh,BD,2017,p0p50,shweal,0.0474
+Bangladesh,BD,2017,pall,anweal,37850.9502
+Bangladesh,BD,2017,pall,wnweal,5.0438
+Bangladesh,BD,2018,p0p100,spllin,0.2325
+Bangladesh,BD,2018,p0p50,sptinc,0.1905
+Bangladesh,BD,2018,p0p50,shweal,0.0474
+Bangladesh,BD,2018,pall,anweal,41729.3864
+Bangladesh,BD,2018,pall,wnweal,5.230300000000001
+Bangladesh,BD,2019,p0p100,spllin,0.2439
+Bangladesh,BD,2019,p0p50,sptinc,0.1905
+Bangladesh,BD,2019,p0p50,shweal,0.0474
+Bangladesh,BD,2019,pall,anweal,42939.558
+Bangladesh,BD,2019,pall,wnweal,5.2115
+Bangladesh,BD,2020,p0p100,spllin,0.25369999
+Bangladesh,BD,2020,p0p50,sptinc,0.1905
+Bangladesh,BD,2020,p0p50,shweal,0.0474
+Bangladesh,BD,2020,pall,anweal,46491.7514
+Bangladesh,BD,2020,pall,wnweal,5.4652
+Bangladesh,BD,2021,p0p100,spllin,0.2642
+Bangladesh,BD,2021,p0p50,sptinc,0.1905
+Bangladesh,BD,2021,p0p50,shweal,0.0474
+Bangladesh,BD,2021,pall,anweal,50067.7982
+Bangladesh,BD,2021,pall,wnweal,5.5689
+Bangladesh,BD,2022,p0p100,spllin,0.27250001
+Bangladesh,BD,2022,p0p50,sptinc,0.1905
+Bangladesh,BD,2022,p0p50,shweal,0.0474
+Bangladesh,BD,2022,pall,anweal,55213.755
+Bangladesh,BD,2022,pall,wnweal,5.8395
+Bangladesh,BD,2023,p0p100,spllin,0.2665
+Bangladesh,BD,2023,p0p50,sptinc,0.1905
+Bangladesh,BD,2023,p0p50,shweal,0.0474
+Bangladesh,BD,2023,pall,anweal,56304.5959
+Bangladesh,BD,2023,pall,wnweal,5.7766
+Bangladesh,BD,2024,p0p100,spllin,0.25330001
+Bangladesh,BD,2024,p0p50,sptinc,0.1905
+Bangladesh,BD,2024,p0p50,shweal,0.0474
+Bangladesh,BD,2024,pall,anweal,57160.9144
+Bangladesh,BD,2024,pall,wnweal,5.7766
+India,IN,2000,p0p100,spllin,0.1609
+India,IN,2000,p0p50,sptinc,0.206
+India,IN,2000,p0p50,shweal,0.0758
+India,IN,2000,pall,anweal,16729.9684
+India,IN,2000,pall,wnweal,4.3334
+India,IN,2001,p0p100,spllin,0.15989999
+India,IN,2001,p0p50,sptinc,0.2017
+India,IN,2001,p0p50,shweal,0.073
+India,IN,2001,pall,anweal,16836.8563
+India,IN,2001,pall,wnweal,4.2873
+India,IN,2002,p0p100,spllin,0.15889999
+India,IN,2002,p0p50,sptinc,0.1973
+India,IN,2002,p0p50,shweal,0.0693
+India,IN,2002,pall,anweal,17043.1289
+India,IN,2002,pall,wnweal,4.2831
+India,IN,2003,p0p100,spllin,0.15790001
+India,IN,2003,p0p50,sptinc,0.1929
+India,IN,2003,p0p50,shweal,0.0696
+India,IN,2003,pall,anweal,17599.3204
+India,IN,2003,pall,wnweal,4.2371
+India,IN,2004,p0p100,spllin,0.1569
+India,IN,2004,p0p50,sptinc,0.1884
+India,IN,2004,p0p50,shweal,0.0681
+India,IN,2004,pall,anweal,18466.5203
+India,IN,2004,pall,wnweal,4.216600000000001
+India,IN,2005,p0p100,spllin,0.1569
+India,IN,2005,p0p50,sptinc,0.1839
+India,IN,2005,p0p50,shweal,0.0676
+India,IN,2005,pall,anweal,19585.5028
+India,IN,2005,pall,wnweal,4.2743
+India,IN,2006,p0p100,spllin,0.1569
+India,IN,2006,p0p50,sptinc,0.1793
+India,IN,2006,p0p50,shweal,0.0652
+India,IN,2006,pall,anweal,20938.9045
+India,IN,2006,pall,wnweal,4.348100000000001
+India,IN,2007,p0p100,spllin,0.1568
+India,IN,2007,p0p50,sptinc,0.1746
+India,IN,2007,p0p50,shweal,0.0614
+India,IN,2007,pall,anweal,22576.852
+India,IN,2007,pall,wnweal,4.4592
+India,IN,2008,p0p100,spllin,0.1568
+India,IN,2008,p0p50,sptinc,0.1699
+India,IN,2008,p0p50,shweal,0.0633
+India,IN,2008,pall,anweal,24553.522
+India,IN,2008,pall,wnweal,4.7426
+India,IN,2009,p0p100,spllin,0.1568
+India,IN,2009,p0p50,sptinc,0.165
+India,IN,2009,p0p50,shweal,0.0658
+India,IN,2009,pall,anweal,26117.4291
+India,IN,2009,pall,wnweal,4.877000000000001
+India,IN,2010,p0p100,spllin,0.1533
+India,IN,2010,p0p50,sptinc,0.1601
+India,IN,2010,p0p50,shweal,0.063
+India,IN,2010,pall,anweal,27429.5991
+India,IN,2010,pall,wnweal,4.8585
+India,IN,2011,p0p100,spllin,0.1556
+India,IN,2011,p0p50,sptinc,0.1535
+India,IN,2011,p0p50,shweal,0.0615
+India,IN,2011,pall,anweal,29361.0063
+India,IN,2011,pall,wnweal,4.9932
+India,IN,2012,p0p100,spllin,0.1577
+India,IN,2012,p0p50,sptinc,0.1506
+India,IN,2012,p0p50,shweal,0.0639
+India,IN,2012,pall,anweal,31548.5523
+India,IN,2012,pall,wnweal,5.2348
+India,IN,2013,p0p100,spllin,0.15989999
+India,IN,2013,p0p50,sptinc,0.1498
+India,IN,2013,p0p50,shweal,0.0636
+India,IN,2013,pall,anweal,33309.8374
+India,IN,2013,pall,wnweal,5.3682
+India,IN,2014,p0p100,spllin,0.16249999
+India,IN,2014,p0p50,sptinc,0.1469
+India,IN,2014,p0p50,shweal,0.0642
+India,IN,2014,pall,anweal,35283.0029
+India,IN,2014,pall,wnweal,5.4725
+India,IN,2015,p0p100,spllin,0.1654
+India,IN,2015,p0p50,sptinc,0.1452
+India,IN,2015,p0p50,shweal,0.0616
+India,IN,2015,pall,anweal,37868.6924
+India,IN,2015,pall,wnweal,5.5243
+India,IN,2016,p0p100,spllin,0.16859999
+India,IN,2016,p0p50,sptinc,0.1407
+India,IN,2016,p0p50,shweal,0.0622
+India,IN,2016,pall,anweal,40049.444
+India,IN,2016,pall,wnweal,5.496700000000001
+India,IN,2017,p0p100,spllin,0.17200001
+India,IN,2017,p0p50,sptinc,0.139
+India,IN,2017,p0p50,shweal,0.0613
+India,IN,2017,pall,anweal,41823.6743
+India,IN,2017,pall,wnweal,5.4808
+India,IN,2018,p0p100,spllin,0.1754
+India,IN,2018,p0p50,sptinc,0.1442
+India,IN,2018,p0p50,shweal,0.0671
+India,IN,2018,pall,anweal,43496.1078
+India,IN,2018,pall,wnweal,5.4222
+India,IN,2019,p0p100,spllin,0.17990001
+India,IN,2019,p0p50,sptinc,0.147
+India,IN,2019,p0p50,shweal,0.068
+India,IN,2019,pall,anweal,44629.3522
+India,IN,2019,pall,wnweal,5.4503
+India,IN,2020,p0p100,spllin,0.1848
+India,IN,2020,p0p50,sptinc,0.1554
+India,IN,2020,p0p50,shweal,0.0694
+India,IN,2020,pall,anweal,43243.9156
+India,IN,2020,pall,wnweal,5.6726
+India,IN,2021,p0p100,spllin,0.19419999
+India,IN,2021,p0p50,sptinc,0.1544
+India,IN,2021,p0p50,shweal,0.0654
+India,IN,2021,pall,anweal,39891.6723
+India,IN,2021,pall,wnweal,5.0273
+India,IN,2022,p0p100,spllin,0.19939999
+India,IN,2022,p0p50,sptinc,0.1502
+India,IN,2022,p0p50,shweal,0.0642
+India,IN,2022,pall,anweal,42068.2106
+India,IN,2022,pall,wnweal,5.0204
+India,IN,2023,p0p100,spllin,0.19239999
+India,IN,2023,p0p50,sptinc,0.1502
+India,IN,2023,p0p50,shweal,0.0642
+India,IN,2023,pall,anweal,44545.3802
+India,IN,2023,pall,wnweal,5.0099
+India,IN,2024,p0p100,spllin,0.19939999
+India,IN,2024,p0p50,sptinc,0.1502
+India,IN,2024,p0p50,shweal,0.0642
+India,IN,2024,pall,anweal,46819.4242
+India,IN,2024,pall,wnweal,5.0099
+Nepal,NP,2000,p0p100,spllin,0.1517
+Nepal,NP,2000,p0p50,sptinc,0.1745
+Nepal,NP,2000,p0p50,shweal,0.0463
+Nepal,NP,2000,pall,anweal,11863.6434
+Nepal,NP,2000,pall,wnweal,3.6961
+Nepal,NP,2001,p0p100,spllin,0.154
+Nepal,NP,2001,p0p50,sptinc,0.1759
+Nepal,NP,2001,p0p50,shweal,0.0464
+Nepal,NP,2001,pall,anweal,12190.4378
+Nepal,NP,2001,pall,wnweal,3.7581
+Nepal,NP,2002,p0p100,spllin,0.1564
+Nepal,NP,2002,p0p50,sptinc,0.1751
+Nepal,NP,2002,p0p50,shweal,0.0465
+Nepal,NP,2002,pall,anweal,12433.458
+Nepal,NP,2002,pall,wnweal,3.8087
+Nepal,NP,2003,p0p100,spllin,0.15899999
+Nepal,NP,2003,p0p50,sptinc,0.1732
+Nepal,NP,2003,p0p50,shweal,0.0465
+Nepal,NP,2003,pall,anweal,13448.6904
+Nepal,NP,2003,pall,wnweal,3.9845
+Nepal,NP,2004,p0p100,spllin,0.1618
+Nepal,NP,2004,p0p50,sptinc,0.1744
+Nepal,NP,2004,p0p50,shweal,0.0467
+Nepal,NP,2004,pall,anweal,14039.5095
+Nepal,NP,2004,pall,wnweal,4.0229
+Nepal,NP,2005,p0p100,spllin,0.16509999
+Nepal,NP,2005,p0p50,sptinc,0.1747
+Nepal,NP,2005,p0p50,shweal,0.0468
+Nepal,NP,2005,pall,anweal,15265.4219
+Nepal,NP,2005,pall,wnweal,4.222
+Nepal,NP,2006,p0p100,spllin,0.1689
+Nepal,NP,2006,p0p50,sptinc,0.1741
+Nepal,NP,2006,p0p50,shweal,0.0468
+Nepal,NP,2006,pall,anweal,16138.318
+Nepal,NP,2006,pall,wnweal,4.328
+Nepal,NP,2007,p0p100,spllin,0.17309999
+Nepal,NP,2007,p0p50,sptinc,0.1728
+Nepal,NP,2007,p0p50,shweal,0.0468
+Nepal,NP,2007,pall,anweal,17393.6404
+Nepal,NP,2007,pall,wnweal,4.4493
+Nepal,NP,2008,p0p100,spllin,0.1778
+Nepal,NP,2008,p0p50,sptinc,0.1782
+Nepal,NP,2008,p0p50,shweal,0.0473
+Nepal,NP,2008,pall,anweal,18034.8055
+Nepal,NP,2008,pall,wnweal,4.3968
+Nepal,NP,2009,p0p100,spllin,0.1822
+Nepal,NP,2009,p0p50,sptinc,0.1799
+Nepal,NP,2009,p0p50,shweal,0.0474
+Nepal,NP,2009,pall,anweal,19037.3178
+Nepal,NP,2009,pall,wnweal,4.4579
+Nepal,NP,2010,p0p100,spllin,0.1865
+Nepal,NP,2010,p0p50,sptinc,0.1768
+Nepal,NP,2010,p0p50,shweal,0.0473
+Nepal,NP,2010,pall,anweal,19256.8709
+Nepal,NP,2010,pall,wnweal,4.380500000000001
+Nepal,NP,2011,p0p100,spllin,0.1909
+Nepal,NP,2011,p0p50,sptinc,0.1793
+Nepal,NP,2011,p0p50,shweal,0.0474
+Nepal,NP,2011,pall,anweal,19685.0727
+Nepal,NP,2011,pall,wnweal,4.3243
+Nepal,NP,2012,p0p100,spllin,0.1953
+Nepal,NP,2012,p0p50,sptinc,0.1798
+Nepal,NP,2012,p0p50,shweal,0.0475
+Nepal,NP,2012,pall,anweal,19911.6467
+Nepal,NP,2012,pall,wnweal,4.2454
+Nepal,NP,2013,p0p100,spllin,0.1997
+Nepal,NP,2013,p0p50,sptinc,0.1806
+Nepal,NP,2013,p0p50,shweal,0.0469
+Nepal,NP,2013,pall,anweal,21480.0098
+Nepal,NP,2013,pall,wnweal,4.388
+Nepal,NP,2014,p0p100,spllin,0.2041
+Nepal,NP,2014,p0p50,sptinc,0.1823
+Nepal,NP,2014,p0p50,shweal,0.0469
+Nepal,NP,2014,pall,anweal,21954.515
+Nepal,NP,2014,pall,wnweal,4.3167
+Nepal,NP,2015,p0p100,spllin,0.2085
+Nepal,NP,2015,p0p50,sptinc,0.185
+Nepal,NP,2015,p0p50,shweal,0.047
+Nepal,NP,2015,pall,anweal,21949.3662
+Nepal,NP,2015,pall,wnweal,4.298900000000001
+Nepal,NP,2016,p0p100,spllin,0.2128
+Nepal,NP,2016,p0p50,sptinc,0.1854
+Nepal,NP,2016,p0p50,shweal,0.0471
+Nepal,NP,2016,pall,anweal,23830.4273
+Nepal,NP,2016,pall,wnweal,4.5549
+Nepal,NP,2017,p0p100,spllin,0.2172
+Nepal,NP,2017,p0p50,sptinc,0.1853
+Nepal,NP,2017,p0p50,shweal,0.0471
+Nepal,NP,2017,pall,anweal,25617.4405
+Nepal,NP,2017,pall,wnweal,4.5876
+Nepal,NP,2018,p0p100,spllin,0.2208
+Nepal,NP,2018,p0p50,sptinc,0.1853
+Nepal,NP,2018,p0p50,shweal,0.047
+Nepal,NP,2018,pall,anweal,26652.0713
+Nepal,NP,2018,pall,wnweal,4.5238
+Nepal,NP,2019,p0p100,spllin,0.2198
+Nepal,NP,2019,p0p50,sptinc,0.1853
+Nepal,NP,2019,p0p50,shweal,0.047
+Nepal,NP,2019,pall,anweal,26767.0511
+Nepal,NP,2019,pall,wnweal,4.581700000000001
+Nepal,NP,2020,p0p100,spllin,0.2207
+Nepal,NP,2020,p0p50,sptinc,0.1853
+Nepal,NP,2020,p0p50,shweal,0.0471
+Nepal,NP,2020,pall,anweal,27322.9124
+Nepal,NP,2020,pall,wnweal,4.8815
+Nepal,NP,2021,p0p100,spllin,0.2202
+Nepal,NP,2021,p0p50,sptinc,0.1853
+Nepal,NP,2021,p0p50,shweal,0.0472
+Nepal,NP,2021,pall,anweal,26778.7614
+Nepal,NP,2021,pall,wnweal,4.7392
+Nepal,NP,2022,p0p100,spllin,0.2207
+Nepal,NP,2022,p0p50,sptinc,0.1853
+Nepal,NP,2022,p0p50,shweal,0.0472
+Nepal,NP,2022,pall,anweal,27413.9051
+Nepal,NP,2022,pall,wnweal,4.9161
+Nepal,NP,2023,p0p100,spllin,0.2237
+Nepal,NP,2023,p0p50,sptinc,0.1853
+Nepal,NP,2023,p0p50,shweal,0.0471
+Nepal,NP,2023,pall,anweal,29096.8147
+Nepal,NP,2023,pall,wnweal,4.8847
+Nepal,NP,2024,p0p100,spllin,0.22679999
+Nepal,NP,2024,p0p50,sptinc,0.1853
+Nepal,NP,2024,p0p50,shweal,0.0472
+Nepal,NP,2024,pall,anweal,30061.8844
+Nepal,NP,2024,pall,wnweal,4.8847
+Pakistan,PK,2000,p0p100,spllin,0.047899999
+Pakistan,PK,2000,p0p50,sptinc,0.1827
+Pakistan,PK,2000,p0p50,shweal,0.0462
+Pakistan,PK,2000,pall,anweal,17184.6694
+Pakistan,PK,2000,pall,wnweal,3.3823
+Pakistan,PK,2001,p0p100,spllin,0.048300002
+Pakistan,PK,2001,p0p50,sptinc,0.1861
+Pakistan,PK,2001,p0p50,shweal,0.0466
+Pakistan,PK,2001,pall,anweal,16738.104
+Pakistan,PK,2001,pall,wnweal,3.3139
+Pakistan,PK,2002,p0p100,spllin,0.050299998
+Pakistan,PK,2002,p0p50,sptinc,0.1806
+Pakistan,PK,2002,p0p50,shweal,0.0463
+Pakistan,PK,2002,pall,anweal,16686.7962
+Pakistan,PK,2002,pall,wnweal,3.2727
+Pakistan,PK,2003,p0p100,spllin,0.056400001
+Pakistan,PK,2003,p0p50,sptinc,0.1745
+Pakistan,PK,2003,p0p50,shweal,0.046
+Pakistan,PK,2003,pall,anweal,17822.5768
+Pakistan,PK,2003,pall,wnweal,3.3676
+Pakistan,PK,2004,p0p100,spllin,0.052299999
+Pakistan,PK,2004,p0p50,sptinc,0.1718
+Pakistan,PK,2004,p0p50,shweal,0.0458
+Pakistan,PK,2004,pall,anweal,18914.6227
+Pakistan,PK,2004,pall,wnweal,3.4149
+Pakistan,PK,2005,p0p100,spllin,0.061500002
+Pakistan,PK,2005,p0p50,sptinc,0.1687
+Pakistan,PK,2005,p0p50,shweal,0.0444
+Pakistan,PK,2005,pall,anweal,19450.09
+Pakistan,PK,2005,pall,wnweal,3.38
+Pakistan,PK,2006,p0p100,spllin,0.0594
+Pakistan,PK,2006,p0p50,sptinc,0.1748
+Pakistan,PK,2006,p0p50,shweal,0.0457
+Pakistan,PK,2006,pall,anweal,20896.4805
+Pakistan,PK,2006,pall,wnweal,3.5611
+Pakistan,PK,2007,p0p100,spllin,0.0535
+Pakistan,PK,2007,p0p50,sptinc,0.1803
+Pakistan,PK,2007,p0p50,shweal,0.0464
+Pakistan,PK,2007,pall,anweal,21376.6895
+Pakistan,PK,2007,pall,wnweal,3.609
+Pakistan,PK,2008,p0p100,spllin,0.060800001
+Pakistan,PK,2008,p0p50,sptinc,0.1878
+Pakistan,PK,2008,p0p50,shweal,0.0469
+Pakistan,PK,2008,pall,anweal,22279.6754
+Pakistan,PK,2008,pall,wnweal,3.7594
+Pakistan,PK,2009,p0p100,spllin,0.055
+Pakistan,PK,2009,p0p50,sptinc,0.1914
+Pakistan,PK,2009,p0p50,shweal,0.0472
+Pakistan,PK,2009,pall,anweal,22201.594
+Pakistan,PK,2009,pall,wnweal,3.6833
+Pakistan,PK,2010,p0p100,spllin,0.061099999
+Pakistan,PK,2010,p0p50,sptinc,0.1897
+Pakistan,PK,2010,p0p50,shweal,0.0472
+Pakistan,PK,2010,pall,anweal,22213.3839
+Pakistan,PK,2010,pall,wnweal,3.6494
+Pakistan,PK,2011,p0p100,spllin,0.057500001
+Pakistan,PK,2011,p0p50,sptinc,0.1916
+Pakistan,PK,2011,p0p50,shweal,0.0469
+Pakistan,PK,2011,pall,anweal,22274.5557
+Pakistan,PK,2011,pall,wnweal,3.5657
+Pakistan,PK,2012,p0p100,spllin,0.0616
+Pakistan,PK,2012,p0p50,sptinc,0.1927
+Pakistan,PK,2012,p0p50,shweal,0.0472
+Pakistan,PK,2012,pall,anweal,22813.3027
+Pakistan,PK,2012,pall,wnweal,3.5557
+Pakistan,PK,2013,p0p100,spllin,0.066
+Pakistan,PK,2013,p0p50,sptinc,0.1942
+Pakistan,PK,2013,p0p50,shweal,0.0475
+Pakistan,PK,2013,pall,anweal,24206.9912
+Pakistan,PK,2013,pall,wnweal,3.6353
+Pakistan,PK,2014,p0p100,spllin,0.065700002
+Pakistan,PK,2014,p0p50,sptinc,0.191
+Pakistan,PK,2014,p0p50,shweal,0.0469
+Pakistan,PK,2014,pall,anweal,24262.4603
+Pakistan,PK,2014,pall,wnweal,3.4933
+Pakistan,PK,2015,p0p100,spllin,0.064300001
+Pakistan,PK,2015,p0p50,sptinc,0.1891
+Pakistan,PK,2015,p0p50,shweal,0.0465
+Pakistan,PK,2015,pall,anweal,25548.2239
+Pakistan,PK,2015,pall,wnweal,3.5215
+Pakistan,PK,2016,p0p100,spllin,0.073100001
+Pakistan,PK,2016,p0p50,sptinc,0.1912
+Pakistan,PK,2016,p0p50,shweal,0.0468
+Pakistan,PK,2016,pall,anweal,26330.4761
+Pakistan,PK,2016,pall,wnweal,3.4916
+Pakistan,PK,2017,p0p100,spllin,0.070900001
+Pakistan,PK,2017,p0p50,sptinc,0.1926
+Pakistan,PK,2017,p0p50,shweal,0.047
+Pakistan,PK,2017,pall,anweal,28650.8049
+Pakistan,PK,2017,pall,wnweal,3.6647
+Pakistan,PK,2018,p0p100,spllin,0.068700001
+Pakistan,PK,2018,p0p50,sptinc,0.1941
+Pakistan,PK,2018,p0p50,shweal,0.0472
+Pakistan,PK,2018,pall,anweal,29978.8122
+Pakistan,PK,2018,pall,wnweal,3.7632
+Pakistan,PK,2019,p0p100,spllin,0.074500002
+Pakistan,PK,2019,p0p50,sptinc,0.1941
+Pakistan,PK,2019,p0p50,shweal,0.0472
+Pakistan,PK,2019,pall,anweal,27274.4648
+Pakistan,PK,2019,pall,wnweal,3.4797
+Pakistan,PK,2020,p0p100,spllin,0.079000004
+Pakistan,PK,2020,p0p50,sptinc,0.1941
+Pakistan,PK,2020,p0p50,shweal,0.0472
+Pakistan,PK,2020,pall,anweal,30085.9775
+Pakistan,PK,2020,pall,wnweal,3.8463
+Pakistan,PK,2021,p0p100,spllin,0.0836
+Pakistan,PK,2021,p0p50,sptinc,0.1941
+Pakistan,PK,2021,p0p50,shweal,0.0472
+Pakistan,PK,2021,pall,anweal,31590.236
+Pakistan,PK,2021,pall,wnweal,3.8996
+Pakistan,PK,2022,p0p100,spllin,0.0858
+Pakistan,PK,2022,p0p50,sptinc,0.1941
+Pakistan,PK,2022,p0p50,shweal,0.0472
+Pakistan,PK,2022,pall,anweal,33628.5939
+Pakistan,PK,2022,pall,wnweal,4.083600000000001
+Pakistan,PK,2023,p0p100,spllin,0.086999997
+Pakistan,PK,2023,p0p50,sptinc,0.1941
+Pakistan,PK,2023,p0p50,shweal,0.0472
+Pakistan,PK,2023,pall,anweal,31098.9583
+Pakistan,PK,2023,pall,wnweal,3.9157
+Pakistan,PK,2024,p0p100,spllin,0.087499999
+Pakistan,PK,2024,p0p50,sptinc,0.1941
+Pakistan,PK,2024,p0p50,shweal,0.0472
+Pakistan,PK,2024,pall,anweal,31056.9063
+Pakistan,PK,2024,pall,wnweal,3.9157
+Sri Lanka,LK,2000,p0p100,spllin,0.2133
+Sri Lanka,LK,2000,p0p50,sptinc,0.1469
+Sri Lanka,LK,2000,p0p50,shweal,0.0415
+Sri Lanka,LK,2000,pall,anweal,24934.7134
+Sri Lanka,LK,2000,pall,wnweal,3.5499
+Sri Lanka,LK,2001,p0p100,spllin,0.2182
+Sri Lanka,LK,2001,p0p50,sptinc,0.1436
+Sri Lanka,LK,2001,p0p50,shweal,0.04
+Sri Lanka,LK,2001,pall,anweal,22961.1522
+Sri Lanka,LK,2001,pall,wnweal,3.6162
+Sri Lanka,LK,2002,p0p100,spllin,0.214
+Sri Lanka,LK,2002,p0p50,sptinc,0.139
+Sri Lanka,LK,2002,p0p50,shweal,0.0393
+Sri Lanka,LK,2002,pall,anweal,24060.2301
+Sri Lanka,LK,2002,pall,wnweal,3.5749
+Sri Lanka,LK,2003,p0p100,spllin,0.21359999
+Sri Lanka,LK,2003,p0p50,sptinc,0.1395
+Sri Lanka,LK,2003,p0p50,shweal,0.0396
+Sri Lanka,LK,2003,pall,anweal,27472.8369
+Sri Lanka,LK,2003,pall,wnweal,3.7449
+Sri Lanka,LK,2004,p0p100,spllin,0.21340001
+Sri Lanka,LK,2004,p0p50,sptinc,0.142
+Sri Lanka,LK,2004,p0p50,shweal,0.0399
+Sri Lanka,LK,2004,pall,anweal,23246.7408
+Sri Lanka,LK,2004,pall,wnweal,3.055
+Sri Lanka,LK,2005,p0p100,spllin,0.2103
+Sri Lanka,LK,2005,p0p50,sptinc,0.1437
+Sri Lanka,LK,2005,p0p50,shweal,0.0402
+Sri Lanka,LK,2005,pall,anweal,31384.2641
+Sri Lanka,LK,2005,pall,wnweal,3.9413
+Sri Lanka,LK,2006,p0p100,spllin,0.2124
+Sri Lanka,LK,2006,p0p50,sptinc,0.1445
+Sri Lanka,LK,2006,p0p50,shweal,0.0405
+Sri Lanka,LK,2006,pall,anweal,35451.8089
+Sri Lanka,LK,2006,pall,wnweal,4.1544
+Sri Lanka,LK,2007,p0p100,spllin,0.21259999
+Sri Lanka,LK,2007,p0p50,sptinc,0.1488
+Sri Lanka,LK,2007,p0p50,shweal,0.0427
+Sri Lanka,LK,2007,pall,anweal,38320.081
+Sri Lanka,LK,2007,pall,wnweal,4.2133
+Sri Lanka,LK,2008,p0p100,spllin,0.2131
+Sri Lanka,LK,2008,p0p50,sptinc,0.1581
+Sri Lanka,LK,2008,p0p50,shweal,0.044
+Sri Lanka,LK,2008,pall,anweal,41699.6415
+Sri Lanka,LK,2008,pall,wnweal,4.4424
+Sri Lanka,LK,2009,p0p100,spllin,0.21080001
+Sri Lanka,LK,2009,p0p50,sptinc,0.1641
+Sri Lanka,LK,2009,p0p50,shweal,0.0449
+Sri Lanka,LK,2009,pall,anweal,37284.6427
+Sri Lanka,LK,2009,pall,wnweal,3.7711
+Sri Lanka,LK,2010,p0p100,spllin,0.2124
+Sri Lanka,LK,2010,p0p50,sptinc,0.1572
+Sri Lanka,LK,2010,p0p50,shweal,0.0439
+Sri Lanka,LK,2010,pall,anweal,46208.7007
+Sri Lanka,LK,2010,pall,wnweal,4.387300000000001
+Sri Lanka,LK,2011,p0p100,spllin,0.2085
+Sri Lanka,LK,2011,p0p50,sptinc,0.1566
+Sri Lanka,LK,2011,p0p50,shweal,0.0434
+Sri Lanka,LK,2011,pall,anweal,50476.5732
+Sri Lanka,LK,2011,pall,wnweal,4.444100000000001
+Sri Lanka,LK,2012,p0p100,spllin,0.2289
+Sri Lanka,LK,2012,p0p50,sptinc,0.1547
+Sri Lanka,LK,2012,p0p50,shweal,0.0428
+Sri Lanka,LK,2012,pall,anweal,54956.0161
+Sri Lanka,LK,2012,pall,wnweal,4.5521
+Sri Lanka,LK,2013,p0p100,spllin,0.2492
+Sri Lanka,LK,2013,p0p50,sptinc,0.1547
+Sri Lanka,LK,2013,p0p50,shweal,0.0426
+Sri Lanka,LK,2013,pall,anweal,57432.5129
+Sri Lanka,LK,2013,pall,wnweal,4.674300000000001
+Sri Lanka,LK,2014,p0p100,spllin,0.2511
+Sri Lanka,LK,2014,p0p50,sptinc,0.1554
+Sri Lanka,LK,2014,p0p50,shweal,0.0426
+Sri Lanka,LK,2014,pall,anweal,60639.3371
+Sri Lanka,LK,2014,pall,wnweal,4.7207
+Sri Lanka,LK,2015,p0p100,spllin,0.25729999
+Sri Lanka,LK,2015,p0p50,sptinc,0.157
+Sri Lanka,LK,2015,p0p50,shweal,0.0426
+Sri Lanka,LK,2015,pall,anweal,67209.7972
+Sri Lanka,LK,2015,pall,wnweal,5.0128
+Sri Lanka,LK,2016,p0p100,spllin,0.24429999
+Sri Lanka,LK,2016,p0p50,sptinc,0.1568
+Sri Lanka,LK,2016,p0p50,shweal,0.0425
+Sri Lanka,LK,2016,pall,anweal,72657.4291
+Sri Lanka,LK,2016,pall,wnweal,5.2538
+Sri Lanka,LK,2017,p0p100,spllin,0.2527
+Sri Lanka,LK,2017,p0p50,sptinc,0.1567
+Sri Lanka,LK,2017,p0p50,shweal,0.0425
+Sri Lanka,LK,2017,pall,anweal,77512.6824
+Sri Lanka,LK,2017,pall,wnweal,5.303900000000001
+Sri Lanka,LK,2018,p0p100,spllin,0.2423
+Sri Lanka,LK,2018,p0p50,sptinc,0.1567
+Sri Lanka,LK,2018,p0p50,shweal,0.0424
+Sri Lanka,LK,2018,pall,anweal,79190.236
+Sri Lanka,LK,2018,pall,wnweal,5.3693
+Sri Lanka,LK,2019,p0p100,spllin,0.2694
+Sri Lanka,LK,2019,p0p50,sptinc,0.1567
+Sri Lanka,LK,2019,p0p50,shweal,0.0425
+Sri Lanka,LK,2019,pall,anweal,76624.0802
+Sri Lanka,LK,2019,pall,wnweal,5.276400000000001
+Sri Lanka,LK,2020,p0p100,spllin,0.27219999
+Sri Lanka,LK,2020,p0p50,sptinc,0.1567
+Sri Lanka,LK,2020,p0p50,shweal,0.0425
+Sri Lanka,LK,2020,pall,anweal,75011.821
+Sri Lanka,LK,2020,pall,wnweal,5.492
+Sri Lanka,LK,2021,p0p100,spllin,0.28490001
+Sri Lanka,LK,2021,p0p50,sptinc,0.1567
+Sri Lanka,LK,2021,p0p50,shweal,0.0425
+Sri Lanka,LK,2021,pall,anweal,76130.6066
+Sri Lanka,LK,2021,pall,wnweal,5.4236
+Sri Lanka,LK,2022,p0p100,spllin,0.30160001
+Sri Lanka,LK,2022,p0p50,sptinc,0.1567
+Sri Lanka,LK,2022,p0p50,shweal,0.0425
+Sri Lanka,LK,2022,pall,anweal,64181.8558
+Sri Lanka,LK,2022,pall,wnweal,5.0831
+Sri Lanka,LK,2023,p0p100,spllin,0.2951
+Sri Lanka,LK,2023,p0p50,sptinc,0.1567
+Sri Lanka,LK,2023,p0p50,shweal,0.0425
+Sri Lanka,LK,2023,pall,anweal,66029.2357
+Sri Lanka,LK,2023,pall,wnweal,5.2093
+Sri Lanka,LK,2024,p0p100,spllin,0.2999
+Sri Lanka,LK,2024,p0p50,sptinc,0.1567
+Sri Lanka,LK,2024,p0p50,shweal,0.0425
+Sri Lanka,LK,2024,pall,anweal,71803.4169
+Sri Lanka,LK,2024,pall,wnweal,5.2093
