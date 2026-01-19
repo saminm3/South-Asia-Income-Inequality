@@ -103,8 +103,6 @@ div[data-testid="stDataFrame"] {
 }
 
 /* ---- Styled expander (excluded years) ---- */
-
-/* Expander container */
 div[data-testid="stExpander"] {
     border-radius: 16px;
     border: 1px solid rgba(139, 92, 246, 0.45);
@@ -115,30 +113,19 @@ div[data-testid="stExpander"] {
     );
     margin-top: 10px;
 }
-
-/* Expander header */
 div[data-testid="stExpander"] summary {
     font-weight: 600;
     color: #e5e7eb;
     padding: 12px 16px;
 }
-
-/* Expander arrow */
 div[data-testid="stExpander"] summary svg {
     color: #a78bfa !important;
 }
-
-/* Expander content */
 div[data-testid="stExpander"] div[role="region"] {
     padding: 10px 18px 16px 18px;
     color: #e5e7eb;
 }
-
-/* Year list emphasis */
-div[data-testid="stExpander"] strong {
-    color: #ffffff;
-}
-
+div[data-testid="stExpander"] strong { color: #ffffff; }
 
 /* Table header */
 div[data-testid="stDataFrame"] thead tr th {
@@ -158,6 +145,14 @@ div[data-testid="stDataFrame"] tbody tr td {
 /* Hover effect */
 div[data-testid="stDataFrame"] tbody tr:hover td {
     background-color: rgba(139, 92, 246, 0.15) !important;
+}
+
+/* Plotly chart container */
+div[data-testid="stPlotlyChart"] {
+    border-radius: 18px;
+    border: 1px solid rgba(139, 92, 246, 0.22);
+    background: linear-gradient(180deg, rgba(88, 28, 135, 0.08), rgba(17, 24, 39, 0.14));
+    padding: 10px 12px;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -271,16 +266,13 @@ wide = df.pivot_table(
 
 plot_df = wide[["country", "year", x_indicator, y_indicator]].dropna()
 
-# Countries present for the chosen X/Y (after dropna)
 coverage = plot_df.groupby("country").size()
 countries_present = list(coverage.index)
 
-# Determine which Home-selected countries got excluded (no overlap)
 excluded_countries = []
 if home_countries:
     excluded_countries = sorted(list(set(home_countries) - set(countries_present)))
 
-# Show exclusion message as a purple themed box (single box only)
 if excluded_countries:
     excluded_list = ", ".join(sorted(excluded_countries))
     st.markdown(
@@ -322,7 +314,7 @@ direction = "Positive" if r > 0 else "Negative"
 left, right = st.columns([2.2, 1])
 
 with left:
-    st.subheader("Scatter view (animated by year)")
+    st.subheader("Scatter view (year-wise observations)")
 
     if home_year_range:
         st.caption(
@@ -335,9 +327,7 @@ with left:
 
         with st.expander("View excluded years (due to missing data)"):
             if excluded_years:
-                st.write(
-                    "The following years are excluded because one or both indicators are missing:"
-                )
+                st.write("The following years are excluded because one or both indicators are missing:")
                 st.write(", ".join(map(str, excluded_years)))
             else:
                 st.write("No years are excluded within the selected range.")
