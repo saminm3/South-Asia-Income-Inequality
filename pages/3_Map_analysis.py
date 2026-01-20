@@ -76,7 +76,6 @@ with st.sidebar:
     st.subheader("🎛️ Map Settings")
 
     show_animation = st.checkbox("Enable Animation", value=True, help="Play through years automatically")
-
     animation_speed = st.slider(
         "Animation Speed (ms)",
         min_value=200,
@@ -85,7 +84,6 @@ with st.sidebar:
         step=100,
         help="Lower = faster animation"
     )
-
     color_scale = st.selectbox(
         "Color Scheme",
         options=['Reds', 'Blues', 'Viridis', 'Plasma', 'Greens', 'YlOrRd', 'RdYlGn_r'],
