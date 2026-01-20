@@ -160,7 +160,7 @@ div[data-testid="stPlotlyChart"] {
 # ----------------------------
 # Page header
 # ----------------------------
-st.title("Inequality Drivers — Visual Correlation Explorer")
+st.title("Correlation Explorer")
 st.caption(
     "Explore how inequality indicators relate to potential drivers across countries. "
     "Patterns are observational and do not imply causation."
@@ -542,4 +542,4 @@ with st.expander("Why some countries are not shown"):
         """
     )
 
-st.caption("Inequality Drivers — Correlation Explorer | South Asia Inequality Analysis Platform")
+st.caption(" Correlation Explorer | South Asia Inequality Analysis Platform")
