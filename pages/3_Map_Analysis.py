@@ -335,8 +335,8 @@ fig.update_layout(
     ),
 
     # Overall layout dimensions
-    height=900,
-    margin={'r': 150, 't': 80, 'l': 50, 'b': 50},
+    height=800,
+    margin={'r': 120, 't': 70, 'l': 30, 'b': 30},
     font=dict(family='Arial, sans-serif')
 )
 
@@ -383,6 +383,7 @@ if highlight_countries:
 fig.update_geos(
     fitbounds='locations',
     visible=False,
+    projection_scale=2,
     projection_type=projection,
     showcountries=True,
     countrycolor='#bdc3c7',
@@ -470,6 +471,7 @@ else:
 
 # # Display the map
 st.plotly_chart(fig, use_container_width=True, theme=None)
+# st.plotly_chart(fig, width='stretch', config={'displayModeBar': True})
 
 def create_tiny_country_map(iso_code, geojson):
     feature = next(
@@ -503,7 +505,6 @@ def create_tiny_country_map(iso_code, geojson):
     )
 
     return fig
-
 st.markdown(
     "<h4 style='margin-top:8px; margin-bottom:6px;'>Country Key</h4>",
     unsafe_allow_html=True
@@ -541,7 +542,9 @@ for row in rows:
                 st.plotly_chart(
                     mini_fig,
                     use_container_width=True,
+                    #width='stretch',
                     config={"displayModeBar": False}
+                    #config={'displayModeBar': False, 'staticPlot': True} 
                 )
                 # Add country name below the map
                 st.markdown(
@@ -723,7 +726,7 @@ if selected_country_spotlight != '-- Select a country --':
                 yaxis=dict(showgrid=True, gridcolor='rgba(0,0,0,0.1)')
             )
 
-            st.plotly_chart(sparkline_fig, use_container_width=True, key="country_sparkline_chart")
+            st.plotly_chart(sparkline_fig, use_container_width=True , config={'displayModeBar': False}, key="country_sparkline_chart")  #use_container_width=True
 
         # Quick comparison to regional average
         st.markdown("**Quick Comparison:**")
@@ -880,7 +883,7 @@ if show_rankings:
             rankings_df['Status'] = rankings_df['Difference from Avg'].apply(
                 lambda x: 'Above avg' if x>5 else 'Below avg' if x<-5 else 'Near avg'
             )
-            st.dataframe(rankings_df, use_container_width=True, hide_index=True)
+            st.dataframe(rankings_df, use_container_width=True, hide_index=True) # use_container_width=True
 # --------------------------------------------------
 # Export Section - Add this at the end of your code
 # --------------------------------------------------
@@ -968,7 +971,7 @@ try:
         
         # Display preview
         with st.expander("Preview data", expanded=False):
-            st.dataframe(export_df.head(10), use_container_width=True)
+            st.dataframe(export_df.head(10), use_container_width=True) #use_container_width=True
             st.caption(f"Showing first 10 of {len(export_df)} rows")
         
         # Export based on format
@@ -979,6 +982,7 @@ try:
                 data=csv_data,
                 file_name=f"{filename_base}.csv",
                 mime="text/csv",
+                #width='stretch',
                 use_container_width=True
             )
             
@@ -1050,6 +1054,7 @@ try:
                 data=output,
                 file_name=f"{filename_base}.xlsx",
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                #width='stretch',
                 use_container_width=True
             )
             st.caption("Contains multiple sheets: Data, Summary, Metadata, and Country Info")
@@ -1061,6 +1066,7 @@ try:
                 data=json_data,
                 file_name=f"{filename_base}.json",
                 mime="application/json",
+                #width='stretch',
                 use_container_width=True
             )
             
@@ -1071,6 +1077,7 @@ try:
                 data=tsv_data,
                 file_name=f"{filename_base}.tsv",
                 mime="text/tab-separated-values",
+                #width='stretch',
                 use_container_width=True
             )
     
@@ -1124,6 +1131,7 @@ try:
                     data=html_bytes,
                     file_name=f"{viz_filename}.html",
                     mime="text/html",
+                    #width='stretch',
                     use_container_width=True
                 )
                 st.success("HTML export ready - includes full animation and interactivity")
@@ -1138,6 +1146,7 @@ try:
                     data=img_bytes_svg,
                     file_name=f"{viz_filename}.svg",
                     mime="image/svg+xml",
+                    #width='stretch'
                     use_container_width=True
                 )
                 st.success("SVG export ready - editable in vector software")
@@ -1153,6 +1162,7 @@ try:
                     data=pdf_bytes,
                     file_name=f"{viz_filename}.pdf",
                     mime="application/pdf",
+                    #width='stretch',
                     use_container_width=True
                 )
                 st.success("PDF export ready - ideal for reports")
@@ -1168,6 +1178,7 @@ try:
                     data=img_bytes_png,
                     file_name=f"{viz_filename}.png",
                     mime="image/png",
+                    #width='stretch',
                     use_container_width=True
                 )
                 st.success(f"PNG export ready - {width}x{height}px")
@@ -1183,6 +1194,7 @@ try:
                     data=img_bytes_jpg,
                     file_name=f"{viz_filename}.jpg",
                     mime="image/jpeg",
+                    #width='stretch',
                     use_container_width=True
                 )
                 st.success(f"JPEG export ready - {width}x{height}px")
@@ -1202,7 +1214,7 @@ try:
                 default=["PNG", "CSV Data"]
             )
             
-            if st.button("Generate Bulk Export Package", use_container_width=True):
+            if st.button("Generate Bulk Export Package", use_container_width=True): #use_container_width=True
                 with st.spinner("Generating export package..."):
                     try:
                         # Create ZIP file with multiple exports
@@ -1241,6 +1253,7 @@ try:
                             data=zip_buffer,
                             file_name=f"Export_Package_{config['indicator']}_{selected_year}.zip",
                             mime="application/zip",
+                            #width='stretch',
                             use_container_width=True
                         )
                         st.success("Export package ready for download!")
