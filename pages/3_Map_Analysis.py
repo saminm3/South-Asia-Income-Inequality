@@ -52,10 +52,10 @@ st.markdown(f"**Geographic visualization of {human_indicator(config['indicator']
 
 config = st.session_state.get("analysis_config")
 
-if config is None:
-    st.error("❌ Analysis configuration missing.")
-    st.info("Please configure the analysis on the Home page first.")
-    st.stop()
+# if config is None:
+#     st.error("❌ Analysis configuration missing.")
+#     st.info("Please configure the analysis on the Home page first.")
+#     st.stop()
 
 # ---------------------------
 # Fixed visualization settings
@@ -140,7 +140,9 @@ filtered_df['country_code'] = filtered_df['country'].apply(get_iso_code)
 # Derived metrics
 # --------------------------------------------------
 filtered_df['regional_avg'] = filtered_df.groupby('year')['value'].transform('mean')
-filtered_df['rank'] = filtered_df.groupby('year')['value'].rank(ascending=False, method='min').astype(int)
+#filtered_df['rank'] = filtered_df.groupby('year')['value'].rank(ascending=False, method='min').astype(int)
+filtered_df['rank'] = filtered_df.groupby('year')['value'].rank(ascending=True, method='min').astype(int)
+
 filtered_df = filtered_df.sort_values(['country','year'])
 filtered_df['change_from_prev'] = filtered_df.groupby('country')['value'].diff()
 
@@ -341,19 +343,19 @@ fig.update_layout(
 )
 
 # Grey out countries without data
-for feature in geojson['features']:
-    iso = feature['properties']['ISO_A3']
-    if iso not in filtered_df['country_code'].values:
-        fig.add_trace(go.Choropleth(
-            geojson={'type':'FeatureCollection','features':[feature]},
-            locations=[iso],
-            featureidkey='properties.ISO_A3',
-            z=[0],
-            colorscale=[[0,"rgba(200,200,200,0.3)"],[1,"rgba(200,200,200,0.3)"]],
-            showscale=False,
-            hoverinfo='skip',
-            geo='geo'
-        ))
+# for feature in geojson['features']:
+#     iso = feature['properties']['ISO_A3']
+#     if iso not in filtered_df['country_code'].values:
+#         fig.add_trace(go.Choropleth(
+#             geojson={'type':'FeatureCollection','features':[feature]},
+#             locations=[iso],
+#             featureidkey='properties.ISO_A3',
+#             z=[0],
+#             colorscale=[[0,"rgba(200,200,200,0.3)"],[1,"rgba(200,200,200,0.3)"]],
+#             showscale=False,
+#             hoverinfo='skip',
+#             geo='geo'
+#         ))
 
 marker_line_width = 5
 
@@ -383,7 +385,7 @@ if highlight_countries:
 fig.update_geos(
     fitbounds='locations',
     visible=False,
-    projection_scale=2,
+    #projection_scale=1.2,
     projection_type=projection,
     showcountries=True,
     countrycolor='#bdc3c7',
