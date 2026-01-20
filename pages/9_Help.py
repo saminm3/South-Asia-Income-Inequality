@@ -14,7 +14,7 @@ st.set_page_config(
     page_title="Help & Documentation | SA Inequality Analytics",
     page_icon="📖",
     layout="wide",
-    initial_sidebar_state="collapsed"
+    initial_sidebar_state="expanded"
 )
 
 apply_all_styles()
