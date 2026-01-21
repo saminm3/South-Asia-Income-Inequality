@@ -275,7 +275,7 @@ fig = px.choropleth(
         'gdp': 'GDP',
         'income_group': 'Income Group'
     },
-    title=f"{human_indicator(config['indicator'])} Across South Asia"
+    #title=f"{human_indicator(config['indicator'])} Across South Asia"
 )
 
 # --------------------------------------------------
@@ -292,13 +292,13 @@ tick_values = [value_min + (i * value_range / 6) for i in range(7)]
 
 fig.update_layout(
     # Title styling
-    title=dict(
-        text=f"<b>{human_indicator(config['indicator'])} Across South Asia</b>",
-        font=dict(size=24, color='#2c3e50', family='Arial Black'),
-        x=0.5,
-        y=0.95,
-        xanchor='center'
-    ),
+    # title=dict(
+    #     text=f"<b>{human_indicator(config['indicator'])} Across South Asia</b>",
+    #     font=dict(size=24, color='#2c3e50', family='Arial Black'),
+    #     x=0.5,
+    #     y=0.95,
+    #     xanchor='center'
+    # ),
 
     # Paper and plot background
     paper_bgcolor='#f8f9fa',
@@ -318,10 +318,13 @@ fig.update_layout(
             tickmode='array',
             tickvals=tick_values,
             ticktext=[f"{val:.1f}" for val in tick_values],
-            thickness=30,
-            len=0.8,
-            x=1.02,
+            thickness=22,
+            len=0.55,
+            x=0.98,
+            xanchor="right",
             xpad=15,
+            y=0.5,
+            yanchor="middle",
             outlinewidth=2,
             outlinecolor='#95a5a6',
             bgcolor='rgba(255,255,255,0.95)',
@@ -337,8 +340,8 @@ fig.update_layout(
     ),
 
     # Overall layout dimensions
-    height=800,
-    margin={'r': 120, 't': 70, 'l': 30, 'b': 30},
+    height= 850,
+    margin={'r': 10, 't': 10, 'l': 10, 'b': 10},
     font=dict(family='Arial, sans-serif')
 )
 
@@ -383,9 +386,9 @@ if highlight_countries:
                 ))
 
 fig.update_geos(
-    fitbounds='locations',
+    fitbounds=False,
     visible=False,
-    #projection_scale=1.2,
+    projection_scale= 3.5,
     projection_type=projection,
     showcountries=True,
     countrycolor='#bdc3c7',
@@ -396,7 +399,8 @@ fig.update_geos(
     oceancolor='#d6eaf8',
     showocean=True,
     showlakes=False,
-    bgcolor='#e8f4f8'
+    bgcolor='#e8f4f8',       
+    center=dict(lat=25, lon=85)
 )
 
 # --------------------------------------------------
@@ -432,44 +436,45 @@ if show_animation and fig.layout.updatemenus:
     fig.layout.updatemenus[0].buttons[0].args[1]['frame']['duration'] = animation_speed
     fig.layout.updatemenus[0].buttons[0].args[1]['transition']['duration'] = 300
 
-    # Style the animation buttons and sliders with visible text and better positioning
     fig.update_layout(
-        updatemenus=[dict(
-            type='buttons',
-            showactive=True,
-            bgcolor='#ecf0f1',
-            bordercolor='#95a5a6',
-            borderwidth=2,
-            font=dict(size=12, color='#2c3e50'),
-            x=0.18,  # Move buttons more to the left
-            y=0.05,  # Lower position
-            xanchor='left',
-            yanchor='bottom'
-        )],
-        sliders=[dict(
-            active=latest_year_index,  # Start at the latest year
-            yanchor='bottom',
-            y=0.01,  # Lower position to match buttons
-            xanchor='left',
-            x=0.25,  # Move slider to the right to avoid overlap
-            currentvalue=dict(
-                prefix='Year: ',
-                visible=True,
-                font=dict(size=16, color='#2c3e50', family='Arial Black'),
-                xanchor='left'
-            ),
-            pad=dict(b=10, t=50),
-            len=0.65,  # Slightly shorter to fit better
-            font=dict(size=12, color='#2c3e50'),
-            bgcolor='#ecf0f1',
-            bordercolor='#95a5a6',
-            borderwidth=2,
-            tickcolor='#34495e',
-            ticklen=8
-        )]
+        updatemenus=[
+            dict(
+                type="buttons",
+                showactive=True,
+                direction="left",
+                bgcolor= "#160323",
+                borderwidth=1,
+                font=dict(size=10),
+                pad=dict(r=2, t=2),
+                x=0.20,
+                y=0.12,
+                xanchor="left",
+                yanchor="top"
+            )
+        ],
+        sliders=[
+            dict(
+                active=latest_year_index,
+                y=0.07,
+                x=0.25,
+                xanchor="left",
+                yanchor="bottom",
+                len=0.55,
+                pad=dict(t=0, b=0),
+                currentvalue=dict(
+                    prefix="",
+                    visible=True,
+                    font=dict(size=11, color = "#160323")
+                ),
+                font=dict(size=10, color = "#160323"),
+                ticklen=5,
+                tickwidth=1
+            )
+        ]
     )
 else:
     fig.update_layout(updatemenus=[])
+
 
 # # Display the map
 st.plotly_chart(fig, use_container_width=True, theme=None)
@@ -501,7 +506,7 @@ def create_tiny_country_map(iso_code, geojson):
     )
 
     fig.update_layout(
-        height=65,
+        height=80,
         margin=dict(l=0, r=0, t=0, b=0),
         paper_bgcolor="rgba(0,0,0,0)"
     )
