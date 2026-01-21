@@ -40,6 +40,7 @@ Thumbs.db
 # Data (large files)
 data/raw/*.csv
 data/raw/*.xlsx
+data/cleaned/cleaned_wid_v2.csv
 *.zip
 *.tar.gz
 

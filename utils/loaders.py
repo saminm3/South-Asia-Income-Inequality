@@ -33,7 +33,7 @@ def load_inequality_data():
             df['country_code'] = df['country_code'].str.upper().str.strip()
         
         # Validate year range
-        if df['year'].min() < 1900 or df['year'].max() > 2030:
+        if df['year'].min() < 1800 or df['year'].max() > 2030:
             st.warning("⚠️ Unusual year values detected in data")
         
         return df
