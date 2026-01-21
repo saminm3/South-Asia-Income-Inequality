@@ -101,64 +101,90 @@ HELP_CONTENT = {
     },
     
     "map": {
-        "title": " Map Analysis - Geographic Visualization",
-        "overview": "Animated choropleth maps showing spatial patterns of inequality across South Asia. Watch how regions evolve over time with powerful animation controls.",
+        "title": "Map Analysis - Geographic Visualization",
+        "overview": "Animated choropleth maps showing spatial patterns of inequality across South Asia. Watch how indicators evolve over time with powerful animation controls and detailed country insights.",
         "features": [
             {
-                "name": "Animated Choropleth",
-                "description": "Color-coded maps that play through years automatically"
+            "name": "Animated Choropleth",
+            "description": "Color-coded maps that play through years."
             },
             {
-                "name": "Multiple Projections",
-                "description": "View maps in different geographical projections"
+                "name": "Interactive Country Spotlight",
+                "description": "Select any country to see detailed performance analysis, historical trends, and regional comparisons"
+            }, 
+            {
+                "name": "Dynamic Storytelling",
+                "description": "Year-specific narratives highlighting champions, challengers, and biggest changes"
             },
             {
-                "name": "Country Highlighting",
-                "description": "Add red borders to focus on specific countries"
+                "name": "Achievement Badges",
+                "description": "Visual indicators for best performers, most improved, and countries needing attention"
             },
             {
-                "name": "Color Schemes",
-                "description": "Choose from 7+ color palettes for optimal visualization"
+                "name": "Historical Trend Charts",
+                "description": "Sparkline visualizations comparing country performance against regional averages"
             },
             {
-                "name": "Dynamic Insights",
-                "description": "Year-specific statistics: highest, lowest, most improved"
+                "name": "Heat Intensity Indicators",
+                "description": "Color-coded severity levels (Low, Moderate, High, Critical) for quick assessment"
             },
             {
-                "name": "Rankings Table",
-                "description": "Tabular view with multiple years side-by-side"
-            }
+                "name": "Multi-Format Export",
+                "description": "Download maps as images (PNG, JPEG, SVG, PDF), data (CSV, Excel, JSON), or interactive HTML"
+            },
+            
+            {
+                "name": "Year-Over-Year Rankings",
+                "description": "Tabular view with multiple years side-by-side showing ranks, trends, and status"
+            }            
         ],
         "how_to_use": [
-            "Enable animation to see changes over time",
-            "Adjust animation speed with the slider (lower = faster)",
-            "Select countries to highlight with red borders",
-            "Choose different map projections for better viewing angles",
-            "Use the year slider below the map for detailed insights",
-            "Check the rankings table for precise comparisons"
+            "The map loads automatically with animation starting from the latest year",
+            "Use the Play/Pause button below the map to control animation",
+            "Drag the year slider to jump to specific years instantly",
+            "Hover over any country to see detailed metrics including value, rank, change, population, and GDP",
+            "Use the year slider above the storytelling section for detailed insights",
+            "Select a country from the Country Spotlight dropdown for in-depth analysis",
+            "View achievement badges to quickly identify top performers and areas of concern",
+            "Check the 'Biggest Changes' section to see most improved and most declined countries",
+            "Scroll to Rankings table to compare countries across multiple recent years",
+            "Select your preferred export format from the dropdown to download visualizations or data"
         ],
         "tips": [
-            "Animation speed 500-800ms works best for presentations",
-            "Hover over countries to see detailed statistics + metadata",
-            "Use 'Natural Earth' projection for familiar map view",
-            "Country highlighting helps when focusing on specific regions",
-            "Download map as PNG for high-quality report images"
+            "Darker colors on the map indicate higher values - what this means depends on your selected indicator",
+            "The animation automatically starts at the latest year, not the earliest",
+            "Country Spotlight shows a sparkline chart comparing the country against regional average over time",
+            "Heat intensity is context-aware: Green (Low 0-25%), Yellow (Moderate 25-50%), Orange (High 50-75%), Red (Critical 75-100%)",
+            "Achievement badges update dynamically for each year - check who's leading and who needs attention",
+            "Export as HTML to preserve full interactivity including animation and hover details",
+            "Use PNG/PDF for reports, SVG for scalable graphics, and CSV/Excel for data analysis",
+            "The storytelling section uses flags and visual cards to make data more engaging",
+            "Rankings table shows 'Status' (Above avg, Near avg, Below avg) for quick scanning",
         ],
         "common_issues": [
             {
-                "problem": "Map animation too fast/slow",
-                "solution": "Adjust the 'Animation Speed' slider in the sidebar. Lower values = faster animation."
+                "problem": "Countries appear in gray",
+                "solution": "Gray indicates no data available for that country in your selected indicator and year range. Check Data Quality page for coverage details."
             },
             {
-                "problem": "Countries appear gray",
-                "solution": "Gray means no data available for that country/year. Check Data Quality page."
+                "problem": "Country Spotlight shows 'No data available'",
+                "solution": "The selected country doesn't have data for the chosen year. Try a different year using the slider above the spotlight section."
             },
             {
-                "problem": "Can't see highlighted countries",
-                "solution": "Make sure countries are selected in the 'Highlight Countries' dropdown in sidebar."
-            }
+                "problem": "Rankings table is empty",
+                "solution": "No data exists for recent years. This happens with indicators that aren't frequently updated. Try expanding your year range."
+            },
+            {
+                "problem": "What does 'change from previous year' mean?",
+                "solution": "It's the absolute difference from the prior year. Positive = increased, Negative = decreased. Arrows show: ⬆️ increase, ⬇️ decrease, ➡️ stable."
+            },
+            {
+                "problem": "Regional average seems wrong",
+                "solution": "Regional average is calculated only from countries with data in that specific year. It excludes missing countries, which may affect the value."
+            },
         ]
     },
+
     
     "correlations": {
         "title": " Correlations - Inequality Drivers",
@@ -334,62 +360,101 @@ HELP_CONTENT = {
         ]
     },
     
+
     "temporal": {
         "title": "Temporal Comparison - Then vs Now",
-        "overview": "Compare inequality patterns across different time periods using statistical tests. See which countries improved, which declined, and by how much.",
+        "overview": "Compare inequality patterns across different time periods with side-by-side visualizations. Analyze how countries have progressed or regressed over time using statistical comparisons and multiple visualization types.",
         "features": [
             {
-                "name": "Point-to-Point Mode",
-                "description": "Compare two specific years (e.g., 2000 vs 2020)"
+                "name": "Dual Time Period Selection",
+                "description": "Compare two specific years or averaged time ranges for robust analysis"
             },
             {
-                "name": "Range-to-Range Mode",
-                "description": "Compare averaged periods (e.g., 2000-2005 vs 2015-2020)"
+                "name": "Multiple Visualization Types",
+                "description": "Choose from choropleth maps, bar charts, scatter plots, ranking shifts, or detailed data tables"
             },
             {
-                "name": "Multiple Visualizations",
-                "description": "Choropleth maps, bar charts, scatter plots, ranking shifts"
+                "name": "Statistical Significance Testing",
+                "description": "Paired t-test analysis to determine if observed changes are statistically meaningful"
             },
             {
-                "name": "Statistical Testing",
-                "description": "Paired t-test to determine if changes are significant"
+                "name": "Side-by-Side Maps",
+                "description": "Visual comparison of geographic patterns between THEN and NOW periods"
             },
             {
-                "name": "Change Metrics",
-                "description": "Absolute change, percentage change, rank change"
+                "name": "Change Metrics Dashboard",
+                "description": "Summary statistics including mean change, improvement count, and regional trends"
+            },
+            {
+                "name": "Country-Specific Analysis",
+                "description": "Detailed breakdown showing absolute change, percentage change, and direction for each country"
+            },
+            {
+                "name": "Ranking Evolution",
+                "description": "Track how countries moved up or down in regional rankings over time"
+            },
+            {
+                "name": "Export Capabilities",
+                "description": "Download comparison data in CSV format for external analysis"
             }
         ],
         "how_to_use": [
-            "Select your indicator from the dropdown",
-            "Choose color scheme and comparison mode",
-            "For Point-to-Point: Select THEN and NOW years",
-            "For Range-to-Range: Select early and late periods",
-            "Pick visualization type (Map, Bar, Scatter, Ranking, Table)",
-            "Read the Summary section for statistical interpretation",
-            "Download results as CSV for further analysis"
+            "Select your indicator from the dropdown (e.g., GINI index, Income share, Poverty rate)",
+            "Choose a color scheme that makes differences easily visible",
+            "In the sidebar, select THEN year (earlier period) and NOW year (later period)",
+            "Pick your preferred visualization type from the dropdown",
+            "Review the Summary Statistics section for overall trends and statistical significance",
+            "Examine the main visualization to see spatial or comparative patterns",
+            "Scroll to the Detailed Country Analysis table for specific country changes",
+            "Use the export button to download the comparison data as CSV"
         ],
         "tips": [
-            "Point-to-Point is good for specific events (e.g., policy changes)",
-            "Range-to-Range smooths out yearly fluctuations",
-            "Scatter plot with diagonal line shows who improved (above line)",
-            "Check p-value: p < 0.05 means change is statistically significant",
-            "Ranking Shift shows countries moving up/down in relative terms"
+            "For volatile indicators, use averaged ranges rather than single years to reduce noise",
+            "A p-value < 0.05 in the statistical test means changes are likely real, not random fluctuations",
+            "Scatter plots with the diagonal line clearly show improvers (above line) vs. decliners (below line)",
+            "Use Map view for geographic patterns, Bar chart for magnitude comparisons, Scatter for correlation",
+            "Ranking Shift view is best for understanding relative position changes, not absolute values",
+            "Color schemes matter: diverging scales (RdYlGn) work well for showing positive/negative changes",
+            "Check sample size (n) in statistics - comparisons with fewer countries are less reliable",
+            "Green cells in the table indicate improvement (lower inequality), red indicates worsening",
+            "Export the data table to Excel for creating custom charts or deeper analysis"
         ],
         "common_issues": [
             {
-                "problem": "No overlapping countries",
-                "solution": "Some countries don't have data for both time periods. Try different years or use more countries."
+                "problem": "No overlapping countries between periods",
+                "solution": "Some countries lack data for one or both periods. Try different years or add more countries in Home configuration."
             },
             {
-                "problem": "What does 'statistically significant' mean?",
-                "solution": "It means the change is unlikely due to random chance (p < 0.05 is the standard threshold)."
+                "problem": "Statistical test shows 'Not significant' but I see changes",
+                "solution": "The changes exist but could be due to random variation. With small samples or high variance, real changes might not reach statistical significance."
             },
             {
-                "problem": "Maps look similar but stats show change",
-                "solution": "Small visual differences can be statistically significant. Check the percentage changes in the table."
+                "problem": "Maps look identical even though data changed",
+                "solution": "Visual differences can be subtle if changes are small. Check the data table for exact values or try Bar/Scatter visualizations for clearer comparisons."
+            },
+            {
+                "problem": "Percentage change shows as inf or very large numbers",
+                "solution": "This happens when the THEN value is zero or very close to zero. Focus on absolute change instead for these cases."
+            },
+            {
+                "problem": "Why do averaged ranges give different results than single years?",
+                "solution": "Averaging smooths out year-to-year fluctuations and provides more stable comparisons, especially for indicators with irregular data collection."
+            },
+            {
+                "problem": "Ranking shifted but value barely changed",
+                "solution": "Rankings are relative. A country can move in rankings if other countries changed more, even with minimal absolute change."
+            },
+            {
+                "problem": "Can't select the exact years I want",
+                "solution": "Year availability depends on data coverage. Check the Data Quality page to see which years have data for your selected countries."
+            },
+            {
+                "problem": "What does 'Mean Absolute Change' mean?",
+                "solution": "It's the average of all absolute differences (ignoring direction). Shows typical magnitude of change across all countries."
             }
         ]
     },
+
     
     "search": {
         "title": " Smart Search - Quick Navigation",
