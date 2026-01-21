@@ -40,7 +40,13 @@ Thumbs.db
 # Data (large files)
 data/raw/*.csv
 data/raw/*.xlsx
+data/cleaned/cleaned_wid_v2.csv
+!data/cleaned/cleaned_wid_v2.csv.zip
+data/processed/south_asia_indicators.csv
+!data/processed/south_asia_indicators.csv.zip
 *.zip
+!data/cleaned/*.zip
+!data/processed/*.zip
 *.tar.gz
 
 # Logs

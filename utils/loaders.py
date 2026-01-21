@@ -12,7 +12,16 @@ GEO_DIR = DATA_DIR / 'geo'
 def load_inequality_data():
     """Load the main inequality dataset with validation"""
     try:
-        df = pd.read_csv(PROCESSED_DIR / "south_asia_indicators.csv")
+        # Check for zip file first (preferred for distribution)
+        zip_path = PROCESSED_DIR / "south_asia_indicators.csv.zip"
+        csv_path = PROCESSED_DIR / "south_asia_indicators.csv"
+        
+        if zip_path.exists():
+            df = pd.read_csv(zip_path, compression='zip')
+        elif csv_path.exists():
+            df = pd.read_csv(csv_path)
+        else:
+            raise FileNotFoundError(f"Neither {zip_path} nor {csv_path} found")
         
         # Validate required columns
         required_cols = ['country', 'year', 'indicator', 'value']
@@ -33,7 +42,7 @@ def load_inequality_data():
             df['country_code'] = df['country_code'].str.upper().str.strip()
         
         # Validate year range
-        if df['year'].min() < 1900 or df['year'].max() > 2030:
+        if df['year'].min() < 1800 or df['year'].max() > 2030:
             st.warning("⚠️ Unusual year values detected in data")
         
         return df
@@ -50,7 +59,16 @@ def load_inequality_data():
 def load_all_indicators():
     """Load all indicators dataset"""
     try:
-        df = pd.read_csv(PROCESSED_DIR / "south_asia_indicators.csv")
+        # Check for zip file first (preferred for distribution)
+        zip_path = PROCESSED_DIR / "south_asia_indicators.csv.zip"
+        csv_path = PROCESSED_DIR / "south_asia_indicators.csv"
+        
+        if zip_path.exists():
+            df = pd.read_csv(zip_path, compression='zip')
+        elif csv_path.exists():
+            df = pd.read_csv(csv_path)
+        else:
+            raise FileNotFoundError(f"Neither {zip_path} nor {csv_path} found")
         
         # Ensure correct data types
         df['year'] = pd.to_numeric(df['year'], errors='coerce')

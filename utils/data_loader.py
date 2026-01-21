@@ -25,7 +25,8 @@ class SouthAsiaDataLoader:
             'education': 'cleaned_education_statistics.csv',
             'jobs': 'cleaned_jobs_data.csv',
             'wdi': 'cleaned_world_development_indicators.csv',
-            'inequality': 'cleaned_wid_inequality_data.csv'
+            'inequality': 'cleaned_wid_inequality_data.csv',
+            'wid_v2': 'cleaned_wid_v2.csv'
         }
     
     @lru_cache(maxsize=10)
@@ -118,6 +119,80 @@ class SouthAsiaDataLoader:
             if isinstance(percentile, str):
                 percentile = [percentile]
             df = df[df['Percentile'].isin(percentile)]
+        
+        return df
+    
+    @lru_cache(maxsize=10)
+    def load_wid_v2_data(self, country=None, year_range=None, percentile=None, 
+                         indicator_category=None, variable_code=None):
+        """
+        Load new comprehensive WID (World Inequality Database) v2 data
+        
+        This dataset includes:
+        - Income shares (pre-tax and post-tax)
+        - Average incomes (pre-tax and post-tax)
+        - Gini coefficients
+        
+        Parameters:
+        -----------
+        country : str or list, optional
+            Filter by country name(s)
+        year_range : tuple, optional
+            (start_year, end_year) to filter data
+        percentile : str or list, optional
+            Filter by percentile group(s) (e.g., 'p90p100', 'p0p50')
+        indicator_category : str or list, optional
+            Filter by indicator category: 'Income Share', 'Average Income', 'Gini Coefficient'
+        variable_code : str or list, optional
+            Filter by specific WID variable code(s) (e.g., 'sptincj992', 'gptincj999')
+        
+        Returns:
+        --------
+        pd.DataFrame with columns:
+            - Country: Country name
+            - Country_Code: Two-letter country code
+            - Year: Year of observation
+            - Variable_Code: WID variable code
+            - Indicator_Category: Category (Income Share, Average Income, Gini Coefficient)
+            - Indicator_Description: Brief description
+            - Indicator_Full_Name: Full indicator name from metadata
+            - Percentile: Income/wealth percentile group
+            - Value: Indicator value
+            - age: Age group code
+            - pop: Population type code
+        """
+        file_path = self.data_dir / self.datasets['wid_v2']
+        
+        # Handle zip file if present
+        zip_path = file_path.with_suffix('.csv.zip')
+        
+        if zip_path.exists():
+            df = pd.read_csv(zip_path, compression='zip')
+        elif file_path.exists():
+            df = pd.read_csv(file_path)
+        else:
+            raise FileNotFoundError(f"Neither {zip_path} nor {file_path} found")
+        
+        # Apply standard filters
+        df = self._apply_filters(df, country, year_range)
+        
+        # Apply percentile filter
+        if percentile is not None:
+            if isinstance(percentile, str):
+                percentile = [percentile]
+            df = df[df['Percentile'].isin(percentile)]
+        
+        # Apply indicator category filter
+        if indicator_category is not None:
+            if isinstance(indicator_category, str):
+                indicator_category = [indicator_category]
+            df = df[df['Indicator_Category'].isin(indicator_category)]
+        
+        # Apply variable code filter
+        if variable_code is not None:
+            if isinstance(variable_code, str):
+                variable_code = [variable_code]
+            df = df[df['Variable_Code'].isin(variable_code)]
         
         return df
     
@@ -251,6 +326,14 @@ def load_inequality_data(country=None, year_range=None, percentile=None):
     """Quick access to inequality data"""
     loader = SouthAsiaDataLoader()
     return loader.load_inequality_data(country, year_range, percentile)
+
+
+def load_wid_v2_data(country=None, year_range=None, percentile=None, 
+                     indicator_category=None, variable_code=None):
+    """Quick access to comprehensive WID v2 inequality data"""
+    loader = SouthAsiaDataLoader()
+    return loader.load_wid_v2_data(country, year_range, percentile, 
+                                     indicator_category, variable_code)
 
 
 def get_available_indicators(dataset='wdi'):
