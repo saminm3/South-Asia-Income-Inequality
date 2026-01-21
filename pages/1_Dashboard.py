@@ -779,6 +779,24 @@ with col_viz1:
     # Horizontal bar chart - Browser breakdown style
     country_avg = filtered_df.groupby('country')['value'].mean().sort_values(ascending=True)
     
+    # ═══════════════════════════════════════════════════════════════
+    # CONSISTENT COLORS: Match donut chart categories
+    # ═══════════════════════════════════════════════════════════════
+    
+    # Calculate thresholds (SAME as donut chart)
+    q1 = country_avg.quantile(0.33)
+    q3 = country_avg.quantile(0.67)
+    
+    # Assign discrete colors based on thresholds (matches donut chart exactly)
+    bar_colors = []
+    for val in country_avg.values:
+        if val <= q1:
+            bar_colors.append('#10b981')  # Green - Low Inequality (Good)
+        elif val <= q3:
+            bar_colors.append('#f59e0b')  # Yellow - Moderate Inequality
+        else:
+            bar_colors.append('#ef4444')  # Red - High Inequality (Bad)
+    
     fig_bars = go.Figure()
     
     fig_bars.add_trace(go.Bar(
@@ -786,8 +804,7 @@ with col_viz1:
         x=country_avg.values,
         orientation='h',
         marker=dict(
-            color=country_avg.values,
-            colorscale='RdYlGn_r',
+            color=bar_colors,  # Discrete colors matching donut chart
             showscale=False,
             line=dict(width=0)
         ),
@@ -855,7 +872,6 @@ with col_viz1:
             'scale': 2
         }
     })
-
 with col_viz2:
     # Donut chart
     median_val = latest_data['value'].median()
