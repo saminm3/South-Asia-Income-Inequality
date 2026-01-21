@@ -162,7 +162,16 @@ class SouthAsiaDataLoader:
             - pop: Population type code
         """
         file_path = self.data_dir / self.datasets['wid_v2']
-        df = pd.read_csv(file_path)
+        
+        # Handle zip file if present
+        zip_path = file_path.with_suffix('.csv.zip')
+        
+        if zip_path.exists():
+            df = pd.read_csv(zip_path, compression='zip')
+        elif file_path.exists():
+            df = pd.read_csv(file_path)
+        else:
+            raise FileNotFoundError(f"Neither {zip_path} nor {file_path} found")
         
         # Apply standard filters
         df = self._apply_filters(df, country, year_range)
