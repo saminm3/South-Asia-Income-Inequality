@@ -10,7 +10,10 @@ from utils.loaders import load_inequality_data
 from utils.data_loader import SouthAsiaDataLoader
 from utils.utils import human_indicator, get_color_scale
 from utils.help_system import render_help_button
-from utils.sidebar import apply_all_styles 
+from utils.sidebar import apply_all_styles
+from utils.user_manager import UserManager
+import time
+import os 
 from utils.api_loader import get_api_loader
 
 
@@ -20,6 +23,37 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded"
 )
+
+# ----------------------------
+# Sidebar
+# ----------------------------
+with st.sidebar:
+    st.image("assets/logo.png", width=50) if os.path.exists("assets/logo.png") else None
+    
+    st.subheader("Navigation")
+    
+    # Load Profile Feature
+    with st.expander("📂 Load Saved Profile"):
+        load_email = st.text_input("Enter your email", key="load_email_input")
+        if st.button("Load Configuration", use_container_width=True):
+            if load_email:
+                if 'user_manager' not in st.session_state:
+                    st.session_state.user_manager = UserManager()
+                
+                with st.spinner("Searching..."):
+                    saved_config = st.session_state.user_manager.get_user_config(load_email)
+                    
+                if saved_config:
+                    st.session_state.analysis_config = saved_config
+                    st.success("✅ Configuration loaded!")
+                    time.sleep(1)
+                    st.rerun()
+                else:
+                    st.error("No profile found.")
+            else:
+                st.warning("Enter email to load.")
+    
+    st.markdown("---")
 
 
 apply_all_styles()
@@ -161,13 +195,61 @@ with col1:
     )
     
     st.markdown("#### Indicator")
+    
+    # Import the new indicator metadata system
+    from utils.indicator_metadata import (
+        get_available_indicators_by_category, 
+        get_indicator_description,
+        INDICATOR_CATEGORIES
+    )
+    
+    # Get categorized indicators that are available in the data
+    available_categories = get_available_indicators_by_category(df)
+    
+    # Step 1: Select Category
+    category_names = list(available_categories.keys())
+    
+    # Find current category for the selected indicator
+    current_category = None
+    current_indicator = st.session_state.analysis_config.get('indicator')
+    
+    for cat_name, cat_info in available_categories.items():
+        if current_indicator in cat_info['indicators']:
+            current_category = cat_name
+            break
+    
+    if current_category is None and category_names:
+        current_category = category_names[0]
+    
+    selected_category = st.selectbox(
+        "Category",
+        options=category_names,
+        index=category_names.index(current_category) if current_category in category_names else 0,
+        help="Choose the type of inequality metric",
+        key="indicator_category"
+    )
+    
+    # Step 2: Select Indicator within Category
+    indicators_in_category = available_categories[selected_category]['indicators']
+    
+    # Find default indicator
+    if current_indicator in indicators_in_category:
+        default_idx = indicators_in_category.index(current_indicator)
+    else:
+        default_idx = 0
+    
     selected_indicator = st.selectbox(
         "Primary inequality metric",
-        options=all_indicators,
-        index=(all_indicators.index(st.session_state.analysis_config['indicator'])
-               if st.session_state.analysis_config.get('indicator') in all_indicators else 0),
-        help="Main indicator for analysis"
+        options=indicators_in_category,
+        index=default_idx,
+        help=available_categories[selected_category]['description'],
+        key="indicator_selector"
     )
+    
+    # Show description for selected indicator
+    description = get_indicator_description(selected_indicator)
+    if description:
+        st.caption(f"ℹ️ {description}")
 
 with col2:
     st.markdown("#### Time Period")
@@ -189,25 +271,125 @@ with col2:
         help="Color palette for charts and maps"
     )
 
-# Auto-save configuration when any value changes
-if selected_countries:
-    new_config = {
+
+# Store temporary selections (not applied until confirmed)
+if 'temp_config' not in st.session_state:
+    st.session_state.temp_config = {
         'countries': selected_countries,
         'year_range': year_range,
         'indicator': selected_indicator,
-        'color_scale': color_scale,
-        'timestamp': pd.Timestamp.now()
+        'color_scale': color_scale
     }
+
+# Update temp config with current selections
+temp_config = {
+    'countries': selected_countries,
+    'year_range': year_range,
+    'indicator': selected_indicator,
+    'color_scale': color_scale
+}
+
+# Check if configuration has changed from the applied one
+config_changed = (
+    st.session_state.analysis_config['countries'] != selected_countries or
+    st.session_state.analysis_config['year_range'] != year_range or
+    st.session_state.analysis_config['indicator'] != selected_indicator or
+    st.session_state.analysis_config.get('color_scale') != color_scale
+)
+
+# Confirm Configuration Button
+st.markdown("<br>", unsafe_allow_html=True)
+
+# Initialize User Manager
+if 'user_manager' not in st.session_state:
+    st.session_state.user_manager = UserManager()
+
+# Dialog logic replacement (compatible with older Streamlit)
+if 'show_save_options' not in st.session_state:
+    st.session_state.show_save_options = False
+
+col_btn = st.columns([1, 2, 1])
+with col_btn[1]:
+    if selected_countries:
+        if config_changed:
+            if st.button(
+                "🎯 Confirm Configuration",
+                use_container_width=True,
+                type="primary",
+                help="Apply these settings to all analysis pages"
+            ):
+                st.session_state.show_save_options = True
+                
+        else:
+            st.info("✓ Configuration is up to date")
+            st.session_state.show_save_options = False
+    else:
+        st.warning("Please select at least one country")
+
+# Show save options if triggered
+if st.session_state.get('show_save_options'):
+    st.markdown("---")
+    st.info("Do you want to save this configuration for future visits?")
     
-    # Only update if config changed
-    if (st.session_state.analysis_config['countries'] != selected_countries or
-        st.session_state.analysis_config['year_range'] != year_range or
-        st.session_state.analysis_config['indicator'] != selected_indicator or
-        st.session_state.analysis_config.get('color_scale') != color_scale):
-        
-        st.session_state.analysis_config = new_config
-else:
-    st.warning("Please select at least one country")
+    col_save_1, col_save_2 = st.columns(2)
+    
+    with col_save_1:
+        if st.button("Yes, Save for Future", use_container_width=True):
+            st.session_state.save_choice = 'yes'
+            
+    with col_save_2:
+        if st.button("No, Just for Now", use_container_width=True):
+            new_config = {
+                'countries': selected_countries,
+                'year_range': year_range,
+                'indicator': selected_indicator,
+                'color_scale': color_scale,
+                'timestamp': pd.Timestamp.now()
+            }
+            st.session_state.analysis_config = new_config
+            st.session_state.show_save_options = False
+            st.success("Configuration applied for this session.")
+            time.sleep(1)
+            st.rerun()
+
+    # If user chose to save
+    if st.session_state.get('save_choice') == 'yes':
+        st.markdown("##### User Profile")
+        with st.container():
+            email = st.text_input("Email Address", placeholder="name@example.com")
+            col_inp1, col_inp2 = st.columns(2)
+            with col_inp1:
+                age_group = st.selectbox("Age Group", ["Under 18", "18-24", "25-34", "35-44", "45-54", "55-64", "65+"])
+            with col_inp2:
+                occupation = st.text_input("Occupation", placeholder="Researcher")
+            
+            if st.button("Save & Apply Profile", type="primary", use_container_width=True):
+                if email and occupation:
+                    new_config = {
+                        'countries': selected_countries,
+                        'year_range': year_range,
+                        'indicator': selected_indicator,
+                        'color_scale': color_scale,
+                        'timestamp': pd.Timestamp.now()
+                    }
+                    
+                    with st.spinner("Saving profile..."):
+                        success = st.session_state.user_manager.save_user_profile(
+                            email, age_group, occupation, new_config
+                        )
+                        
+                        if success:
+                            st.session_state.analysis_config = new_config
+                            st.session_state.show_save_options = False
+                            st.session_state.save_choice = None
+                            st.success("Profile saved! Configuration applied.")
+                            time.sleep(1)
+                            st.rerun()
+                        else:
+                            st.error("Failed to connect to database. Check API keys.")
+                else:
+                    st.warning("Please fill in email and occupation.")
+
 
 # CURRENT CONFIGURATION DISPLAY
 

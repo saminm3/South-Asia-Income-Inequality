@@ -14,6 +14,7 @@ from utils.loaders import load_all_indicators
 from utils.utils import human_indicator
 from utils.help_system import render_help_button
 from utils.sidebar import apply_all_styles
+from utils.indicator_metadata import get_available_indicators_by_category, INDICATOR_CATEGORIES
 
 # ----------------------------
 # Page config
@@ -203,54 +204,113 @@ if df.empty:
     st.stop()
 
 # ----------------------------
-# Indicator classification
+# Indicator classification using metadata system
 # ----------------------------
-def _norm(s: str) -> str:
-    return str(s).lower().strip()
 
-INEQ_KEYWORDS = [
-    "gini",
-    "income share held by highest",
-    "income share held by lowest",
-    "poverty",
-    "unemployment"
+# Get available indicators organized by category
+available_categories = get_available_indicators_by_category(df)
+
+# Define which categories are for inequality (Y-axis)
+INEQUALITY_CATEGORIES = [
+    "📉 Income Inequality",
+    "🏛️ Wealth Inequality"
 ]
 
-DRIVER_KEYWORDS = [
-    "gdp",
-    "inflation",
-    "hdi",
-    "schooling",
-    "internet",
-    "labor force",
-    "population"
+# Define which categories are for drivers (X-axis)
+DRIVER_CATEGORIES = [
+    "💵 Average & Total Income",
+    "🎓 Education & Skills",
+    "🏥 Health & Social",
+    "📈 Other Economic Indicators",
+    "♀️ Gender Inequality"
 ]
 
-all_indicators = sorted(df["indicator"].unique())
-ineq_candidates = [i for i in all_indicators if any(k in _norm(i) for k in INEQ_KEYWORDS)]
-driver_candidates = [i for i in all_indicators if any(k in _norm(i) for k in DRIVER_KEYWORDS)]
+# Collect inequality indicators
+ineq_candidates = []
+for cat_name in INEQUALITY_CATEGORIES:
+    if cat_name in available_categories:
+        ineq_candidates.extend(available_categories[cat_name]['indicators'])
+
+# Collect driver indicators
+driver_candidates = []
+for cat_name in DRIVER_CATEGORIES:
+    if cat_name in available_categories:
+        driver_candidates.extend(available_categories[cat_name]['indicators'])
+
+# Remove duplicates while preserving order
+ineq_candidates = list(dict.fromkeys(ineq_candidates))
+driver_candidates = list(dict.fromkeys(driver_candidates))
 
 # ----------------------------
-# Sidebar (clean & focused)
+# Sidebar (clean & focused with categories)
 # ----------------------------
 with st.sidebar:
     st.subheader("Settings")
+    
+    # Y-axis (Inequality) selection
+    st.markdown("#### Inequality Indicator (Y-axis)")
+    
+    # Get categories that have indicators
+    available_ineq_categories = [cat for cat in INEQUALITY_CATEGORIES if cat in available_categories]
+    
+    if available_ineq_categories:
+        y_category = st.selectbox(
+            "Category",
+            options=available_ineq_categories,
+            key="y_category",
+            help="Choose the type of inequality to analyze"
+        )
+        
+        y_indicators_in_cat = available_categories[y_category]['indicators']
+        y_indicator = st.selectbox(
+            "Specific indicator",
+            options=y_indicators_in_cat,
+            key="y_indicator",
+            help=available_categories[y_category]['description']
+        )
+    else:
+        st.error("No inequality indicators available")
+        st.stop()
+    
+    st.markdown("---")
+    
+    # X-axis (Driver) selection
+    st.markdown("#### Driver Factor (X-axis)")
+    
+    available_driver_categories = [cat for cat in DRIVER_CATEGORIES if cat in available_categories]
+    
+    if available_driver_categories:
+        x_category = st.selectbox(
+            "Category",
+            options=available_driver_categories,
+            key="x_category",
+            help="Choose the potential driver to correlate with inequality"
+        )
+        
+        x_indicators_in_cat = available_categories[x_category]['indicators']
+        # Exclude the Y indicator if it happens to be in this category
+        x_indicators_filtered = [i for i in x_indicators_in_cat if i != y_indicator]
+        
+        if x_indicators_filtered:
+            x_indicator = st.selectbox(
+                "Specific indicator",
+                options=x_indicators_filtered,
+                key="x_indicator",
+                help=available_categories[x_category]['description']
+            )
+        else:
+            st.error(f"No available indicators in {x_category} (excluding Y-axis selection)")
+            st.stop()
+    else:
+        st.error("No driver indicators available")
+        st.stop()
 
-    y_indicator = st.selectbox(
-        "Inequality indicator (Y-axis)",
-        options=ineq_candidates
-    )
-
-    x_indicator = st.selectbox(
-        "Driver factor (X-axis)",
-        options=[i for i in driver_candidates if i != y_indicator]
-    )
-
+    st.markdown("---")
     show_trend = st.checkbox("Show trend line", value=True)
 
     st.markdown("---")
     if home_countries:
-        st.info("Using Home-selected countries")
+        st.success(f"✓ Using {len(home_countries)} selected countries")
     else:
         st.info("Using all available countries")
 
