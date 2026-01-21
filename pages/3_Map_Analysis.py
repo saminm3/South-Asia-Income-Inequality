@@ -340,25 +340,10 @@ fig.update_layout(
     ),
 
     # Overall layout dimensions
-    height= 850,
+    height=650,
     margin={'r': 10, 't': 10, 'l': 10, 'b': 10},
     font=dict(family='Arial, sans-serif')
 )
-
-# Grey out countries without data
-# for feature in geojson['features']:
-#     iso = feature['properties']['ISO_A3']
-#     if iso not in filtered_df['country_code'].values:
-#         fig.add_trace(go.Choropleth(
-#             geojson={'type':'FeatureCollection','features':[feature]},
-#             locations=[iso],
-#             featureidkey='properties.ISO_A3',
-#             z=[0],
-#             colorscale=[[0,"rgba(200,200,200,0.3)"],[1,"rgba(200,200,200,0.3)"]],
-#             showscale=False,
-#             hoverinfo='skip',
-#             geo='geo'
-#         ))
 
 marker_line_width = 5
 
@@ -446,7 +431,7 @@ if show_animation and fig.layout.updatemenus:
                 borderwidth=1,
                 font=dict(size=10),
                 pad=dict(r=2, t=2),
-                x=0.20,
+                x=0.17,
                 y=0.12,
                 xanchor="left",
                 yanchor="top"
@@ -464,9 +449,9 @@ if show_animation and fig.layout.updatemenus:
                 currentvalue=dict(
                     prefix="",
                     visible=True,
-                    font=dict(size=11, color = "#160323")
+                    font=dict(size=11, color = "#FFFFFF")
                 ),
-                font=dict(size=10, color = "#160323"),
+                font=dict(size=10, color = "#FFFFFF"),
                 ticklen=5,
                 tickwidth=1
             )
