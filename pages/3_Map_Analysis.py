@@ -301,8 +301,8 @@ fig.update_layout(
     # ),
 
     # Paper and plot background
-    paper_bgcolor='#f8f9fa',
-    plot_bgcolor='#ffffff',
+    paper_bgcolor= "rgba(52, 26, 87, 0.28)",
+    plot_bgcolor="#ffffff",
 
     # Colorbar configuration
     coloraxis=dict(
@@ -537,13 +537,13 @@ for row in rows:
                 mini_fig.update_geos(
                     fitbounds="locations",
                     visible=False,
-                    bgcolor= "#87C1E5" 
+                    bgcolor= "#C0DCED" 
                 )
 
                 mini_fig.update_layout(
                     height=80,
                     margin=dict(l=0, r=0, t=0, b=0),
-                    paper_bgcolor="black"  # figure background white
+                    paper_bgcolor="rgba(52, 26, 87, 0.28)"  # figure background white
                 )
 
                 st.plotly_chart(
