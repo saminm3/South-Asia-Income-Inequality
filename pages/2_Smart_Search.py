@@ -807,3 +807,9 @@ st.markdown("""
     <p><strong>🔍 Smart Search & Navigation Hub</strong> | South Asia Inequality Analysis Platform</p>
 </div>
 """, unsafe_allow_html=True)
+
+# -----------------
+# Navigation
+# -----------------
+from utils.navigation_ui import bottom_nav_layout
+bottom_nav_layout(__file__)

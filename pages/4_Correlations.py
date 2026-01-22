@@ -213,16 +213,16 @@ available_categories = get_available_indicators_by_category(df)
 # Define which categories are for inequality (Y-axis)
 INEQUALITY_CATEGORIES = [
     "📉 Income Inequality",
-    "🏛️ Wealth Inequality"
+    "🆘 Poverty Metrics"
 ]
 
 # Define which categories are for drivers (X-axis)
 DRIVER_CATEGORIES = [
-    "💵 Average & Total Income",
-    "🎓 Education & Skills",
-    "🏥 Health & Social",
-    "📈 Other Economic Indicators",
-    "♀️ Gender Inequality"
+    "💵 Income & Growth",
+    "🎓 Education",
+    "💼 Employment & Labor",
+    "⚡ Infrastructure & Digital",
+    "📊 Other Metrics"
 ]
 
 # Collect inequality indicators
@@ -245,6 +245,7 @@ driver_candidates = list(dict.fromkeys(driver_candidates))
 # Sidebar (clean & focused with categories)
 # ----------------------------
 with st.sidebar:
+    # st.write("Avail Cats:", list(available_categories.keys()))
     st.subheader("Settings")
     
     # Y-axis (Inequality) selection
@@ -603,3 +604,10 @@ with st.expander("Why some countries are not shown"):
     )
 
 st.caption(" Correlation Explorer | South Asia Inequality Analysis Platform")
+
+
+# -----------------
+# Navigation
+# -----------------
+from utils.navigation_ui import bottom_nav_layout
+bottom_nav_layout(__file__)

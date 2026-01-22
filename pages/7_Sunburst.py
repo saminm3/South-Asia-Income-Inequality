@@ -8,10 +8,12 @@ from pathlib import Path
 # Add utils to path
 sys.path.append(str(Path(__file__).parent.parent))
 
-from utils.loaders import load_all_indicators
+from utils.loaders import load_inequality_data
 from utils.utils import format_value
 from utils.help_system import render_help_button
 from utils.sidebar import apply_all_styles
+from utils.indicator_metadata import get_category_for_indicator
+
 
 st.set_page_config(
     page_title="Sunburst Explorer",
@@ -115,9 +117,9 @@ config = st.session_state.get("analysis_config", None)
 home_countries = config.get("countries", []) if config else []
 home_year_range = config.get("year_range", None) if config else None
 
-# Load data
-with st.spinner("Loading data..."):
-    df = load_all_indicators()
+# Load World Bank data (clean, limited indicators - perfect for sunburst)
+with st.spinner("Loading World Bank data..."):
+    df = load_inequality_data()
 
 if df.empty:
     st.error("No data available")
@@ -227,6 +229,13 @@ with st.expander("View country coverage details (selected year)"):
     display_cov.columns = ["Country", "Indicators available", "Data points"]
     st.dataframe(display_cov, use_container_width=True, hide_index=True)
 
+# ============================================================
+# World Bank data already has a clean set of indicators (6 total)
+# No filtering needed - perfect for sunburst visualization!
+# ============================================================
+indicator_count = year_df['indicator'].nunique()
+# st.success(...) - Removed per user request
+
 # Normalize per indicator for fair sunburst sizing
 sunburst_df = year_df[["country", "indicator", "value"]].copy()
 sunburst_df = sunburst_df.dropna(subset=["value"])
@@ -263,6 +272,19 @@ if sunburst_df.empty or sunburst_df["normalized_value"].sum() == 0:
 
 # Add region
 sunburst_df["Region"] = "South Asia"
+sunburst_df["Category"] = sunburst_df["indicator"].apply(get_category_for_indicator)
+
+# Robust cleaning to prevent JSON errors
+sunburst_df = sunburst_df.replace([np.inf, -np.inf], np.nan)
+sunburst_df = sunburst_df.dropna(subset=["normalized_value", "Category", "country", "Region"])
+
+# Explicit type conversion to ensure JSON serializability
+sunburst_df["normalized_value"] = sunburst_df["normalized_value"].astype(float)
+sunburst_df["value"] = sunburst_df["value"].astype(float)
+
+# String sanitization to remove any weird characters
+for col in ["Region", "country", "Category", "indicator"]:
+    sunburst_df[col] = sunburst_df[col].astype(str).str.strip().str.replace(r'[^\x20-\x7E]', '', regex=True)
 
 # Pretty value for hover
 def fmt(val):
@@ -273,26 +295,36 @@ def fmt(val):
 
 sunburst_df["formatted_value"] = sunburst_df["value"].apply(fmt)
 
+
 # ---------------- Sunburst ----------------
 fig = px.sunburst(
     sunburst_df,
-    path=["Region", "country", "indicator"],
+    path=["Region", "country", "Category", "indicator"],
     values="normalized_value",
     color="normalized_value",
     color_continuous_scale=color_scheme,
-    hover_data=["formatted_value"]
+    hover_data=["formatted_value"],
+    template="plotly_dark"
 )
 
 fig.update_traces(
     textinfo="label+percent parent",
     hovertemplate="<b>%{label}</b><br>Actual: %{customdata[0]}<br>Dominance (normalized): %{value:.1f}/100<extra></extra>",
-    marker=dict(line=dict(color="white", width=2))
+    marker=dict(
+        line=dict(color="#ffffff", width=1.5),
+        colors=None  # Let Plotly handle colors automatically
+    ),
+    textfont=dict(size=10, color="black")  # Make text more visible
 )
 
 fig.update_layout(
     title=f"Indicator Dominance Breakdown ({selected_year})",
     title_x=0.5,
-    height=850
+    height=850,
+    paper_bgcolor='rgba(0,0,0,0)',
+    plot_bgcolor='rgba(0,0,0,0)',
+    font=dict(color="#e5e7eb"),
+    margin=dict(t=80, b=40, l=40, r=40)
 )
 
 st.plotly_chart(fig, use_container_width=True)
@@ -465,9 +497,17 @@ fig_bubble = px.scatter(
     color="normalized_value",
     color_continuous_scale=color_scheme,
     hover_data=["formatted_value"],
+    template="plotly_dark",
     title="🫧 Indicator Bubble View (size = normalized dominance)"
 )
-fig_bubble.update_layout(height=540, xaxis_title="Normalized dominance (0–100)", yaxis_title="")
+fig_bubble.update_layout(
+    height=540,
+    xaxis_title="Normalized dominance (0–100)",
+    yaxis_title="",
+    paper_bgcolor='rgba(0,0,0,0)',
+    plot_bgcolor='rgba(0,0,0,0)',
+    font=dict(color="#e5e7eb")
+)
 st.plotly_chart(fig_bubble, use_container_width=True)
 
 st.info(
@@ -483,3 +523,10 @@ with st.expander("View underlying data (for this country)"):
 
 st.divider()
 st.caption("Sunburst Explorer | South Asia Inequality Analysis Platform")
+
+
+# -----------------
+# Navigation
+# -----------------
+from utils.navigation_ui import bottom_nav_layout
+bottom_nav_layout(__file__)

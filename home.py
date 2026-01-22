@@ -28,7 +28,8 @@ st.set_page_config(
 # Sidebar
 # ----------------------------
 with st.sidebar:
-    st.image("assets/logo.png", width=50) if os.path.exists("assets/logo.png") else None
+    if os.path.exists("assets/logo.png"):
+        st.image("assets/logo.png", width=50)
     
     st.subheader("Navigation")
     
@@ -47,7 +48,7 @@ with st.sidebar:
                     st.session_state.analysis_config = saved_config
                     st.success("✅ Configuration loaded!")
                     time.sleep(1)
-                    st.rerun()
+                    st.switch_page("pages/1_Dashboard.py")
                 else:
                     st.error("No profile found.")
             else:
@@ -60,34 +61,27 @@ apply_all_styles()
 
 render_help_button("home")
 
-loader = SouthAsiaDataLoader()
-summary_stats = loader.get_summary_stats()
-local_data_points = summary_stats['Total Records'].sum() if not summary_stats.empty else 0
-local_indicators = summary_stats['Indicators'].sum() if not summary_stats.empty else 0
+# Load Curated Data for the Platform stats
+df = load_inequality_data()
+if df.empty:
+    st.error("Data not found. Please ensure processed/curated_indicators.csv exists.")
+    st.stop()
 
-# Fetch API Stats to increase "Data Points" count
+# Calculate stats from curated data
+total_records = len(df)
+total_indicators = df['indicator'].nunique()
+total_countries = df['country'].nunique()
+year_min = int(df['year'].min())
+year_max = int(df['year'].max())
+year_span = f"{year_min}-{year_max}"
+
+# Fetch additional API Stats if they exist
 api_loader = get_api_loader()
 api_stats = api_loader.get_api_summary_v2()
 
-# IMF Data Points Calculation
-from utils.imf_api_loader import get_imf_loader
-imf_loader = get_imf_loader()
-imf_stats = imf_loader.get_stats()
-
-# UN Data Points Calculation
-from utils.un_data_loader import get_un_loader
-un_loader = get_un_loader()
-# Use a simple estimate if get_stats doesn't exist yet
-un_data_points = 8 * 4 # 8 countries * 4 indicators
-un_indicators = 4
-
-total_data_points = local_data_points + api_stats['total_records'] + imf_stats['records'] + un_data_points
-total_indicators = local_indicators + api_stats['indicators'] + imf_stats['indicators'] + un_indicators
-
-df = load_inequality_data() # Keep this for legacy compatibility on this page if needed
-if df.empty and summary_stats.empty:
-    st.error("Data not found. Please ensure processed dataset exists.")
-    st.stop()
+# Final stats for display
+display_data_points = total_records + api_stats['total_records']
+display_indicators = total_indicators + api_stats['indicators']
 
 # HERO SECTION
 st.markdown("""
@@ -122,17 +116,16 @@ with col2:
     st.markdown(f"""
     <div style="text-align: center; padding: 2rem 1.5rem; background: linear-gradient(135deg, rgba(236, 72, 153, 0.15), rgba(236, 72, 153, 0.05)); border: 1px solid rgba(236, 72, 153, 0.3); border-radius: 12px; height: 200px; display: flex; flex-direction: column; justify-content: center;">
         <div style="font-size: 3rem; margin-bottom: 1rem;"></div>
-        <div style="font-size: 2.5rem; font-weight: 800; color: #ec4899; margin-bottom: 0.5rem;">{total_indicators}</div>
+        <div style="font-size: 2.5rem; font-weight: 800; color: #ec4899; margin-bottom: 0.5rem;">{display_indicators}</div>
         <div style="color: #94a3b8; font-size: 0.9rem;">Total Indicators</div>
     </div>
     """, unsafe_allow_html=True)
 
 with col3:
-    year_span = int(df['year'].max() - df['year'].min())
     st.markdown(f"""
     <div style="text-align: center; padding: 2rem 1.5rem; background: linear-gradient(135deg, rgba(6, 182, 212, 0.15), rgba(6, 182, 212, 0.05)); border: 1px solid rgba(6, 182, 212, 0.3); border-radius: 12px; height: 200px; display: flex; flex-direction: column; justify-content: center;">
         <div style="font-size: 3rem; margin-bottom: 1rem;"></div>
-        <div style="font-size: 2.5rem; font-weight: 800; color: #06b6d4; margin-bottom: 0.5rem;">{year_span}</div>
+        <div style="font-size: 2rem; font-weight: 800; color: #06b6d4; margin-bottom: 0.5rem;">{year_span}</div>
         <div style="color: #94a3b8; font-size: 0.9rem;">Years of Data</div>
     </div>
     """, unsafe_allow_html=True)
@@ -141,7 +134,7 @@ with col4:
     st.markdown(f"""
     <div style="text-align: center; padding: 2rem 1.5rem; background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(16, 185, 129, 0.05)); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 12px; height: 200px; display: flex; flex-direction: column; justify-content: center;">
         <div style="font-size: 3rem; margin-bottom: 1rem;"></div>
-        <div style="font-size: 2.5rem; font-weight: 800; color: #10b981; margin-bottom: 0.5rem;">{total_data_points:,}</div>
+        <div style="font-size: 2.5rem; font-weight: 800; color: #10b981; margin-bottom: 0.5rem;">{display_data_points:,}</div>
         <div style="color: #94a3b8; font-size: 0.9rem;">Total Data Points</div>
     </div>
     """, unsafe_allow_html=True)
@@ -322,6 +315,8 @@ with col_btn[1]:
                 
         else:
             st.info("✓ Configuration is up to date")
+            time.sleep(1)
+            st.switch_page("pages/1_Dashboard.py")
             st.session_state.show_save_options = False
     else:
         st.warning("Please select at least one country")
@@ -350,7 +345,7 @@ if st.session_state.get('show_save_options'):
             st.session_state.show_save_options = False
             st.success("Configuration applied for this session.")
             time.sleep(1)
-            st.rerun()
+            st.switch_page("pages/1_Dashboard.py")
 
     # If user chose to save
     if st.session_state.get('save_choice') == 'yes':
@@ -384,7 +379,7 @@ if st.session_state.get('show_save_options'):
                             st.session_state.save_choice = None
                             st.success("Profile saved! Configuration applied.")
                             time.sleep(1)
-                            st.rerun()
+                            st.switch_page("pages/1_Dashboard.py")
                         else:
                             st.error("Failed to connect to database. Check API keys.")
                 else:
@@ -483,3 +478,9 @@ st.markdown("""
     </p>
 </div>
 """, unsafe_allow_html=True)
+
+# -----------------
+# Navigation
+# -----------------
+from utils.navigation_ui import bottom_nav_layout
+bottom_nav_layout(__file__)

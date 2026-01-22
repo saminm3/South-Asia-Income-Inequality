@@ -9,3 +9,4 @@ openpyxl
 reportlab
 statsmodels
 requests
+supabase

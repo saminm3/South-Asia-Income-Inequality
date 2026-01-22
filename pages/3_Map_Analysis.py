@@ -1258,3 +1258,10 @@ st.divider()
 st.caption("Map Analysis | South Asia Inequality Analysis Platform")
 st.caption("Data sources: World Bank, UNDP | Map boundaries: Natural Earth")
 st.caption("Enhanced with dynamic insights, country highlighting, projections, and advanced filtering")
+
+
+# -----------------
+# Navigation
+# -----------------
+from utils.navigation_ui import bottom_nav_layout
+bottom_nav_layout(__file__)

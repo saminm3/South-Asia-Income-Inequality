@@ -1822,3 +1822,9 @@ try:
 except Exception as e:
     st.error(f"❌ Error in export section: {str(e)}")
     st.caption("Please try a different export format or contact support if the issue persists.")
+
+# -----------------
+# Navigation
+# -----------------
+from utils.navigation_ui import bottom_nav_layout
+bottom_nav_layout(__file__)

@@ -8,20 +8,19 @@ DATA_DIR = Path(__file__).parent.parent / 'data'
 PROCESSED_DIR = DATA_DIR / 'processed'
 GEO_DIR = DATA_DIR / 'geo'
 
-@st.cache_data(ttl=3600)
+# Removed cache to force data reload
 def load_inequality_data():
-    """Load the main inequality dataset with validation"""
+    """Load the curated inequality dataset (12 focused indicators)"""
     try:
-        # Check for zip file first (preferred for distribution)
-        zip_path = PROCESSED_DIR / "south_asia_indicators.csv.zip"
-        csv_path = PROCESSED_DIR / "south_asia_indicators.csv"
+        # Load curated data (contains only the 12 indicators requested by user)
+        csv_path = PROCESSED_DIR / "curated_indicators.csv"
         
-        if zip_path.exists():
-            df = pd.read_csv(zip_path, compression='zip')
-        elif csv_path.exists():
-            df = pd.read_csv(csv_path)
-        else:
-            raise FileNotFoundError(f"Neither {zip_path} nor {csv_path} found")
+        if not csv_path.exists():
+            st.error(f"❌ Curated data file not found: {csv_path}")
+            st.info("Please run the curation script: scripts/curate_indicator_dataset.py")
+            return pd.DataFrame()
+        
+        df = pd.read_csv(csv_path)
         
         # Validate required columns
         required_cols = ['country', 'year', 'indicator', 'value']
@@ -40,51 +39,21 @@ def load_inequality_data():
         # Clean country codes if they exist
         if 'country_code' in df.columns:
             df['country_code'] = df['country_code'].str.upper().str.strip()
-        
-        # Validate year range
-        if df['year'].min() < 1800 or df['year'].max() > 2030:
-            st.warning("⚠️ Unusual year values detected in data")
+            
+        # Filter for year range 2000-2024
+        df = df[(df['year'] >= 2000) & (df['year'] <= 2024)]
         
         return df
         
-    except FileNotFoundError:
-        st.error(f"❌ Data file not found: {PROCESSED_DIR / 'inequality_long.csv'}")
-        st.info("Please ensure inequality_long.csv exists in data/processed/")
-        return pd.DataFrame()
     except Exception as e:
-        st.error(f"❌ Error loading data: {str(e)}")
+        st.error(f"❌ Error loading curated data: {str(e)}")
         return pd.DataFrame()
 
-@st.cache_data(ttl=3600)
+
+# Removed cache for data sync
 def load_all_indicators():
-    """Load all indicators dataset"""
-    try:
-        # Check for zip file first (preferred for distribution)
-        zip_path = PROCESSED_DIR / "south_asia_indicators.csv.zip"
-        csv_path = PROCESSED_DIR / "south_asia_indicators.csv"
-        
-        if zip_path.exists():
-            df = pd.read_csv(zip_path, compression='zip')
-        elif csv_path.exists():
-            df = pd.read_csv(csv_path)
-        else:
-            raise FileNotFoundError(f"Neither {zip_path} nor {csv_path} found")
-        
-        # Ensure correct data types
-        df['year'] = pd.to_numeric(df['year'], errors='coerce')
-        df['value'] = pd.to_numeric(df['value'], errors='coerce')
-        
-        # Remove invalid rows
-        df = df.dropna(subset=['country', 'year', 'indicator', 'value'])
-        
-        return df
-        
-    except FileNotFoundError:
-        st.warning("All indicators file not found, using main dataset")
-        return load_inequality_data()
-    except Exception as e:
-        st.warning(f"Error loading all indicators: {str(e)}")
-        return load_inequality_data()
+    """Load all indicators (redirected to curated set for consistency)"""
+    return load_inequality_data()
 
 @st.cache_data(ttl=3600)
 def load_quality_audit():

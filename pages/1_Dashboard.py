@@ -1517,3 +1517,9 @@ with st.expander("View Raw Data & Export Options"):
 
 st.markdown("---")
 st.caption("Dashboard | South Asia Inequality Analysis Platform")
+
+# -----------------
+# Navigation
+# -----------------
+from utils.navigation_ui import bottom_nav_layout
+bottom_nav_layout(__file__)

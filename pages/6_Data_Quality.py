@@ -9,7 +9,9 @@ import numpy as np
 # Add utils to path
 sys.path.append(str(Path(__file__).parent.parent))
 
-from utils.loaders import load_quality_audit
+from utils.loaders import load_quality_audit, load_inequality_data
+
+
 from utils.help_system import render_help_button
 from utils.sidebar import apply_all_styles
 from utils.api_loader import get_api_loader
@@ -137,8 +139,40 @@ with st.sidebar:
         st.info("Enable to validate against live World Bank data")
 
 # Load data
-with st.spinner("Loading quality audit data..."):
-    audit = load_quality_audit()
+with st.spinner("Calculating quality metrics from live data..."):
+    # 1. Load actual data
+    df_actual = load_inequality_data()
+    
+    # 2. Calculate dynamic audit
+    if not df_actual.empty:
+        # Define expected year range
+        EXPECTED_YEARS = 25  # 2000-2024
+        
+        # Group by Country + Indicator
+        audit = df_actual.groupby(['country', 'indicator']).agg(
+            record_count=('value', 'count'),
+            min_year=('year', 'min'),
+            max_year=('year', 'max')
+        ).reset_index()
+        
+        # Calculate completeness
+        audit['completeness'] = (audit['record_count'] / EXPECTED_YEARS) * 100
+        audit['completeness'] = audit['completeness'].clip(upper=100)  # Cap at 100%
+        
+        # Merge source information if available
+        if 'source' in df_actual.columns:
+            # Create a source mapping (take first source found for each country-indicator pair)
+            source_map = df_actual.groupby(['country', 'indicator'])['source'].first().reset_index()
+            audit = pd.merge(audit, source_map, on=['country', 'indicator'], how='left')
+            audit['source'] = audit['source'].fillna('World Bank / Derived')
+        else:
+            audit['source'] = 'World Bank / Derived' 
+            
+        audit['issues'] = audit.apply(lambda x: "Low coverage" if x['completeness'] < 50 else "Good", axis=1)
+        
+    else:
+        # Fallback if load fails
+        audit = load_quality_audit()
 
 if audit.empty:
     st.error("❌ Quality audit data not found")
@@ -903,3 +937,9 @@ st.markdown("""
     ✅ Transparency in data quality is essential for credible research
 </div>
 """, unsafe_allow_html=True)
+
+# -----------------
+# Navigation
+# -----------------
+from utils.navigation_ui import bottom_nav_layout
+bottom_nav_layout(__file__)
