@@ -253,6 +253,16 @@ if filtered_df.empty:
     st.warning("⚠️ No data available for selected filters")
     st.stop()
 
+# FIX: Remove duplicates and scale values
+# Remove duplicate country-year rows by averaging
+filtered_df = filtered_df.groupby(['country', 'year', 'indicator']).agg({
+    'value': 'mean'
+}).reset_index()
+
+# Auto-scale if values are too large (should be 0-100 for GINI)
+if filtered_df['value'].max() > 100:
+    filtered_df['value'] = filtered_df['value'] / 1000
+    
 
 # ═══════════════════════════════════════════════════════════════════
 # API ENRICHMENT SECTION
@@ -398,7 +408,11 @@ st.markdown(f"""
 # ═══════════════════════════════════════════════════════════════════
 
 latest_year = int(filtered_df['year'].max())
-latest_data = filtered_df[filtered_df['year'] == latest_year].copy()
+latest_data = filtered_df[filtered_df['year'] == latest_year].groupby('country').agg({
+    'value': 'mean',
+    'year': 'first',
+    'indicator': 'first'
+}).reset_index()
 prev_year = latest_year - 1
 prev_data = filtered_df[filtered_df['year'] == prev_year]
 
@@ -1323,7 +1337,8 @@ with col_bottom1:
     </div>
     """, unsafe_allow_html=True)
     
-    rankings = latest_data.sort_values('value').reset_index(drop=True)
+    rankings = latest_data.groupby('country')['value'].mean().reset_index()
+    rankings = rankings.sort_values('value').reset_index(drop=True)
     
     for idx, row in rankings.iterrows():
         rank = idx + 1
