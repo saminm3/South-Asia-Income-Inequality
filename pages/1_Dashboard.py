@@ -425,11 +425,38 @@ else:
     yoy_change = 0
     yoy_pct = 0
 
-# Best and worst performers
-best_country = latest_data.loc[latest_data['value'].idxmin(), 'country'] if not latest_data.empty else "N/A"
-worst_country = latest_data.loc[latest_data['value'].idxmax(), 'country'] if not latest_data.empty else "N/A"
+# ═══════════════════════════════════════════════════════════════════
+# SMART BEST/WORST DETECTION (REPLACES LINES 429-458)
+# ═══════════════════════════════════════════════════════════════════
+
+# Detect indicator type based on name
+indicator_name = config['indicator'].lower()
+
+# Define indicator categories
+inequality_terms = ['gini', 'inequality', 'poverty', 'disparity', 'gap', 'ratio']
+income_terms = ['income', 'gdp', 'wage', 'salary', 'earnings', 'consumption', 'expenditure']
+
+# Determine if this is an income/positive indicator (higher = better)
+is_positive_indicator = any(term in indicator_name for term in income_terms)
+
+# Calculate best and worst based on indicator type
+if is_positive_indicator:
+    # For INCOME: HIGHER = BETTER, LOWER = WORSE
+    best_country = latest_data.loc[latest_data['value'].idxmax(), 'country'] if not latest_data.empty else "N/A"
+    worst_country = latest_data.loc[latest_data['value'].idxmin(), 'country'] if not latest_data.empty else "N/A"
+    best_value = latest_data['value'].max() if not latest_data.empty else 0
+    worst_value = latest_data['value'].min() if not latest_data.empty else 0
+else:
+    # For INEQUALITY: LOWER = BETTER, HIGHER = WORSE (default)
+    best_country = latest_data.loc[latest_data['value'].idxmin(), 'country'] if not latest_data.empty else "N/A"
+    worst_country = latest_data.loc[latest_data['value'].idxmax(), 'country'] if not latest_data.empty else "N/A"
+    best_value = latest_data['value'].min() if not latest_data.empty else 0
+    worst_value = latest_data['value'].max() if not latest_data.empty else 0
+
+# Calculate data coverage
 data_coverage = (filtered_df.notna().sum()['value'] / len(filtered_df) * 100)
 
+# Display metric cards
 col1, col2, col3, col4, col5= st.columns(5)
 
 with col1:
@@ -441,7 +468,6 @@ with col1:
     )
 
 with col2:
-    best_value = latest_data['value'].min() if not latest_data.empty else 0
     st.metric(
         label="Best Performer",
         value=best_country,
@@ -449,7 +475,6 @@ with col2:
     )
 
 with col3:
-    worst_value = latest_data['value'].max() if not latest_data.empty else 0
     st.metric(
         label="Needs Attention",
         value=worst_country,
@@ -469,7 +494,6 @@ with col5:
         label="Data Range",
         value=f"{config['year_range'][1] - config['year_range'][0] + 1} Years"
     )
-
 # ═══════════════════════════════════════════════════════════════════
 # API-DRIVEN INSIGHTS (APPEARS WHEN API ENRICHMENT IS ENABLED)
 # ═══════════════════════════════════════════════════════════════════
@@ -802,20 +826,38 @@ with col_viz1:
     print(country_avg)
     print(f"Min: {country_avg.min()}, Max: {country_avg.max()}")
     
+# ═══════════════════════════════════════════════════════════════════
+    # SMART COLOR CODING (REPLACES LINES 805-817)
+    # ═══════════════════════════════════════════════════════════════════
+    
     # Calculate thresholds (SAME as donut chart)
     q1 = country_avg.quantile(0.33)
     q3 = country_avg.quantile(0.67)
     
-    # Assign discrete colors based on thresholds (matches donut chart exactly)
+    # Detect indicator type (reuse from earlier)
+    indicator_name = config['indicator'].lower()
+    income_terms = ['income', 'gdp', 'wage', 'salary', 'earnings', 'consumption', 'expenditure']
+    is_positive_indicator = any(term in indicator_name for term in income_terms)
+    
+    # Assign colors based on indicator type
     bar_colors = []
     for val in country_avg.values:
-        if val <= q1:
-            bar_colors.append('#10b981')  # Green - Low Inequality (Good)
-        elif val <= q3:
-            bar_colors.append('#f59e0b')  # Yellow - Moderate Inequality
+        if is_positive_indicator:
+            # For INCOME: LOW = BAD (red), HIGH = GOOD (green)
+            if val <= q1:
+                bar_colors.append('#ef4444')  # Red - Low Income (Bad)
+            elif val <= q3:
+                bar_colors.append('#f59e0b')  # Yellow - Moderate Income
+            else:
+                bar_colors.append('#10b981')  # Green - High Income (Good)
         else:
-            bar_colors.append('#ef4444')  # Red - High Inequality (Bad)
-    
+            # For INEQUALITY: LOW = GOOD (green), HIGH = BAD (red)
+            if val <= q1:
+                bar_colors.append('#10b981')  # Green - Low Inequality (Good)
+            elif val <= q3:
+                bar_colors.append('#f59e0b')  # Yellow - Moderate Inequality
+            else:
+                bar_colors.append('#ef4444')  # Red - High Inequality (Bad)
     fig_bars = go.Figure()
     
     # ═══════════════════════════════════════════════════════════════
@@ -919,33 +961,64 @@ with col_viz1:
         }
     })
 with col_viz2:
+# ═══════════════════════════════════════════════════════════════════
+    # SMART CATEGORY ASSIGNMENT (REPLACES LINES 923-943)
+    # ═══════════════════════════════════════════════════════════════════
+    
     # Donut chart
     median_val = latest_data['value'].median()
     q1 = latest_data['value'].quantile(0.33)
     q3 = latest_data['value'].quantile(0.67)
     
+    # Detect indicator type (reuse from earlier)
+    indicator_name = config['indicator'].lower()
+    income_terms = ['income', 'gdp', 'wage', 'salary', 'earnings', 'consumption', 'expenditure']
+    is_positive_indicator = any(term in indicator_name for term in income_terms)
+    
+    # Assign categories based on indicator type
     categories = []
     for val in latest_data['value']:
-        if val <= q1:
-            categories.append('Low Inequality')
-        elif val <= q3:
-            categories.append('Moderate')
+        if is_positive_indicator:
+            # For INCOME: LOW = BAD, HIGH = GOOD
+            if val <= q1:
+                categories.append('Low Income')      # Bad (was bottom 33%)
+            elif val <= q3:
+                categories.append('Moderate')
+            else:
+                categories.append('High Income')     # Good (top 33%)
         else:
-            categories.append('High Inequality')
+            # For INEQUALITY: LOW = GOOD, HIGH = BAD
+            if val <= q1:
+                categories.append('Low Inequality')  # Good
+            elif val <= q3:
+                categories.append('Moderate')
+            else:
+                categories.append('High Inequality') # Bad
     
     category_counts = pd.Series(categories).value_counts()
     
-    # Define consistent color mapping (green=good, red=bad)
-    color_map = {
-        'Low Inequality': '#10b981',    # Green (GOOD)
-        'Moderate': '#f59e0b',          # Yellow/Orange (OK)
-        'High Inequality': '#ef4444'    # Red (BAD)
-    }
+    # Define color mapping (adapt to indicator type)
+    if is_positive_indicator:
+        # For INCOME indicators
+        color_map = {
+            'Low Income': '#ef4444',      # Red (BAD - low income)
+            'Moderate': '#f59e0b',        # Yellow/Orange (OK)
+            'High Income': '#10b981'      # Green (GOOD - high income)
+        }
+        ordered_categories = ['Low Income', 'Moderate', 'High Income']
+    else:
+        # For INEQUALITY indicators (default)
+        color_map = {
+            'Low Inequality': '#10b981',    # Green (GOOD)
+            'Moderate': '#f59e0b',          # Yellow/Orange (OK)
+            'High Inequality': '#ef4444'    # Red (BAD)
+        }
+        ordered_categories = ['Low Inequality', 'Moderate', 'High Inequality']
     
     # Ensure consistent order and colors
-    ordered_categories = ['Low Inequality', 'Moderate', 'High Inequality']
     ordered_values = [category_counts.get(cat, 0) for cat in ordered_categories]
     ordered_colors = [color_map[cat] for cat in ordered_categories]
+
     
     fig_donut = go.Figure(data=[go.Pie(
         labels=ordered_categories,
