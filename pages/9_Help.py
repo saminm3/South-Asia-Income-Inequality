@@ -232,7 +232,6 @@ with tab1:
         <div class='tip-box'>
             <strong> Keyboard Shortcuts</strong><br>
             • Click the ❓ help button on any page<br>
-            • Use Smart Search (Ctrl+K) for quick navigation<br>
             • Sidebar collapses for more screen space
         </div>
         """, unsafe_allow_html=True)
