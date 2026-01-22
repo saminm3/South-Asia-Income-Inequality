@@ -578,9 +578,22 @@ else:
 # Enhanced Storytelling with Visual Indicators
 # --------------------------------------------------
 st.markdown("---")
-
 # Get data for selected year
 year_data = filtered_df[filtered_df['year'] == selected_year].copy()
+
+# Default values in case no data
+avg_value = 0
+regional_heat = "N/A"
+regional_color = "#888888"
+best_country = None
+best_value = None
+worst_country = None
+worst_value = None
+best_flag = None
+worst_flag = None
+has_comparison = False
+trend_text = ""
+trend_arrow = ""
 
 if not year_data.empty:
     # Calculate key statistics
@@ -595,7 +608,6 @@ if not year_data.empty:
     best_flag = country_flags.get(best_country)
     worst_flag = country_flags.get(worst_country)
 
-
     # Heat intensity for region
     regional_heat, regional_color = get_heat_intensity(avg_value, value_min, value_max)
 
@@ -606,12 +618,8 @@ if not year_data.empty:
             prev_avg = prev_year_data['value'].mean()
             regional_change = avg_value - prev_avg
             trend_text = "increased" if regional_change > 0 else "decreased"
-            trend_arrow = "📈" if regional_change < 0 else "📉"
+            trend_arrow = "📈" if regional_change > 0 else "📉"
             has_comparison = True
-        else:
-            has_comparison = False
-    else:
-        has_comparison = False
 
 # --------------------------------------------------
 # Interactive Country Spotlight Cards
@@ -619,25 +627,31 @@ if not year_data.empty:
 st.markdown("---")
 st.markdown("### Country Spotlight")
 
-# Country selector
 selected_country_spotlight = st.selectbox(
     "Choose a country to spotlight:",
     options=['-- Select a country --'] + sorted(config['countries']),
     key='spotlight_selector'
 )
 
-if selected_country_spotlight != '-- Select a country --':
+if selected_country_spotlight != '-- Select a country --' and not year_data.empty:
     country_year_data = year_data[year_data['country'] == selected_country_spotlight]
 
     if not country_year_data.empty:
         country_info = country_year_data.iloc[0]
         flag = country_flags.get(selected_country_spotlight)
 
-        # Create spotlight card with custom styling
+        # Prepare safe display values
+        value_display = f"{country_info['value']:.2f}" if pd.notna(country_info['value']) else "N/A"
+        change_display = f"{country_info['change_from_prev']:.2f}" if pd.notna(country_info['change_from_prev']) else "N/A"
+        rank_display = f"#{int(country_info['rank'])}" if pd.notna(country_info['rank']) else "N/A"
+        diff_from_avg = (country_info['value'] - country_info['regional_avg']) if pd.notna(country_info['value']) and pd.notna(country_info['regional_avg']) else None
+        diff_display = f"{diff_from_avg:+.2f}" if diff_from_avg is not None else "N/A"
+
+        # Spotlight card
         st.markdown(f"""
         <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                    padding: 30px; border-radius: 15px; color: white; margin: 20px 0;">
-            <h2 style="margin: 0; font-size: 2.5em;">{flag} {selected_country_spotlight}</h2>
+                    padding: 20px; border-radius: 15px; color: white; margin: 15px 0;">
+            <h2 style="margin: 0; font-size: 2em;">{flag} {selected_country_spotlight}</h2>
             <p style="opacity: 0.9; margin-top: 10px;">Year {selected_year} Performance Analysis</p>
         </div>
         """, unsafe_allow_html=True)
@@ -647,12 +661,12 @@ if selected_country_spotlight != '-- Select a country --':
 
         with col1:
             heat_label, heat_color = get_heat_intensity(
-                country_info['value'],
-                year_data['value'].min(),
-                year_data['value'].max()
+                country_info['value'] if pd.notna(country_info['value']) else 0,
+                year_data['value'].min() if not year_data.empty else 0,
+                year_data['value'].max() if not year_data.empty else 0
             )
             st.markdown(f"""
-            <div style="background: {heat_color}; padding: 20px; border-radius: 10px; text-align: center;">
+            <div style="background: {heat_color}; padding: 15px; border-radius: 10px; text-align: center;">
                 <h3 style="color: white; margin: 0;">Intensity</h3>
                 <p style="color: white; font-size: 1.5em; margin: 10px 0;">{heat_label}</p>
             </div>
@@ -661,8 +675,8 @@ if selected_country_spotlight != '-- Select a country --':
         with col2:
             st.metric(
                 "Current Value",
-                f"{country_info['value']:.2f}",
-                delta=f"{country_info['change_from_prev']:.2f}" if pd.notna(country_info['change_from_prev']) else "N/A",
+                value_display,
+                delta=change_display,
                 delta_color='inverse'
             )
 
@@ -670,20 +684,20 @@ if selected_country_spotlight != '-- Select a country --':
             rank_total = len(year_data)
             st.metric(
                 "Regional Rank",
-                f"#{int(country_info['rank'])}",
-                delta=f"of {rank_total} countries"
+                rank_display,
+                delta=f"of {rank_total} countries" if rank_display != "N/A" else "N/A"
             )
 
         with col4:
-            diff_from_avg = country_info['value'] - country_info['regional_avg']
+            delta_text = "Above" if diff_from_avg and diff_from_avg > 0 else "Below"
             st.metric(
                 "vs Regional Avg",
-                f"{diff_from_avg:+.2f}",
-                delta="Above" if diff_from_avg > 0 else "Below",
+                diff_display,
+                delta=delta_text if diff_display != "N/A" else "N/A",
                 delta_color='inverse'
             )
 
-        # Achievement badges
+        # Achievements
         badges = get_achievement_badge(selected_country_spotlight, year_data)
         if badges:
             st.markdown("**Achievements:**")
@@ -692,14 +706,11 @@ if selected_country_spotlight != '-- Select a country --':
                 with badge_cols[i]:
                     st.info(badge)
 
-        # Mini sparkline chart
+        # Sparkline chart
         country_history = filtered_df[filtered_df['country'] == selected_country_spotlight].sort_values('year')
-
         if len(country_history) > 1:
             st.markdown("**Historical Trend:**")
-
             sparkline_fig = go.Figure()
-
             sparkline_fig.add_trace(go.Scatter(
                 x=country_history['year'],
                 y=country_history['value'],
@@ -710,8 +721,7 @@ if selected_country_spotlight != '-- Select a country --':
                 fill='tozeroy',
                 fillcolor='rgba(102, 126, 234, 0.2)'
             ))
-
-            # Add regional average line
+            # Regional average
             regional_trend = filtered_df.groupby('year')['value'].mean().reset_index()
             sparkline_fig.add_trace(go.Scatter(
                 x=regional_trend['year'],
@@ -720,7 +730,6 @@ if selected_country_spotlight != '-- Select a country --':
                 name='Regional Average',
                 line=dict(color='#95a5a6', width=2, dash='dash')
             ))
-
             sparkline_fig.update_layout(
                 height=300,
                 margin=dict(l=0, r=0, t=30, b=0),
@@ -730,35 +739,41 @@ if selected_country_spotlight != '-- Select a country --':
                 xaxis=dict(showgrid=False),
                 yaxis=dict(showgrid=True, gridcolor='rgba(0,0,0,0.1)')
             )
+            st.plotly_chart(sparkline_fig, width="stretch", config={'displayModeBar': False}, key="country_sparkline_chart")
 
-            st.plotly_chart(sparkline_fig, use_container_width=True , config={'displayModeBar': False}, key="country_sparkline_chart")  #use_container_width=True
-
-        # Quick comparison to regional average
+        # Quick comparison
         st.markdown("**Quick Comparison:**")
         comparison_text = ""
-
-        if diff_from_avg > 5:
-            comparison_text = f"⚠️ {selected_country_spotlight} is **{abs(diff_from_avg):.2f} points above** the regional average, indicating higher inequality than most countries in the region."
-        elif diff_from_avg < -5:
-            comparison_text = f"{selected_country_spotlight} is **{abs(diff_from_avg):.2f} points below** the regional average, performing better than most countries in the region."
+        if diff_from_avg is not None:
+            if diff_from_avg > 5:
+                comparison_text = f"⚠️ {selected_country_spotlight} is **{abs(diff_from_avg):.2f} points above** the regional average."
+            elif diff_from_avg < -5:
+                comparison_text = f"{selected_country_spotlight} is **{abs(diff_from_avg):.2f} points below** the regional average."
+            else:
+                comparison_text = f"{selected_country_spotlight} is **near the regional average**."
         else:
-            comparison_text = f"{selected_country_spotlight} is **near the regional average**, with a difference of only {abs(diff_from_avg):.2f} points."
-
+            comparison_text = "Data not available for comparison."
         st.info(comparison_text)
 
     else:
         st.warning(f"⚠️ No data available for {selected_country_spotlight} in {selected_year}")
+else:
+    st.info("Select a country to spotlight, or no data available for this year.")
 
-#Storytelling narrative with visual elements
+
+# --------------------------------------------------
+# Storytelling narrative
+# --------------------------------------------------
 st.markdown(f"""
-    <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                padding: 30px; border-radius: 15px; color: white; margin-bottom: 30px;">
-        <h2 style="margin: 0;">South Asia in {selected_year}: A Story of Inequality</h2>
-        <p style="opacity: 0.9; margin-top: 10px; font-size: 1.1em;">
-            Regional Intensity: {regional_heat}
-        </p>
-    </div>
-    """, unsafe_allow_html=True)
+<div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px; border-radius: 15px; color: white; margin-bottom: 30px;">
+    <h2 style="margin: 0;">South Asia in {selected_year}: A Story of Inequality</h2>
+    <p style="opacity: 0.9; margin-top: 10px; font-size: .95em;">
+        Regional Intensity: {regional_heat}
+    </p>
+</div>
+""", unsafe_allow_html=True)
+
 
     #The Overview
 st.markdown(f"Summary of **{human_indicator(config['indicator']).lower()}**")
@@ -768,38 +783,41 @@ st.markdown(f"""
     the gap between the best and worst performers stood at **{value_range:.2f} points** — a stark reminder
     of the diverse economic realities within the region.
     """)
+# Prepare safe display variables
+best_value_display = f"{best_value:.2f}" if best_value is not None else "N/A"
+worst_value_display = f"{worst_value:.2f}" if worst_value is not None else "N/A"
+avg_value_display = f"{avg_value:.2f}" if avg_value is not None else "N/A"
+regional_heat_display = regional_heat.split()[1] if regional_heat and len(regional_heat.split()) > 1 else regional_heat or "N/A"
 
-    # Visual indicator boxes
+# Display boxes
 col1, col2, col3 = st.columns(3)
 
 with col1:
-        st.markdown(f"""
-        <div style="background: #4B5BD5; padding: 15px; border-radius: 10px; text-align: center;">
-            <h3 style="color: white; margin: 0;"> Country with Highest Value </h3>
-            <p style="color: white; font-size: 1.5em; margin: 10px 0;">{best_country}</p>
-            <p style="color: white; margin: 5px 0;">{best_value:.2f}</p>
-        </div>
-        """, unsafe_allow_html=True)
+    st.markdown(f"""
+    <div style="background: #4B5BD5; padding: 12px; border-radius: 10px; text-align: center;">
+        <h3 style="color: white; margin: 0; font-size: 1.2em; font-weight: 600;">Country with Highest Value</h3>
+        <p style="color: white; font-size: 1.3em; margin: 8px 0 0 0; font-weight: bold;">{best_country or "N/A"}</p>
+        <p style="color: white; margin: 2px 0 0 0; font-size: 0.95em;">{best_value_display}</p>
+    </div>
+    """, unsafe_allow_html=True)
 
 with col2:
-        st.markdown(f"""
-        <div style="background: #8B5CF6; padding: 15px; border-radius: 10px; text-align: center;">
-            <h3 style="color: white; margin: 0;">Regional Avg</h3>
-            <p style="color: white; font-size: 1.5em; margin: 10px 0;">{avg_value:.2f}</p>
-            <p style="color: white; margin: 5px 0;">{regional_heat.split()[1] if len(regional_heat.split()) > 1 else regional_heat}</p>
-        </div>
-        """, unsafe_allow_html=True)
+    st.markdown(f"""
+    <div style="background: #8B5CF6; padding: 12px; border-radius: 10px; text-align: center;">
+        <h3 style="color: white; margin: 0; font-size: 1.2em; font-weight: 600;">Regional Avg</h3>
+        <p style="color: white; font-size: 1.3em; margin: 8px 0 0 0; font-weight: bold;">{avg_value_display}</p>
+        <p style="color: white; margin: 2px 0 0 0; font-size: 0.95em;">{regional_heat_display}</p>
+    </div>
+    """, unsafe_allow_html=True)
 
 with col3:
-        st.markdown(f"""
-        <div style="background: #F472B6; padding: 15px; border-radius: 10px; text-align: center;">
-            <h3 style="color: white; margin: 0;">Country with Lowest Value</h3>
-            <p style="color: white; font-size: 1.5em; margin: 10px 0;">{worst_country}</p>
-            <p style="color: white; margin: 5px 0;">{worst_value:.2f}</p>
-        </div>
-        """, unsafe_allow_html=True)
-
-st.markdown("<br>", unsafe_allow_html=True)
+    st.markdown(f"""
+    <div style="background: #F472B6; padding: 12px; border-radius: 10px; text-align: center;">
+        <h3 style="color: white; margin: 0; font-size: 1.2em; font-weight: 600;">Country with Lowest Value</h3>
+        <p style="color: white; font-size: 1.3em; margin: 8px 0 0 0; font-weight: bold;">{worst_country or "N/A"}</p>
+        <p style="color: white; margin: 2px 0 0 0; font-size: 0.95em;">{worst_value_display}</p>
+    </div>
+    """, unsafe_allow_html=True)
 
     # Find most improved and most declined if data exists
 year_data_with_change = year_data[year_data['change_from_prev'].notna()]
