@@ -1,4 +1,3 @@
-
 import streamlit as st
 import pandas as pd
 import plotly.express as px
@@ -6,6 +5,7 @@ from scipy.stats import ttest_rel
 import sys
 from pathlib import Path
 import numpy as np
+import json 
 
 # --------------------------------------------------
 # Path setup
@@ -22,8 +22,93 @@ from utils.utils import (
     format_value,
     safe_divide
 )
+from utils.indicator_metadata import (
+    get_available_indicators_by_category,
+    get_indicator_description
+)
 
+# --------------------------------------------------
+# CONSTANTS
+# --------------------------------------------------
+MIN_STATISTICAL_TEST_SIZE = 5
+TIER_THRESHOLD = 6  # Use 3 tiers if <= 6 countries, 4 tiers if more
 
+# Eurostat-style color palette
+EUROSTAT_COLORS = {
+    'diverging': [
+        [0.0, "#160216"],
+        [0.25, "#5A3C5A"],
+        [0.5, "#FAFAFB"],
+        [0.75, "#1C91C8"],
+        [1.0, "#1F4F82"]
+    ]
+}
+
+# ADD THIS NEW HELPER FUNCTION
+def add_country_labels_to_map(fig, data, geojson):
+    """Add country name labels to choropleth map."""
+    for _, row in data.iterrows():
+        iso = row['country_code']
+        country_feature = next(
+            (f for f in geojson['features'] if f['properties']['ISO_A3'] == iso), 
+            None
+        )
+        
+        if not country_feature:
+            continue
+            
+        coords = country_feature['geometry']['coordinates']
+        
+        if country_feature['geometry']['type'] == 'Polygon':
+            lons = [c[0] for c in coords[0]]
+            lats = [c[1] for c in coords[0]]
+        elif country_feature['geometry']['type'] == 'MultiPolygon':
+            lons = [c[0] for c in coords[0][0]]
+            lats = [c[1] for c in coords[0][0]]
+        else:
+            continue
+        
+        center_lon = sum(lons) / len(lons)
+        center_lat = sum(lats) / len(lats)
+        
+        fig.add_scattergeo(
+            lon=[center_lon],
+            lat=[center_lat],
+            text=row['country'],
+            mode='text',
+            textfont=dict(size=10, color='black', family='Arial'),
+            showlegend=False,
+            hoverinfo='skip'
+        )
+    
+    return fig
+def style_choropleth_map(fig):
+    """Apply consistent styling to choropleth maps."""
+    
+    fig.update_geos(
+        fitbounds="locations",
+        visible=False,
+        showcountries=True,
+        countrycolor='#bdc3c7',
+        countrywidth=1.5,
+        coastlinecolor='#34495e',
+        coastlinewidth=1,
+        landcolor='#ecf0f1',
+        oceancolor='#d6eaf8',
+        showocean=True,
+        showlakes=False,
+        bgcolor='#e8f4f8',
+        scope='world'
+    )
+    
+    fig.update_layout(
+        paper_bgcolor="rgba(52, 26, 87, 0.28)",
+        plot_bgcolor="#ffffff",
+        margin={'r': 10, 't': 30, 'l': 10, 'b': 10},
+        font=dict(family='Arial, sans-serif')
+    )
+    
+    return fig
 # --------------------------------------------------
 # Page configuration
 # --------------------------------------------------
@@ -33,10 +118,27 @@ st.set_page_config(
 )
 render_help_button("temporal")
 apply_all_styles()
-st.title("🕰️ Temporal Comparison")
-
 st.title("Temporal Comparison")
 st.caption("Temporal, spatial, and statistical comparison of inequality indicators")
+
+# Display current configuration from home page
+if 'analysis_config' in st.session_state and st.session_state.analysis_config:
+    config = st.session_state.analysis_config
+
+    st.markdown(
+        f"Period: **{config['year_range'][0]}–{config['year_range'][1]}** | "
+        f"Countries: **{len(config['countries'])}** selected"
+    )
+
+    with st.expander("View Full Configuration"):
+        col1, col2 = st.columns(2)
+        with col1:
+            st.write("**Selected Countries:**")
+            st.write(", ".join(config['countries']))
+        with col2:
+            st.write("**Indicator:**", human_indicator(config['indicator']))
+            st.write("**Year Range:**", f"{config['year_range'][0]} - {config['year_range'][1]}")
+            st.write("**Color Scheme:**", config['color_scale'])
 
 def render_visualization_help(viz_type: str):
     """
@@ -45,88 +147,116 @@ def render_visualization_help(viz_type: str):
     
     viz_help = {
         "Map": {
-            "title": "How to Read Side-by-Side Maps",
+            "title": "How to Read Side-by-Side Choropleth Maps",
             "content": """
             **What you're seeing:**
             - **Left map (THEN):** Shows the earlier time period's values
             - **Right map (NOW):** Shows the later time period's values
-            - **Color intensity:** Darker = higher values (meaning varies by indicator)
+            - **Color intensity:** Based on your selected color scheme
+            - **Country labels:** Visible on the map for easy identification
             
             **How to interpret:**
-            - Compare the same country across both maps to see if it got darker or lighter
-            - Darker to lighter = improvement (for inequality indicators)
-            - Lighter to darker = worsening situation
+            - Compare the same country across both maps to see changes
+            - Color changes indicate whether values increased or decreased
             - Hover over countries to see exact values and changes
+            - Geographic patterns show regional trends
+            
+            **Color scales:**
+            Your selected color scheme from the home page configuration is applied to all visualizations for consistency.
             
             **Best for:**
             - Understanding geographic shifts in patterns
             - Seeing which regions improved vs. declined
             - Visual storytelling about temporal change
+            - Identifying spatial clusters
             """
         },
         "Bar Chart": {
             "title": "How to Read the Comparison Bar Chart",
             "content": """
             **What you're seeing:**
-            - Each country has two bars side-by-side
-            - **First bar (darker):** THEN period value
-            - **Second bar (lighter):** NOW period value
+            - Two separate bar charts side-by-side
+            - **Left chart:** THEN period values (all countries)
+            - **Right chart:** NOW period values (all countries)
+            - Countries sorted by value magnitude
             
             **How to interpret:**
-            - If NOW bar is shorter than THEN bar = improvement (values decreased)
-            - If NOW bar is taller than THEN bar = worsening (values increased)
-            - Hover to see exact values and percentage change
+            - Find the same country in both charts to compare
+            - Color intensity indicates value magnitude
+            - Chart uses same color scale for consistency
+            - Bars are ordered independently in each period
+            
+            **What to look for:**
+            - Countries that changed position significantly
+            - Overall distribution shifts (more/less inequality)
+            - Extreme values (top and bottom performers)
             
             **Best for:**
             - Quickly comparing magnitudes across countries
-            - Identifying which countries changed the most
+            - Identifying rank changes between periods
             - Spotting outliers or exceptional cases
+            - Understanding overall distribution changes
             """
         },
         "Scatter Plot": {
             "title": "How to Read the Scatter Plot",
             "content": """
             **What you're seeing:**
-            - X-axis = THEN period values
-            - Y-axis = NOW period values
-            - **Diagonal line** = line of no change
+            - **X-axis:** THEN period values
+            - **Y-axis:** NOW period values
+            - **Red diagonal line:** Line of no change
+            - **Point color:** Represents the absolute change (NOW - THEN)
             - Each point represents one country
             
             **How to interpret:**
-            - Points **below the diagonal** = improved (decreased inequality)
-            - Points **above the diagonal** = worsened (increased inequality)
+            - Points **below the diagonal** = values decreased
+            - Points **above the diagonal** = values increased
             - Points **on the diagonal** = no change
             - Distance from line = magnitude of change
+            - Color intensity shows change magnitude
+            
+            **For inequality indicators (lower is better):**
+            - Below diagonal = improved (inequality decreased)
+            - Above diagonal = worsened (inequality increased)
+            
+            **For positive indicators (higher is better):**
+            - Above diagonal = improved (values increased)
+            - Below diagonal = worsened (values decreased)
             
             **Best for:**
             - Seeing correlation between past and present
-            - Identifying countries that bucked regional trends
-            - Understanding if high-inequality countries improved more/less
+            - Identifying countries that bucked trends
+            - Understanding if high-value countries changed more/less
+            - Spotting outliers visually
             """
         },
         "Ranking Shift": {
-            "title": "How to Read Ranking Changes",
+            "title": "How to Read Ranking Changes Scatter Plot",
             "content": """
             **What you're seeing:**
-            - Each country's rank position in THEN vs NOW
-            - Lines connect the same country across time periods
-            - **Green lines** = moved up in rankings (improved relative position)
-            - **Red lines** = moved down in rankings (worsened relative position)
+            - **X-axis:** Rank in THEN period (reversed scale)
+            - **Y-axis:** Rank in NOW period (reversed scale)
+            - **Red diagonal line:** Line of no rank change
+            - **Point color:** Rank improvement (negative of rank change)
+            - Each point represents one country
             
             **How to interpret:**
-            - Upward slopes (left-to-right) = worsening rank
-            - Downward slopes = improving rank
-            - Steep lines = major rank shifts
-            - Flat/horizontal = maintained position
+            - Points **below the diagonal** = improved ranking (moved to better/lower rank number)
+            - Points **above the diagonal** = worsened ranking (moved to worse/higher rank number)
+            - Points **on the diagonal** = maintained same rank
+            - Both axes are reversed so better ranks (1, 2, 3) appear at top/left
             
-            **Important note:**
+            **Important notes:**
             - Rankings are **relative**, not absolute
             - A country can worsen in absolute terms but improve in rank if others worsened more
+            - Rank improvement is calculated as: THEN rank - NOW rank
+            - Positive rank improvement = moved to a better (lower) rank number
             
             **Best for:**
             - Understanding competitive positioning
             - Tracking relative progress among peers
-            - Identifying regional leaders vs. laggards
+            - Identifying which countries moved up/down in rankings
+            - Comparing relative vs. absolute performance
             """
         },
         "Distribution": {
@@ -134,16 +264,14 @@ def render_visualization_help(viz_type: str):
             "content": """
             **What you're seeing:**
             - Box plots showing data distribution for THEN and NOW periods
-            - **Box** = middle 50/%/ of values (interquartile range)
+            - **Box** = middle 50% of values (interquartile range)
             - **Line in box** = median value
             - **Whiskers** = extend to min/max within 1.5× IQR
-            - **Dots** = individual country data points
-            
-            **How to interpret:**
-            - Wider box = more inequality/variance among countries
-            - Box shift up/down = overall regional trend
-            - Dots outside whiskers = outlier countries
+            - **Individual dots** = all country data points
             - Hover over dots to see which country
+            
+            **Color scheme:**
+            Your selected color scheme from the home page is used consistently across both periods for direct comparison.
             
             **Statistics table shows:**
             - **Mean:** Average value across all countries
@@ -152,139 +280,109 @@ def render_visualization_help(viz_type: str):
             - **Min/Max:** Extreme values
             - **Range:** Difference between max and min
             
+            **How to interpret:**
+            - **Vertical position:** Overall level (higher = larger values)
+            - **Box width:** Spread of middle 50% of countries
+            - **Box shift:** If NOW box is lower = overall improvement (for inequality)
+            - **Narrower box:** Countries converging (less dispersion)
+            - **Wider box:** Countries diverging (more dispersion)
+            
             **Key insights:**
-            - If NOW box is narrower = countries converging (less dispersion)
-            - If NOW box is wider = countries diverging (more dispersion)
             - Compare medians to see if typical country improved
+            - Compare ranges to see if extremes changed
+            - Look at outlier dots to identify exceptional countries
             
             **Best for:**
             - Understanding regional inequality trends
             - Seeing if countries are converging or diverging
             - Identifying outliers and extreme cases
+            - Statistical overview of changes
             """
         },
         "Delta Map": {
             "title": "How to Read Delta (Change) Map",
             "content": """
             **What you're seeing:**
-            - Single map showing **change** between periods (NOW - THEN)
-            - Uses Eurostat-style diverging color scale
+            - Single choropleth map showing **change** between periods (NOW - THEN)
+            - Uses your selected color scheme from home page configuration
+            - Country labels for significant changes (top/bottom 20%)
             
-            **Color guide:**
-            - 🟣 **Dark Purple (#160216)** = Large negative change (large decrease)  
-            - 🟣 **Medium Purple (#5A3C5A)** = Moderate negative change  
-            - ⚪ **Off-White (#FAFAFB)** = Little or no change / neutral  
-            - 🔵 **Light Blue (#1C91C8)** = Moderate positive change  
-            - 🔵 **Dark Blue (#1F4F82)** = Large positive change (large increase)
-            
-            **How to interpret:**
-            - For inequality indicators (lower is better):
-              - **Blue = worsened** (inequality increased)
-              - **Red = improved** (inequality decreased)
-            - For positive indicators (higher is better):
-              - **Blue = improved**
-              - **Red = worsened**
+            **Color interpretation:**
+            The color scale you selected on the home page is applied to show changes:
+            - **For diverging scales:** Center color = no change, extremes = large changes
+            - **For sequential scales:** Darker = larger absolute change
+            - **Color direction depends on indicator type:**
+              - Inequality indicators: Negative change (decrease) = improvement
+              - Positive indicators: Positive change (increase) = improvement
             
             **Hover information shows:**
-            - THEN value
-            - NOW value
-            - Absolute change
+            - Value in THEN period
+            - Value in NOW period
+            - Absolute change (NOW - THEN)
             - Percentage change
             
             **Summary metrics below map:**
             - **Biggest Increase:** Country with largest positive change
             - **Biggest Decrease:** Country with largest negative change
             - **Average Change:** Mean change across all countries
+            - **Median Change:** Middle value (more robust to outliers)
             
             **Best for:**
             - Quickly identifying winners and losers
-            - Geographic patterns of improvement/decline
-            - Seeing regional clusters of change
+            - Seeing geographic patterns of improvement/decline
+            - Identifying regional clusters of change
             - Presentations and reports (single clear visual)
+            - Highlighting significant changes only
             """
         },
         "Sankey": {
             "title": "How to Read Sankey Diagram (Rank Flow)",
             "content": """
             **What you're seeing:**
-            - **Left side (Blue):** Performance tiers in THEN period
-            - **Right side (Red):** Performance tiers in NOW period
-            - **Flows (ribbons):** Show how many countries moved between tiers
+            - **Left side:** Performance tiers in THEN period
+            - **Right side:** Performance tiers in NOW period
+            - **Flowing ribbons:** Show how many countries moved between tiers
+            - Width of ribbon = number of countries making that transition
             
             **Tier definitions:**
-            - For small datasets (≤6 countries): 3 tiers (Top, Middle, Bottom)
-            - For larger datasets: 4 quartiles (Top 25%, Upper Middle, Lower Middle, Bottom 25%)
+            - **For small datasets (< 8 countries):** 3 tiers
+              - Top Tier, Middle Tier, Bottom Tier
+            - **For larger datasets (≥ 8 countries):** 4 quartiles
+              - Top 25%, Upper Middle, Lower Middle, Bottom 25%
             
-            **Color coding:**
+            **Flow color coding:**
             - **Green flows** = Countries improved (moved to better tier)
             - **Red flows** = Countries declined (moved to worse tier)
             - **Gray flows** = Countries stayed in same tier
             
-            **Flow width:**
+            **Flow width meaning:**
             - Wider ribbon = more countries made that transition
             - Narrow ribbon = fewer countries
+            - No flow = no countries made that transition
             
             **How to interpret:**
-            - Lots of green = many countries improving
-            - Lots of red = many countries declining
-            - Thick gray flows = stable tier membership
+            - Lots of green flows = many countries improving tiers
+            - Lots of red flows = many countries declining tiers
+            - Thick gray flows = stable tier membership (low mobility)
+            - Thin flows everywhere = high tier mobility
             
             **Expandable details:**
-            - Click "Individual Country Movements" to see which specific countries moved
-            - Shows tier transitions and rank changes for each country
+            - Click "Individual Country Movements" to see specifics
+            - Shows each country's tier transitions
+            - Includes rank changes and movement direction
+            - Categorizes as: Improved, Worsened, or Stayed Same
+            
+            **Important notes:**
+            - Tiers are **relative rankings**, not absolute thresholds
+            - Even if all countries improved absolutely, some must still be in bottom tier
+            - Movement shows relative performance changes
             
             **Best for:**
             - Visualizing mobility between performance groups
             - Understanding tier stability vs. movement
             - Seeing overall direction of change (upward/downward mobility)
-            - Presentations (easy to explain to non-technical audiences)
-            
-            **Note:**
-            - Tiers are **relative rankings**, not absolute thresholds
-            - Even if all countries improved, some must still be in bottom tier
-            """
-        },
-        "Radar Chart": {
-            "title": "How to Read Radar Chart (Performance Profile)",
-            "content": """
-            **What you're seeing:**
-            - **Left chart:** THEN period performance profiles
-            - **Right chart:** NOW period performance profiles
-            - Each axis = one indicator (3-8 indicators recommended)
-            - Colored polygons = individual countries
-            
-            **How to interpret:**
-            - **Larger polygon area** = better overall performance
-            - **Polygon shape** = performance pattern across indicators
-            - Distance from center = value magnitude
-            - **Outer edge** = higher values, **center** = lower values
-            
-            **Comparing THEN vs NOW:**
-            - Same color represents same country in both periods
-            - Expanded polygon (THEN→NOW) = overall improvement
-            - Contracted polygon = overall decline
-            - Shape changes = shifts in performance pattern
-            
-            **Pattern recognition:**
-            - **Circular/balanced polygon** = consistent performance across indicators
-            - **Star-shaped** = uneven performance (strong in some, weak in others)
-            - **Similar shapes** = countries with similar development patterns
-            
-            **Best for:**
-            - Multi-dimensional country comparisons
-            - Seeing holistic performance (not just one metric)
-            - Identifying countries with balanced vs. unbalanced development
-            - Understanding which indicators drive overall change
-            
-            **Tips:**
-            - Select 1-4 countries for clarity (more gets messy)
-            - Choose 3-8 indicators (too few = less informative, too many = cluttered)
-            - Look for countries that shift from star to circle (becoming more balanced)
-            - Compare polygon areas visually for quick overall assessment
-            
-            **Limitation:**
-            - Different indicators may have different scales, making direct comparison tricky
-            - Useful for patterns, less for precise values
+            - Explaining changes to non-technical audiences
+            - Group-level analysis rather than individual countries
             """
         },
         "Heatmap": {
@@ -292,104 +390,61 @@ def render_visualization_help(viz_type: str):
             "content": """
             **What you're seeing:**
             - Three heatmaps stacked vertically
-            - **Rows** = Countries
-            - **Columns** = Indicators
-            - **Colors** = Values (darker = higher)
+            - **Rows** = Countries (sorted alphabetically)
+            - **Columns** = Selected indicators
+            - **Colors** = Values (intensity shows magnitude)
+            - **Numbers in cells** = Exact values (formatted to 2 decimals)
             
-            **First heatmap (Blue):**
+            **First heatmap (Side-by-side, left):**
             - Shows THEN period values
-            - Darker blue = higher value
-            - Lighter blue = lower value
-            - Numbers show exact values
+            - Uses your selected color scheme from home page
+            - Color intensity indicates value magnitude
+            - Consistent scale with NOW period for comparison
             
-            **Second heatmap (Red):**
+            **Second heatmap (Side-by-side, right):**
             - Shows NOW period values
-            - Darker red = higher value
-            - Lighter red = lower value
-            - Numbers show exact values
+            - Uses same color scheme as THEN period
+            - Same scale range for direct comparison
+            - Color intensity shows value magnitude
             
-            **Third heatmap (Red-Blue diverging):**
+            **Third heatmap (Full width below):**
             - Shows **change** (NOW - THEN)
-            - 🔵 **Blue** = Value increased
-            - ⚪ **White** = No change
-            - 🔴 **Red** = Value decreased
-            - Numbers show change amount
+            - Uses diverging color scale
+            - Numbers show change amount (can be positive or negative)
             
             **How to interpret:**
             - **Vertical patterns** (same column) = how countries compare on one indicator
             - **Horizontal patterns** (same row) = one country's profile across indicators
-            - **Diagonal patterns** = correlated indicators
+            - **Diagonal patterns** = potentially correlated indicators
+            - **Color blocks** = country/indicator clusters
             
             **Using the change heatmap:**
-            - For inequality (lower is better):
-              - Red cells = good (decreased)
-              - Blue cells = bad (increased)
+            - For inequality indicators (lower is better):
+              - Red cells = good (decreased inequality)
+              - Blue cells = bad (increased inequality)
             - For positive indicators (higher is better):
               - Blue cells = good (increased)
               - Red cells = bad (decreased)
             
+            **Interactive features:**
+            - Hover over cells to see exact values
+            - Column headers at top for easier reading
+            - Rows maintain alphabetical order
+            
             **Best for:**
             - Comprehensive multi-indicator, multi-country analysis
-            - Spotting patterns and clusters
+            - Spotting patterns and clusters across indicators
             - Identifying which indicators changed most
             - Finding countries with unusual profiles
             - Data exploration and hypothesis generation
+            - Detailed analysis (not presentations - too much info)
             
             **Tips:**
-            - Click column headers to sort
-            - Look for blocks of color (country/indicator clusters)
+            - Select 3-8 indicators for best readability
+            - Look for color blocks (systematic patterns)
             - Compare first two heatmaps to third to validate changes
-            - Use for detailed analysis, not presentations (too much info)
-            
-            **Interactive features:**
-            - Hover over cells to see exact values
-            - Axis labels show at top for easier reading
-            """
-        },
-        "Data Table": {
-            "title": "How to Read the Data Table",
-            "content": """
-            **Column explanations:**
-            - **Country:** Country name with flag emoji
-            - **Value (THEN):** Indicator value in earlier period
-            - **Value (NOW):** Indicator value in later period
-            - **Absolute Change:** NOW - THEN (negative = improvement for inequality)
-            - **Percentage Change:** ((NOW - THEN) / THEN) × 100
-            - **Rank Change:** Change in regional ranking position
-            - **Trend:** Visual indicator of direction
-            
-            **Trend icons:**
-            - 📈 = Improved (value increased) - for positive indicators
-            - 📉 = Improved (value decreased) - for inequality indicators
-            - ⚠️ = Worsened (value increased) - for inequality indicators
-            - ⚠️ = Worsened (value decreased) - for positive indicators
-            - ➡️ = No significant change
-            
-            **How to use:**
-            - **Click column headers** to sort (find top/bottom performers)
-            - **Absolute change** = real-world impact magnitude
-            - **Percentage change** = normalized comparison (accounts for different starting points)
-            - **Rank change** = relative position shift
-            
-            **Interpreting changes:**
-            - Large absolute change + small /%/ change = started from high baseline
-            - Small absolute change + large %/ change = started from low baseline
-            - Positive rank change = improved relative to peers
-            - Negative rank change = fell behind peers
-            
-            **Best for:**
-            - Precise numerical analysis
-            - Finding specific country statistics
-            - Sorting and filtering data
-            - Exporting for external analysis (Excel, etc.)
-            - Creating custom reports
-            - Fact-checking and verification
-            
-            **Tips:**
-            - Sort by "Rank Change" to see who moved up/down most
-            - Sort by "Percentage Change" to normalize for starting values
-            - Use absolute change for real-world impact assessment
-            - Export table and use Excel pivot tables for deeper analysis
+            - Use for detailed analysis sessions
+            - Export data table for numerical analysis
             """
         }
     }
@@ -400,6 +455,7 @@ def render_visualization_help(viz_type: str):
     
     with st.expander(f"❓ {help_info['title']}", expanded=False):
         st.markdown(help_info['content'])
+
 # --------------------------------------------------
 # Detect theme
 # --------------------------------------------------
@@ -476,20 +532,33 @@ def get_indicator_config(indicator_name):
     
     # Default to higher is better for unknown indicators
     return {"lower_is_better": False, "improved_direction": "increased"}
-# --------------------------------------------------
-# Indicator selection
-# --------------------------------------------------
-available_indicators = sorted(df["indicator"].unique())
 
-if len(available_indicators) == 0:
-    st.error("❌ No indicators found in the dataset.")
+# --------------------------------------------------
+# Get indicator from home page configuration
+# --------------------------------------------------
+if 'analysis_config' not in st.session_state or st.session_state.analysis_config is None:
+    st.warning("⚠️ No configuration found. Please configure your analysis on the Home page first.")
+    if st.button("Go to Home Page"):
+        st.switch_page("home.py")
     st.stop()
 
-indicator = st.selectbox(
-    "Select Indicator",
-    available_indicators,
-    format_func=human_indicator
-)
+# Use indicator from home page configuration
+indicator = st.session_state.analysis_config.get('indicator')
+
+if not indicator:
+    st.error("❌ No indicator configured. Please select an indicator on the Home page.")
+    if st.button("Go to Home Page"):
+        st.switch_page("home.py")
+    st.stop()
+
+# Verify indicator exists in dataset
+available_indicators = sorted(df["indicator"].unique())
+if indicator not in available_indicators:
+    st.error(f"❌ Configured indicator '{indicator}' not found in dataset.")
+    st.info(f"Available indicators: {', '.join(available_indicators)}")
+    if st.button("Go to Home Page to Reconfigure"):
+        st.switch_page("home.py")
+    st.stop()
 
 # Get indicator configuration
 indicator_config = get_indicator_config(indicator)
@@ -623,9 +692,6 @@ df_now = df_now.dropna(subset=["value"])
 if df_then.empty or df_now.empty:
     st.error("❌ No valid data available for comparison after filtering.")
     st.stop()
-
-st.info(f"Comparing {len(common)} countries across selected periods")
-
 # --------------------------------------------------
 # Ranking
 # --------------------------------------------------
@@ -703,8 +769,7 @@ viz_option = st.selectbox(
         "Ranking Shift", 
         "Distribution Comparison",
         "Delta Map (Change Visualization)",         
-        "Sankey Diagram (Rank Flow)",   
-        "Radar Chart (Performance Profile)",
+        "Sankey Diagram (Rank Flow)", 
         "Heatmap Matrix"
     ]
 )
@@ -722,6 +787,10 @@ if vmin == vmax:
 # Side-by-side visualizations
 # --------------------------------------------------
 try:
+# Calculate global min/max for consistent color scaling
+    vmin = min(df_then["value"].min(), df_now["value"].min())
+    vmax = max(df_then["value"].max(), df_now["value"].max())
+    
     if viz_option == "Choropleth Map":
         c1, c2 = st.columns(2)
         
@@ -737,46 +806,10 @@ try:
                 title=f"{human_indicator(indicator)} — THEN ({period_then})",
                 hover_data={"country": True, "value": ":.2f"}
             )
-            # For fig_then:
-            for idx, row in df_then.iterrows():
-                iso = row['country_code']
-                country_feature = next((f for f in geojson['features'] if f['properties']['ISO_A3'] == iso), None)
-                if country_feature:
-                    coords = country_feature['geometry']['coordinates']
-                    if country_feature['geometry']['type'] == 'Polygon':
-                        lons = [c[0] for c in coords[0]]
-                        lats = [c[1] for c in coords[0]]
-                    elif country_feature['geometry']['type'] == 'MultiPolygon':
-                        lons = [c[0] for c in coords[0][0]]
-                        lats = [c[1] for c in coords[0][0]]
-        
-                    center_lon = sum(lons) / len(lons)
-                    center_lat = sum(lats) / len(lats)
-        
-                    fig_then.add_scattergeo(
-                        lon=[center_lon],
-                        lat=[center_lat],
-                        text=row['country'],
-                        mode='text',
-                        textfont=dict(size=10, color='black', family='Arial'),
-                        showlegend=False,
-                        hoverinfo='skip'
-                    )
-            fig_then.update_geos(
-                    fitbounds="locations", 
-                    visible=False,
-                    showcountries=True,
-                    countrycolor='#bdc3c7',
-                    countrywidth=1.5,
-                    coastlinecolor='#34495e',
-                    coastlinewidth=1,
-                    landcolor='#ecf0f1',
-                    oceancolor='#d6eaf8',
-                    showocean=True,
-                    showlakes=False,
-                    bgcolor='#e8f4f8',
-                    scope='world'
-            )
+            
+            # With only 8 countries, label all of them
+            fig_then = add_country_labels_to_map(fig_then, df_then, geojson)
+            fig_then = style_choropleth_map(fig_then)
             fig_then.update_layout(margin={"r":0,"t":30,"l":0,"b":0})
             st.plotly_chart(fig_then, use_container_width=True)
 
@@ -792,46 +825,10 @@ try:
                 title=f"{human_indicator(indicator)} — NOW ({period_now})",
                 hover_data={"country": True, "value": ":.2f"}
             )
-            for idx, row in df_now.iterrows():
-                iso = row['country_code']
-                country_feature = next((f for f in geojson['features'] if f['properties']['ISO_A3'] == iso), None)
-                if country_feature:
-                    coords = country_feature['geometry']['coordinates']
-                    if country_feature['geometry']['type'] == 'Polygon':
-                        lons = [c[0] for c in coords[0]]
-                        lats = [c[1] for c in coords[0]]
-                    elif country_feature['geometry']['type'] == 'MultiPolygon':
-                        lons = [c[0] for c in coords[0][0]]
-                        lats = [c[1] for c in coords[0][0]]
-        
-                    center_lon = sum(lons) / len(lons)
-                    center_lat = sum(lats) / len(lats)
-        
-                    fig_now.add_scattergeo(
-                        lon=[center_lon],
-                        lat=[center_lat],
-                        text=row['country'],
-                        mode='text',
-                        textfont=dict(size=10, color='black', family='Arial'),
-                        showlegend=False,
-                        hoverinfo='skip'
-                    )
-            fig_now.update_geos(
-                    fitbounds="locations", 
-                    visible=False,
-                    showcountries=True,
-                    countrycolor='#bdc3c7',
-                    countrywidth=1.5,
-                    coastlinecolor='#34495e',
-                    coastlinewidth=1,
-                    landcolor='#ecf0f1',
-                    oceancolor='#d6eaf8',
-                    showocean=True,
-                    showlakes=False,
-                    bgcolor='#e8f4f8',
-                    scope='world'
-            )
             
+            # With only 8 countries, label all of them
+            fig_now = add_country_labels_to_map(fig_now, df_now, geojson)
+            fig_now = style_choropleth_map(fig_now)
             fig_now.update_layout(margin={"r":0,"t":30,"l":0,"b":0})
             st.plotly_chart(fig_now, use_container_width=True)
 
@@ -839,46 +836,57 @@ try:
         c1, c2 = st.columns(2)
         
         with c1:
-            df_then_sorted = df_then.sort_values("value", ascending=ascending).head(20)
+            df_then_sorted = df_then.sort_values("value", ascending=False)
             fig_then = px.bar(
                 df_then_sorted,
                 x="value", 
                 y="country", 
                 color="value",
                 color_continuous_scale=color_scale,
+                range_color=[vmin, vmax],
                 orientation='h',
-                title=f"Top Countries - THEN ({period_then})"
+                title=f"All Countries - THEN ({period_then})"
             )
             fig_then.update_layout(showlegend=False, yaxis={'categoryorder':'total ascending'})
             st.plotly_chart(fig_then, use_container_width=True)
             
         with c2:
-            df_now_sorted = df_now.sort_values("value", ascending=ascending).head(8)
+            df_now_sorted = df_now.sort_values("value", ascending=False)
             fig_now = px.bar(
                 df_now_sorted,
                 x="value", 
                 y="country", 
                 color="value",
                 color_continuous_scale=color_scale,
+                range_color=[vmin, vmax],
                 orientation='h',
-                title=f"Top 20 Countries - NOW ({period_now})"
+                title=f"All Countries - NOW ({period_now})"
             )
             fig_now.update_layout(showlegend=False, yaxis={'categoryorder':'total ascending'})
             st.plotly_chart(fig_now, use_container_width=True)
 
-    elif viz_option == "Scatter Plot":
+    elif viz_option == "Scatter Plot": 
+        # Calculate min/max for diagonal line
+        vmin = min(cmp["value_then"].min(), cmp["value_now"].min())
+        vmax = max(cmp["value_then"].max(), cmp["value_now"].max())
+        
         fig_scatter = px.scatter(
             cmp, 
             x="value_then", 
             y="value_now", 
-            text="country", 
+            hover_name="country",
             color="abs_change",
             color_continuous_scale=color_scale,
             title=f"Value Comparison: {period_then} vs {period_now}",
             labels={
                 "value_then": f"Value in {period_then}",
                 "value_now": f"Value in {period_now}",
-                "abs_change": "Absolute Change"
+                "abs_change": "Change (Now - Then)"
+            },
+            hover_data={
+                "value_then": ":.2f",
+                "value_now": ":.2f", 
+                "abs_change": ":.2f"
             }
         )
         fig_scatter.add_shape(
@@ -888,36 +896,51 @@ try:
             line=dict(color="red", dash="dash", width=2),
             name="No change"
         )
-        fig_scatter.update_traces(textposition='top center')
+        # Increase marker size for better visibility
+        fig_scatter.update_traces(marker=dict(size=12))
         st.plotly_chart(fig_scatter, use_container_width=True)
 
     elif viz_option == "Ranking Shift":
+        # Calculate rank improvement (negative rank_change = improvement)
+        cmp["rank_improvement"] = -cmp["rank_change"]
+        
+        # Calculate min/max for diagonal line
+        rank_min = min(cmp["rank_then"].min(), cmp["rank_now"].min())
+        rank_max = max(cmp["rank_then"].max(), cmp["rank_now"].max())
+        
         fig_rank = px.scatter(
             cmp, 
             x="rank_then", 
             y="rank_now", 
-            text="country", 
-            color="rank_change",
+            hover_name="country", 
+            color="rank_improvement",
             color_continuous_scale=color_scale,
             title=f"Ranking Changes: {period_then} vs {period_now}",
             labels={
                 "rank_then": f"Rank in {period_then}",
                 "rank_now": f"Rank in {period_now}",
-                "rank_change": "Rank Change"
+                "rank_improvement": "Rank Improvement"
+            },
+            hover_data={
+                "rank_then": True,
+                "rank_now": True,
+                "rank_improvement": ":.0f",
+                "rank_change": ":.0f"
             }
         )
-        rank_min = min(cmp["rank_then"].min(), cmp["rank_now"].min())
-        rank_max = max(cmp["rank_then"].max(), cmp["rank_now"].max())
         fig_rank.add_shape(
             type="line",
             x0=rank_min, y0=rank_min,
             x1=rank_max, y1=rank_max,
-            line=dict(color="black", dash="dash", width=2)
+            line=dict(color="red", dash="dash", width=2)
         )
-        fig_rank.update_traces(textposition='top center')
+        fig_rank.update_traces(marker=dict(size=12))
         fig_rank.update_yaxes(autorange="reversed")
         fig_rank.update_xaxes(autorange="reversed")
         st.plotly_chart(fig_rank, use_container_width=True)
+        
+        # Add explanation
+        st.caption("ℹ️ Positive rank improvement = moved to a better (lower) rank number. Points below the red line improved their ranking.")
 
     elif viz_option == "Distribution Comparison":
         dist_data = pd.DataFrame([
@@ -951,7 +974,11 @@ try:
                 f'NOW ({period_now})': "#dcaca6"
             }
         )
-        fig_box.update_layout(showlegend=True, height=500)
+        fig_box.update_layout(
+            showlegend=True, 
+            height=600,
+            hovermode='closest'
+        )
         st.plotly_chart(fig_box, use_container_width=True)
         
         # Distribution statistics
@@ -990,15 +1017,23 @@ try:
                 ]
             })
             st.dataframe(stats_df_now, use_container_width=True, hide_index=True)
-        
 
     elif viz_option == "Delta Map (Change Visualization)":
         # Create a single map showing the CHANGE between periods
         delta_data = cmp.copy()
         
-        # Use Eurostat-style diverging colors
-        # Blue = positive change, Orange/Red = negative change
+        # Calculate symmetric range for diverging color scales
         max_abs_change = delta_data['abs_change'].abs().max()
+        
+        # Determine if we should use symmetric or asymmetric range
+        min_change = delta_data['abs_change'].min()
+        max_change = delta_data['abs_change'].max()
+        
+        # Use symmetric range for diverging scales, asymmetric for sequential
+        if color_mode in ["Diverging", "Semantic (Default)"]:
+            color_range = [-max_abs_change, max_abs_change]
+        else:
+            color_range = [min_change, max_change]
         
         fig_delta = px.choropleth(
             delta_data,
@@ -1006,14 +1041,8 @@ try:
             locations="country_code",
             featureidkey="properties.ISO_A3",
             color="abs_change",
-            range_color=[-max_abs_change, max_abs_change],
-            color_continuous_scale=[
-                [0.0, "#160216"],    # Dark red (large negative)
-                [0.25, "#5A3C5A"],   # Light red
-                [0.5, "#FAFAFB"],    # Yellow (neutral)
-                [0.75, "#1C91C8"],   # Light blue
-                [1.0, "#1F4F82"]     # Dark blue (large positive)
-            ],
+            range_color=color_range,
+            color_continuous_scale=color_scale,  # Use user-selected color scale
             title=f"Change in {human_indicator(indicator)}: {period_then} → {period_now}",
             hover_data={
                 'country': True,
@@ -1029,46 +1058,14 @@ try:
                 'pct_change': '% Change'
             }
         )
-        for idx, row in delta_data.iterrows():
-                iso = row['country_code']
-                country_feature = next((f for f in geojson['features'] if f['properties']['ISO_A3'] == iso), None)
-                if country_feature:
-                    coords = country_feature['geometry']['coordinates']
-                    if country_feature['geometry']['type'] == 'Polygon':
-                        lons = [c[0] for c in coords[0]]
-                        lats = [c[1] for c in coords[0]]
-                    elif country_feature['geometry']['type'] == 'MultiPolygon':
-                        lons = [c[0] for c in coords[0][0]]
-                        lats = [c[1] for c in coords[0][0]]
         
-                    center_lon = sum(lons) / len(lons)
-                    center_lat = sum(lats) / len(lats)
+        # Add labels only for countries with significant changes (performance optimization)
+        # Define "significant" as top/bottom 20% of changes
+        threshold = delta_data['abs_change'].abs().quantile(0.80)
+        significant_changes = delta_data[delta_data['abs_change'].abs() >= threshold]
         
-                    fig_delta.add_scattergeo(
-                        lon=[center_lon],
-                        lat=[center_lat],
-                        text=row['country'],
-                        mode='text',
-                        textfont=dict(size=10, color='black', family='Arial'),
-                        showlegend=False,
-                        hoverinfo='skip'
-                    )
-        
-        fig_delta.update_geos(
-                    fitbounds="locations", 
-                    visible=False,
-                    showcountries=True,
-                    countrycolor='#bdc3c7',
-                    countrywidth=1.5,
-                    coastlinecolor='#34495e',
-                    coastlinewidth=1,
-                    landcolor='#ecf0f1',
-                    oceancolor='#d6eaf8',
-                    showocean=True,
-                    showlakes=False,
-                    bgcolor='#e8f4f8',
-                    scope='world'
-        )
+        fig_delta = add_country_labels_to_map(fig_delta, significant_changes, geojson)
+        fig_delta = style_choropleth_map(fig_delta)
             
         fig_delta.update_layout(
             margin={"r":0,"t":50,"l":0,"b":0},
@@ -1077,107 +1074,136 @@ try:
         
         st.plotly_chart(fig_delta, use_container_width=True)
         
-        # Summary metrics
-        col1, col2, col3 = st.columns(3)
+        # Summary metrics - CORRECTED LOGIC
+        col1, col2, col3, col4 = st.columns(4)
+        
         with col1:
-            biggest_increase = delta_data.loc[delta_data['abs_change'].idxmax()]
-            st.metric(
-                "Biggest Increase",
-                biggest_increase['country'],
-                f"+{biggest_increase['abs_change']:.2f}"
-            )
+            # Filter for actual increases (positive changes)
+            increases = delta_data[delta_data['abs_change'] > 0]
+            if len(increases) > 0:
+                biggest_increase = increases.loc[increases['abs_change'].idxmax()]
+                st.metric(
+                    "Biggest Increase",
+                    biggest_increase['country'],
+                    f"+{biggest_increase['abs_change']:.2f}"
+                )
+            else:
+                st.metric("Biggest Increase", "N/A", "—")
+        
         with col2:
-            biggest_decrease = delta_data.loc[delta_data['abs_change'].idxmin()]
-            st.metric(
-                "Biggest Decrease",
-                biggest_decrease['country'],
-                f"{biggest_decrease['abs_change']:.2f}"
-            )
+            # Filter for actual decreases (negative changes)
+            decreases = delta_data[delta_data['abs_change'] < 0]
+            if len(decreases) > 0:
+                biggest_decrease = decreases.loc[decreases['abs_change'].idxmin()]
+                st.metric(
+                    "Biggest Decrease",
+                    biggest_decrease['country'],
+                    f"{biggest_decrease['abs_change']:.2f}"
+                )
+            else:
+                st.metric("Biggest Decrease", "N/A", "—")
+        
         with col3:
+            avg_change = delta_data['abs_change'].mean()
             st.metric(
                 "Average Change",
-                format_value(delta_data['abs_change'].mean()),
+                format_value(avg_change),
                 f"{delta_data['pct_change'].mean():.1f}%"
+            )
+        
+        with col4:
+            # Add median change for robustness
+            median_change = delta_data['abs_change'].median()
+            st.metric(
+                "Median Change",
+                format_value(median_change),
+                f"{delta_data['pct_change'].median():.1f}%"
             )
 
         
     elif viz_option == "Sankey Diagram (Rank Flow)":
         st.info("Shows how countries moved between performance tiers")
-        
-        # For 8 countries, use tertiles instead of quartiles
         num_countries = len(cmp)
-        
-        if num_countries <= 6:
-            # Use 3 groups for small datasets
+
+        if num_countries < 8:
+            num_tiers = 3
             labels_list = ['Top Tier', 'Middle Tier', 'Bottom Tier']
-            cmp['tier_then'] = pd.qcut(
-                cmp['rank_then'], 
-                q=3, 
-                labels=labels_list,
-                duplicates='drop'
-            )
-            cmp['tier_now'] = pd.qcut(
-                cmp['rank_now'], 
-                q=3, 
-                labels=labels_list,
-                duplicates='drop'
-            )
         else:
-            # Use quartiles for larger datasets
+            num_tiers = 4
             labels_list = ['Top 25%', 'Upper Middle', 'Lower Middle', 'Bottom 25%']
+    
+
+        try:
             cmp['tier_then'] = pd.qcut(
                 cmp['rank_then'], 
-                q=4, 
+                q=num_tiers, 
                 labels=labels_list,
                 duplicates='drop'
             )
             cmp['tier_now'] = pd.qcut(
                 cmp['rank_now'], 
-                q=4, 
+                q=num_tiers, 
                 labels=labels_list,
                 duplicates='drop'
             )
+        except ValueError:
+            # Fallback to manual binning if qcut fails
+            st.warning("⚠️ Using manual tier assignment due to data distribution")
+            max_rank = max(cmp['rank_then'].max(), cmp['rank_now'].max())
+            bins = [0] + [max_rank * (i+1) / num_tiers for i in range(num_tiers)]
         
-        # Build Sankey data
+            cmp['tier_then'] = pd.cut(
+                cmp['rank_then'],
+                bins=bins,
+                labels=labels_list,
+                include_lowest=True
+            )
+            cmp['tier_now'] = pd.cut(
+                cmp['rank_now'],
+                bins=bins,
+                labels=labels_list,
+                include_lowest=True
+            )
+    
+    # Build Sankey data
         import plotly.graph_objects as go
-        
+    
         sankey_data = cmp.groupby(['tier_then', 'tier_now']).size().reset_index(name='count')
-        
+    
         # Create node labels
         source_labels = [f"{tier} (THEN)" for tier in labels_list]
         target_labels = [f"{tier} (NOW)" for tier in labels_list]
         all_labels = source_labels + target_labels
-        
         label_to_idx = {label: idx for idx, label in enumerate(all_labels)}
-        
+    
         sources = []
         targets = []
         values = []
         colors = []
-        
+    
         for _, row in sankey_data.iterrows():
             source_label = f"{row['tier_then']} (THEN)"
             target_label = f"{row['tier_now']} (NOW)"
-            
+        
             if source_label in label_to_idx and target_label in label_to_idx:
                 sources.append(label_to_idx[source_label])
                 targets.append(label_to_idx[target_label])
                 values.append(row['count'])
-                
-                # Color based on movement
+            
+                # FIXED: Color based on movement (lower index = better tier)
                 src_idx = label_to_idx[source_label] % len(labels_list)
                 tgt_idx = (label_to_idx[target_label] - len(labels_list)) % len(labels_list)
-                
+            
                 if src_idx == tgt_idx:
-                    colors.append('rgba(150, 150, 150, 0.3)')  # Gray
-                elif tgt_idx < src_idx:
-                    colors.append('rgba(46, 204, 113, 0.5)')  # Green
+                    colors.append('rgba(150, 150, 150, 0.3)')  # Gray - no change
+                elif tgt_idx > src_idx:
+                    colors.append('rgba(231, 76, 60, 0.5)')  # Red - WORSENED (moved to worse tier)
                 else:
-                    colors.append('rgba(231, 76, 60, 0.5)')  # Red
-        
+                    colors.append('rgba(46, 204, 113, 0.5)')  # Green - IMPROVED (moved to better tier)
+    
         # Node colors
         node_colors = ["#240b47"] * len(labels_list) + ["#e089c9"] * len(labels_list)
-        
+
         fig_sankey = go.Figure(data=[go.Sankey(
             node=dict(
                 pad=20,
@@ -1193,272 +1219,155 @@ try:
                 color=colors
             )
         )])
-        
+    
         fig_sankey.update_layout(
             title=f"Performance Tier Transitions: {period_then} → {period_now}",
             height=500,
             font=dict(size=14)
         )
-        
+    
         st.plotly_chart(fig_sankey, use_container_width=True)
-        
-        # Country movement details
+    
+        # FIXED: Country movement details
         with st.expander("Individual Country Movements"):
             movement_df = cmp[['country', 'tier_then', 'tier_now', 'rank_change']].copy()
-            movement_df['Movement'] = movement_df.apply(
-                lambda row: '⬆️ Moved Up' if row['tier_then'] != row['tier_now'] and row['rank_change'] > 0
-                else ('⬇️ Moved Down' if row['tier_then'] != row['tier_now'] and row['rank_change'] < 0
-                else '➡️ Stayed in Tier'),
-                axis=1
-            )
+        
+            # Corrected movement logic
+            def determine_movement(row):
+                if row['tier_then'] == row['tier_now']:
+                    return '➡️ Stayed in Same Tier'
+                elif row['rank_change'] > 0:
+                    return '⬆️ Improved (Better Rank)'
+                else:
+                    return '⬇️ Worsened (Worse Rank)'
+        
+            movement_df['Movement'] = movement_df.apply(determine_movement, axis=1)
             st.dataframe(movement_df, use_container_width=True, hide_index=True)
-    
-
-    elif viz_option == "Radar Chart (Performance Profile)":
-        st.info("Compare country performance profiles across indicators")
-        available_indicators = df['indicator'].unique()
-    
-        selected_indicators = st.multiselect(
-            "Select 3-8 indicators",
-            available_indicators,
-            default=list(available_indicators[:min(5, len(available_indicators))]),
-            format_func=human_indicator
-        )
-        
-        if len(selected_indicators) < 3:
-            st.warning("⚠️ Select at least 3 indicators")
-            st.stop()
-        country_options = sorted(cmp['country'].unique())
-        selected_countries = st.multiselect(
-            "Select countries (1-4 recommended)",
-            country_options,
-            default=list(country_options[:min(3, len(country_options))])
-        )
-        
-        if len(selected_countries) == 0:
-            st.warning("⚠️ Select at least one country")
-            st.stop()
-        
-        import plotly.graph_objects as go
-        from plotly.subplots import make_subplots
-        from sklearn.preprocessing import MinMaxScaler
-
-        all_data_then = []
-        all_data_now = []
-        
-        for country in selected_countries:
-            for indicator_name in selected_indicators:
-                indicator_df = df[
-                    (df['indicator'] == indicator_name) & 
-                    (df['country'] == country)
-                ]
-            
-                if mode.startswith("Point"):
-                    then_val = indicator_df[indicator_df['year'] == then_year]['value']
-                    now_val = indicator_df[indicator_df['year'] == now_year]['value']
-                
-                    then_v = then_val.iloc[0] if len(then_val) > 0 else np.nan
-                    now_v = now_val.iloc[0] if len(now_val) > 0 else np.nan
-                else:
-                    then_v = indicator_df[indicator_df['year'].between(*early_range)]['value'].mean()
-                    now_v = indicator_df[indicator_df['year'].between(*late_range)]['value'].mean()
-            
-                all_data_then.append({'indicator': indicator_name, 'country': country, 'value': then_v})
-                all_data_now.append({'indicator': indicator_name, 'country': country, 'value': now_v})
-
-
-        df_all_then = pd.DataFrame(all_data_then)
-        df_all_now = pd.DataFrame(all_data_now) 
-        # Normalize each indicator to 0-100 scale
-        normalized_then = {}
-        normalized_now = {}
-    
-        for indicator_name in selected_indicators:
-            # Get all values for this indicator across all countries
-            then_vals = df_all_then[df_all_then['indicator'] == indicator_name]['value'].values
-            now_vals = df_all_now[df_all_now['indicator'] == indicator_name]['value'].values
-        
-            # Combine to get min/max range
-            all_vals = np.concatenate([then_vals, now_vals])
-            all_vals = all_vals[~np.isnan(all_vals)]
-        
-            if len(all_vals) > 0:
-                val_min = all_vals.min()
-                val_max = all_vals.max()
-                val_range = val_max - val_min
-                if val_range > 0:
-                    for country in selected_countries:
-                        then_val = df_all_then[
-                            (df_all_then['indicator'] == indicator_name) & 
-                            (df_all_then['country'] == country)
-                        ]['value'].iloc[0]
-                    
-                        if pd.notna(then_val):
-                            normalized_then[(country, indicator_name)] = ((then_val - val_min) / val_range) * 100
-                        else:
-                            normalized_then[(country, indicator_name)] = 0
-                    
-                    # NOW
-                        now_val = df_all_now[
-                            (df_all_now['indicator'] == indicator_name) & 
-                            (df_all_now['country'] == country)
-                        ]['value'].iloc[0]
-                    
-                        if pd.notna(now_val):
-                            normalized_now[(country, indicator_name)] = ((now_val - val_min) / val_range) * 100
-                        else:
-                            normalized_now[(country, indicator_name)] = 0
-
-                else:
-                    for country in selected_countries:
-                        normalized_then[(country, indicator_name)] = 50
-                        normalized_now[(country, indicator_name)] = 50
-            
-        fig = make_subplots(
-            rows=1, cols=2,
-            subplot_titles=(f'THEN ({period_then})', f'NOW ({period_now})'),
-            specs=[[{'type': 'polar'}, {'type': 'polar'}]]
-        )
-        
-
-        
-        colors = ['#e74c3c', '#3498db', '#2ecc71', '#f39c12', '#9b59b6']
-        indicator_labels = [human_indicator(ind) for ind in selected_indicators]
-        for country_idx, country in enumerate(selected_countries):
-            values_then = [normalized_then.get((country, ind), 0) for ind in selected_indicators]
-            values_now = [normalized_now.get((country, ind), 0) for ind in selected_indicators]
-            color = colors[country_idx % len(colors)]
-            # THEN
-            fig.add_trace(go.Scatterpolar(
-                r=values_then,
-                theta=indicator_labels,
-                fill='toself',
-                name=country,
-                line=dict(color=color, width=2),
-                fillcolor=color,
-                opacity=0.3
-            ), row=1, col=1)
-        
-        # NOW
-            fig.add_trace(go.Scatterpolar(
-                r=values_now,
-                theta=indicator_labels,
-                fill='toself',
-                name=country,
-                line=dict(color=color, width=2),
-                fillcolor=color,
-                opacity=0.3,
-                showlegend=False
-            ), row=1, col=2)           
-        fig.update_layout(
-            height=600,
-            showlegend=True,
-            legend=dict(orientation="h", yanchor="bottom", y=-0.15, xanchor="center", x=0.5),
-            polar=dict(radialaxis=dict(range=[0, 100], showticklabels=True)),
-            polar2=dict(radialaxis=dict(range=[0, 100], showticklabels=True))
-        )
-        st.plotly_chart(fig, use_container_width=True)
 
     elif viz_option == "Heatmap Matrix":
-        st.info("Multi-indicator heatmap comparison")
-        available_indicators = df['indicator'].unique()
+        st.markdown("#### Indicators")
+
+        # Get only indicators that actually exist in the dataset
+        available_categories = get_available_indicators_by_category(df)
+
+        # Category selector
+        category_names = list(available_categories.keys())
+        selected_category = st.selectbox(
+            "Indicator category",
+            category_names,
+            help="Choose the indicator group"
+        )
+
+        # Indicators inside chosen category
+        category_indicators = available_categories[selected_category]['indicators']
+
+        # Multi-select indicators (heatmap needs multiple)
         selected_indicators = st.multiselect(
             "Select indicators",
-            available_indicators,
-            default=list(available_indicators[:min(5, len(available_indicators))]),
+            options=category_indicators,
+            default=category_indicators[:min(5, len(category_indicators))],
             format_func=human_indicator
         )
     
-        if len(selected_indicators) == 0:
-            st.warning("⚠️ Select at least one indicator")
-            st.stop()
-
         heatmap_data_then = []
         heatmap_data_now = []
-    
+
         for country_code in common:
             country_name = cmp[cmp['country_code'] == country_code]['country'].iloc[0]
-        
+    
             row_then = {'Country': country_name}
             row_now = {'Country': country_name}
-            for indicator_name in selected_indicators:
+        
+            for ind in selected_indicators:
                 indicator_df = df[
-                    (df['indicator'] == indicator_name) & 
+                    (df['indicator'] == ind) & 
                     (df['country_code'] == country_code)
                 ]
-            
+        
                 if mode.startswith("Point"):
                     then_val = indicator_df[indicator_df['year'] == then_year]['value']
                     now_val = indicator_df[indicator_df['year'] == now_year]['value']
-                
-                    row_then[human_indicator(indicator_name)] = then_val.iloc[0] if len(then_val) > 0 else np.nan
-                    row_now[human_indicator(indicator_name)] = now_val.iloc[0] if len(now_val) > 0 else np.nan
+            
+                    row_then[human_indicator(ind)] = then_val.iloc[0] if len(then_val) > 0 else np.nan
+                    row_now[human_indicator(ind)] = now_val.iloc[0] if len(now_val) > 0 else np.nan
                 else:
                     then_val = indicator_df[indicator_df['year'].between(*early_range)]['value'].mean()
                     now_val = indicator_df[indicator_df['year'].between(*late_range)]['value'].mean()
-                
-                    row_then[human_indicator(indicator_name)] = then_val if pd.notna(then_val) else np.nan
-                    row_now[human_indicator(indicator_name)] = now_val if pd.notna(now_val) else np.nan
-        
+            
+                    row_then[human_indicator(ind)] = then_val if pd.notna(then_val) else np.nan
+                    row_now[human_indicator(ind)] = now_val if pd.notna(now_val) else np.nan
+    
             heatmap_data_then.append(row_then)
             heatmap_data_now.append(row_now)
-    
+
         df_heatmap_then = pd.DataFrame(heatmap_data_then).set_index('Country')
         df_heatmap_now = pd.DataFrame(heatmap_data_now).set_index('Country')
-    
-    # CRITICAL FIX: Ensure both dataframes have identical structure
+
+        # Ensure both dataframes have identical structure
         df_heatmap_then = df_heatmap_then.sort_index().sort_index(axis=1)
         df_heatmap_now = df_heatmap_now.sort_index().sort_index(axis=1)
-    
-    # Side-by-side heatmaps
+
+        # Calculate global min/max for consistent color scaling
+        global_min = min(df_heatmap_then.min().min(), df_heatmap_now.min().min())
+        global_max = max(df_heatmap_then.max().max(), df_heatmap_now.max().max())
+
+        # Side-by-side heatmaps
         col1, col2 = st.columns(2)
-    
+
         with col1:
             st.markdown(f"### THEN ({period_then})")
             fig_heat_then = px.imshow(
                 df_heatmap_then,
                 labels=dict(x="Indicator", y="Country", color="Value"),
                 aspect="auto",
-                color_continuous_scale=["#5A3C5A", "#CF9ECF", "#FAFAFB"],
+                color_continuous_scale=color_scale,  # Use user's color choice
+                zmin=global_min,
+                zmax=global_max,
                 text_auto='.2f'
             )
-
             fig_heat_then.update_layout(height=max(350, len(df_heatmap_then) * 50))
             fig_heat_then.update_xaxes(side="top")
             st.plotly_chart(fig_heat_then, use_container_width=True)
-    
+
         with col2:
             st.markdown(f"### NOW ({period_now})")
             fig_heat_now = px.imshow(
                 df_heatmap_now,
                 labels=dict(x="Indicator", y="Country", color="Value"),
                 aspect="auto",
-                color_continuous_scale=["#1F4F82", "#8CC6E1", "#FAFAFB"],
+                color_continuous_scale=color_scale,  # Use user's color choice
+                zmin=global_min,
+                zmax=global_max,
                 text_auto='.2f'
             )
             fig_heat_now.update_layout(height=max(350, len(df_heatmap_now) * 50))
             fig_heat_now.update_xaxes(side="top")
             st.plotly_chart(fig_heat_now, use_container_width=True)
-    
+
         st.markdown("---")
         st.markdown("### Change Heatmap (NOW - THEN)")
-    
-    # Calculate difference with proper alignment
+   
+        # Calculate difference with proper alignment
         df_heatmap_diff = df_heatmap_now - df_heatmap_then
 
-    
-    # Get max absolute change for symmetric color scale
+        # Get max absolute change for symmetric color scale
         max_diff = df_heatmap_diff.abs().max().max()
-    
         if pd.isna(max_diff) or max_diff == 0:
             st.warning("⚠️ No changes detected between periods")
             max_diff = 1  # Prevent division by zero
+
+        # Use diverging color scale for difference (always makes sense for +/- changes)
+        if color_mode == "Diverging" or color_mode == "Semantic (Default)":
+            diff_color_scale = color_scale
+        else:
+            # Force diverging for difference visualization
+            diff_color_scale = "RdBu_r"  # Red=negative, Blue=positive
     
         fig_heat_diff = px.imshow(
             df_heatmap_diff,
             labels=dict(x="Indicator", y="Country", color="Change"),
             aspect="auto",
-            color_continuous_scale= ["#160216", "#5A3C5A", "#FAFAFB", "#89CFF0", "#2B6CB0"],
+            color_continuous_scale=diff_color_scale,
             color_continuous_midpoint=0,
             zmin=-max_diff,
             zmax=max_diff,
@@ -1467,7 +1376,7 @@ try:
         fig_heat_diff.update_layout(height=max(350, len(df_heatmap_diff) * 50))
         fig_heat_diff.update_xaxes(side="top")
         st.plotly_chart(fig_heat_diff, use_container_width=True)
-    
+
 except Exception as e:
     st.error(f"❌ Error creating visualization: {str(e)}")
     st.write("Debug info:", str(e))
@@ -1489,13 +1398,17 @@ viz_help_mapping = {
 # Show help for the selected visualization
 if viz_option in viz_help_mapping:
     render_visualization_help(viz_help_mapping[viz_option])
-
 # --------------------------------------------------
 # Insights (FIXED: Better logic and null handling)
 # --------------------------------------------------
 st.subheader("Summary")
 
 try:
+    # Determine if lower is better for this indicator
+    # Add your logic here based on indicator type
+    lower_is_better_indicators = ['unemployment_rate', 'inflation_rate', 'poverty_rate', 'crime_rate']
+    ascending = indicator in lower_is_better_indicators
+    
     # Calculate metrics safely
     mean_change = cmp["abs_change"].mean()
     median_change = cmp["abs_change"].median()
@@ -1516,9 +1429,17 @@ try:
         sig = "unable to determine"
         confidence = "N/A"
     
-    # Find biggest changes
-    biggest_improver_idx = cmp["abs_change"].idxmax() if not ascending else cmp["abs_change"].idxmin()
-    biggest_decliner_idx = cmp["abs_change"].idxmin() if not ascending else cmp["abs_change"].idxmax()
+    # Find biggest changes - CORRECTED LOGIC
+    if ascending:  # Lower is better
+        # Biggest improver = most negative change
+        biggest_improver_idx = cmp["abs_change"].idxmin()
+        # Biggest decliner = most positive change
+        biggest_decliner_idx = cmp["abs_change"].idxmax()
+    else:  # Higher is better
+        # Biggest improver = most positive change
+        biggest_improver_idx = cmp["abs_change"].idxmax()
+        # Biggest decliner = most negative change
+        biggest_decliner_idx = cmp["abs_change"].idxmin()
     
     biggest_improver = cmp.loc[biggest_improver_idx]
     biggest_decliner = cmp.loc[biggest_decliner_idx]
@@ -1571,7 +1492,7 @@ try:
     {f"- The change is **{sig}** at {confidence} confidence level" if test_valid else ""}
     
     **Notable Changes:**
-    - **Best Performer:** {biggest_improver['country']} 
+    - 🏆 **Best Performer:** {biggest_improver['country']} 
       - Change: {format_value(biggest_improver['abs_change'])} ({biggest_improver['pct_change']:.1f}% change)
     - ⚠️ **Biggest Decline:** {biggest_decliner['country']}
       - Change: {format_value(biggest_decliner['abs_change'])} ({biggest_decliner['pct_change']:.1f}% change)
@@ -1584,108 +1505,109 @@ except Exception as e:
 # Export Section (Enhanced with multiple options)
 # --------------------------------------------------
 st.markdown("---")
-st.subheader("📥 Export Data & Visualizations")
+st.subheader("📥 Export Data")
 
 try:
-    # Create tabs for different export types
-    export_tab1, export_tab2 = st.tabs(["Data Export", "Visualization Export"])
+    st.markdown("### Download Comparison Data")
     
-    with export_tab1:
-        st.markdown("### Download Comparison Data")
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        # Data export options
+        export_format = st.selectbox(
+            "Select data format",
+            ["CSV", "Excel (XLSX)", "JSON", "TSV"]
+        )
+    
+    with col2:
+        # Data selection
+        data_selection = st.selectbox(
+            "Select dataset",
+            [
+                "Comparison Results (All Metrics)",
+                "THEN Period Data Only",
+                "NOW Period Data Only",
+                "Change Data Only (Delta)",
+                "Full Dataset (All Indicators)"
+            ]
+        )
+    
+    # Prepare different datasets based on selection
+    if data_selection == "Comparison Results (All Metrics)":
+        export_df = cmp[[
+            "country", "country_code",
+            "value_then", "value_now", 
+            "abs_change", "pct_change",
+            "rank_then", "rank_now", "rank_change",
+            "improved"
+        ]].rename(columns={
+            "value_then": f"Value_{period_then}",
+            "value_now": f"Value_{period_now}",
+            "abs_change": "Absolute_Change",
+            "pct_change": "Percentage_Change",
+            "rank_then": f"Rank_{period_then}",
+            "rank_now": f"Rank_{period_now}",
+            "rank_change": "Rank_Change",
+            "improved": "Improved"
+        })
+        filename_base = f"Comparison_{indicator}_{period_then}_vs_{period_now}"
         
-        col1, col2 = st.columns(2)
+    elif data_selection == "THEN Period Data Only":
+        export_df = df_then[["country", "country_code", "value"]].rename(columns={
+            "value": f"Value_{period_then}"
+        })
+        filename_base = f"Data_{indicator}_{period_then}"
         
-        with col1:
-            # Data export options
-            export_format = st.selectbox(
-                "Select data format",
-                ["CSV", "Excel (XLSX)", "JSON", "TSV"]
-            )
+    elif data_selection == "NOW Period Data Only":
+        export_df = df_now[["country", "country_code", "value"]].rename(columns={
+            "value": f"Value_{period_now}"
+        })
+        filename_base = f"Data_{indicator}_{period_now}"
         
-        with col2:
-            # Data selection
-            data_selection = st.selectbox(
-                "Select dataset",
-                [
-                    "Comparison Results (All Metrics)",
-                    "THEN Period Data Only",
-                    "NOW Period Data Only",
-                    "Change Data Only (Delta)",
-                    "Full Dataset (All Indicators)"
-                ]
-            )
+    elif data_selection == "Change Data Only (Delta)":
+        export_df = cmp[["country", "country_code", "abs_change", "pct_change"]].rename(columns={
+            "abs_change": "Absolute_Change",
+            "pct_change": "Percentage_Change"
+        })
+        filename_base = f"Changes_{indicator}_{period_then}_to_{period_now}"
         
-        # Prepare different datasets based on selection
-        if data_selection == "Comparison Results (All Metrics)":
-            export_df = cmp[[
-                "country", "country_code",
-                "value_then", "value_now", 
-                "abs_change", "pct_change",
-                "rank_then", "rank_now", "rank_change",
-                "improved"
-            ]].rename(columns={
-                "value_then": f"Value_{period_then}",
-                "value_now": f"Value_{period_now}",
-                "abs_change": "Absolute_Change",
-                "pct_change": "Percentage_Change",
-                "rank_then": f"Rank_{period_then}",
-                "rank_now": f"Rank_{period_now}",
-                "rank_change": "Rank_Change",
-                "improved": "Improved"
-            })
-            filename_base = f"Comparison_{indicator}_{period_then}_vs_{period_now}"
-            
-        elif data_selection == "THEN Period Data Only":
-            export_df = df_then[["country", "country_code", "value"]].rename(columns={
-                "value": f"Value_{period_then}"
-            })
-            filename_base = f"Data_{indicator}_{period_then}"
-            
-        elif data_selection == "NOW Period Data Only":
-            export_df = df_now[["country", "country_code", "value"]].rename(columns={
-                "value": f"Value_{period_now}"
-            })
-            filename_base = f"Data_{indicator}_{period_now}"
-            
-        elif data_selection == "Change Data Only (Delta)":
-            export_df = cmp[["country", "country_code", "abs_change", "pct_change"]].rename(columns={
-                "abs_change": "Absolute_Change",
-                "pct_change": "Percentage_Change"
-            })
-            filename_base = f"Changes_{indicator}_{period_then}_to_{period_now}"
-            
-        else:  # Full Dataset
-            export_df = df[df['indicator'] == indicator].copy()
-            filename_base = f"Full_Data_{indicator}"
+    else:  # Full Dataset
+        export_df = df[df['indicator'] == indicator].copy()
+        filename_base = f"Full_Data_{indicator}"
+    
+    # Add metadata
+    metadata = {
+        "Indicator": indicator,
+        "Period_THEN": period_then,
+        "Period_NOW": period_now,
+        "Countries": len(common),
+        "Export_Date": pd.Timestamp.now().strftime("%Y-%m-%d %H:%M:%S")
+    }
+    
+    # Display preview
+    with st.expander("Preview data", expanded=False):
+        st.dataframe(export_df.head(10), use_container_width=True)
+        st.caption(f"Showing first 10 of {len(export_df)} rows")
+    
+    # Export based on format
+    if export_format == "CSV":
+        # Add metadata as comment lines
+        metadata_lines = "\n".join([f"# {k}: {v}" for k, v in metadata.items()])
+        csv_data = metadata_lines + "\n" + export_df.to_csv(index=False)
         
-        # Add metadata row
-        metadata = {
-            "Indicator": indicator,
-            "Period_THEN": period_then,
-            "Period_NOW": period_now,
-            "Countries": len(common),
-            "Export_Date": pd.Timestamp.now().strftime("%Y-%m-%d %H:%M:%S")
-        }
+        st.download_button(
+            label=f"⬇️ Download as CSV",
+            data=csv_data,
+            file_name=f"{filename_base}.csv",
+            mime="text/csv",
+            use_container_width=True
+        )
         
-        # Display preview
-        with st.expander("📋 Preview data", expanded=False):
-            st.dataframe(export_df.head(10), use_container_width=True)
-            st.caption(f"Showing first 10 of {len(export_df)} rows")
-        
-        # Export based on format
-        if export_format == "CSV":
-            csv_data = export_df.to_csv(index=False)
-            st.download_button(
-                label=f"⬇️ Download as CSV",
-                data=csv_data,
-                file_name=f"{filename_base}.csv",
-                mime="text/csv",
-                use_container_width=True
-            )
-            
-        elif export_format == "Excel (XLSX)":
+    elif export_format == "Excel (XLSX)":
+        try:
             from io import BytesIO
             output = BytesIO()
+            
             with pd.ExcelWriter(output, engine='openpyxl') as writer:
                 export_df.to_excel(writer, sheet_name='Data', index=False)
                 
@@ -1715,109 +1637,98 @@ try:
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                 use_container_width=True
             )
-            
-        elif export_format == "JSON":
-            json_data = export_df.to_json(orient='records', indent=2)
-            st.download_button(
-                label=f"⬇️ Download as JSON",
-                data=json_data,
-                file_name=f"{filename_base}.json",
-                mime="application/json",
-                use_container_width=True
-            )
-            
-        else:  # TSV
-            tsv_data = export_df.to_csv(index=False, sep='\t')
-            st.download_button(
-                label=f"⬇️ Download as TSV",
-                data=tsv_data,
-                file_name=f"{filename_base}.tsv",
-                mime="text/tab-separated-values",
-                use_container_width=True
-            )
-    
-    with export_tab2:
-        st.markdown("### Download Current Visualization")
+        except ImportError:
+            st.error("❌ Excel export requires 'openpyxl'. Install it with: pip install openpyxl")
         
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            viz_format = st.selectbox(
-                "Select image format",
-                ["PNG (High Quality)", "SVG (Vector)", "PDF", "HTML (Interactive)", "JPEG"]
-            )
-        
-        with col2:
-            viz_size = st.selectbox(
-                "Select size/resolution",
-                ["Standard (1200x800)", "Large (1920x1080)", "Extra Large (2560x1440)", "Print Quality (3840x2160)"]
-            )
-        
-        # Parse size
-        size_map = {
-            "Standard (1200x800)": (1200, 800),
-            "Large (1920x1080)": (1920, 1080),
-            "Extra Large (2560x1440)": (2560, 1440),
-            "Print Quality (3840x2160)": (3840, 2160)
+    elif export_format == "JSON":
+        # Include metadata in JSON
+        json_output = {
+            "metadata": metadata,
+            "data": export_df.to_dict(orient='records')
         }
-        width, height = size_map[viz_size]
+        json_data = json.dumps(json_output, indent=2)
         
-        st.info(f"💡 Current visualization: **{viz_option}**")
+        st.download_button(
+            label=f"⬇️ Download as JSON",
+            data=json_data,
+            file_name=f"{filename_base}.json",
+            mime="application/json",
+            use_container_width=True
+        )
         
-        # Note about format compatibility
-        if viz_format in ["PNG (High Quality)", "JPEG"]:
-            st.caption("📸 Static image - good for presentations and documents")
-        elif viz_format == "SVG (Vector)":
-            st.caption("Vector format - scalable without quality loss, ideal for publications")
-        elif viz_format == "PDF":
-            st.caption("PDF format - ideal for reports and printing")
-        else:
-            st.caption("Interactive HTML - preserves hover effects and interactivity")
+    else:  # TSV
+        # Add metadata as comment lines
+        metadata_lines = "\n".join([f"# {k}: {v}" for k, v in metadata.items()])
+        tsv_data = metadata_lines + "\n" + export_df.to_csv(index=False, sep='\t')
         
-        # Generate filename
-        viz_filename = f"{viz_option.replace(' ', '_')}_{indicator}_{period_then}_vs_{period_now}"
-        
-        # Download button with instructions
-        st.markdown("""
-        **To download visualization:**
-        1. The current visualization shown above will be exported
-        2. Click the download button below
-        3. The file will be saved in your selected format
-        """)
-        
-        # Format-specific download logic
-        if viz_format == "HTML (Interactive)":
-            st.info("ℹ️ For HTML export: Right-click on the visualization above → 'Save as' or use the Plotly camera icon → 'Download plot as HTML'")
-            st.caption("HTML files preserve all interactive features like hover, zoom, and pan")
-            
-        elif viz_format == "SVG (Vector)":
-            st.info("ℹ️ For SVG export: Click the camera icon 📷 in the top-right of the visualization → Select 'Download plot as a svg'")
-            st.caption("SVG files can be edited in vector graphics software like Adobe Illustrator or Inkscape")
-            
-        elif viz_format == "PDF":
-            st.info("ℹ️ For PDF export: Click the camera icon 📷 in the top-right of the visualization → Select 'Download plot as a pdf'")
-            st.caption("PDF files are ideal for reports and can be printed at any size")
-            
-        else:  # PNG or JPEG
-            st.info(f"ℹ️ For {viz_format} export: Click the camera icon 📷 in the top-right of the visualization → Select 'Download plot as a png'")
-            st.caption(f"Resolution: {width}x{height} pixels")
-        
-        # Additional export options
-        st.markdown("---")
-        st.markdown("### Bulk Export Options")
-        
-        if st.checkbox("Export all visualizations for this comparison"):
-            st.warning("⚠️ This will generate multiple files. Make sure you have enough storage space.")
-            
-            bulk_formats = st.multiselect(
-                "Select formats for bulk export",
-                ["PNG", "CSV Data", "Excel Summary"],
-                default=["PNG", "CSV Data"]
+        st.download_button(
+            label=f"⬇️ Download as TSV",
+            data=tsv_data,
+            file_name=f"{filename_base}.tsv",
+            mime="text/tab-separated-values",
+            use_container_width=True
+        )
+    
+    # Visualization export instructions
+    if 'fig' not in locals():
+        st.warning("⚠️ No visualization available to export")
+        st.stop()
+
+    st.markdown("---")
+    st.markdown("### Export Visualizations")
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+        viz_format = st.selectbox(
+            "Select image format",
+            ["PNG (High Quality)", "SVG (Vector)", "PDF", "HTML (Interactive)", "JPEG"]
+        )
+
+    with col2:
+        viz_size = st.selectbox(
+            "Select size/resolution",
+            ["Standard (1200x800)", "Large (1920x1080)", "Extra Large (2560x1440)", "Print Quality (3840x2160)"]
+        )
+
+    size_map = {
+        "Standard (1200x800)": (1200, 800),
+        "Large (1920x1080)": (1920, 1080),
+        "Extra Large (2560x1440)": (2560, 1440),
+        "Print Quality (3840x2160)": (3840, 2160)
+        }
+
+    width, height = size_map.get(viz_size, (1200, 800))
+    viz_filename = f"Comparison_{indicator}_{period_then}_vs_{period_now}".replace(" ", "_")
+
+    if viz_format == "HTML (Interactive)":
+        html_bytes = fig.to_html(include_plotlyjs="cdn").encode("utf-8")
+        st.download_button(
+            "Download HTML",
+            data=html_bytes,
+            file_name=f"{viz_filename}.html",
+            mime="text/html",
+            use_container_width=True
+        )
+    else:
+        fmt_map = {
+            "PNG (High Quality)": "png",
+            "SVG (Vector)": "svg",
+            "PDF": "pdf",
+            "JPEG": "jpeg"
+        }
+        fmt = fmt_map[viz_format]
+        try:
+            img_bytes = fig.to_image(format=fmt, width=width, height=height)
+            st.download_button(
+                f"Download {viz_format}",
+                data=img_bytes,
+            file_name=f"{viz_filename}.{fmt}",
+            use_container_width=True
             )
-            
-            if st.button("Generate Bulk Export Package", use_container_width=True):
-                st.info("Bulk export would generate files for all visualization types. For now, please export visualizations individually using the camera icon on each chart.")
-                st.caption("Tip: You can switch between visualization types using the dropdown above and export each one.")
+        except Exception:
+            st.error("❌ Image export unavailable. Install Kaleido: pip install kaleido")
+
 
 except Exception as e:
     st.error(f"❌ Error in export section: {str(e)}")
