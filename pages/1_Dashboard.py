@@ -1016,7 +1016,7 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# HEATMAP - WITH VALUES ONLY
+# HEATMAP 
 
 # ═══════════════════════════════════════════════════════════════════
 
@@ -1036,8 +1036,7 @@ st.markdown("""
 country_trends = filtered_df.pivot_table(values='value', index='year', columns='country')
 correlation_matrix = country_trends.corr()
 
-# ═══════════════════════════════════════════════════════════════════
-# SIMPLIFIED CONTROLS - Only color scheme selector
+#  CONTROLS - Only color scheme selector
 # ═══════════════════════════════════════════════════════════════════
 
 color_scheme = st.selectbox(
