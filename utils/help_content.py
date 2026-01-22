@@ -52,7 +52,7 @@ HELP_CONTENT = {
     
     "dashboard": {
         "title": "Dashboard - Multi-Dimensional Overview",
-        "overview": "Comprehensive statistical overview with temporal trends, country comparisons, and distribution analysis. Perfect for getting a complete picture of inequality patterns.",
+        "overview": "Comprehensive statistical overview with temporal trends, country comparisons, distribution analysis, and correlation patterns. Perfect for getting a complete picture of inequality dynamics.",
         "features": [
             {
                 "name": "Temporal Trends",
@@ -60,15 +60,19 @@ HELP_CONTENT = {
             },
             {
                 "name": "Country Comparison",
-                "description": "Side-by-side bar charts comparing selected countries"
+                "description": "Side-by-side bar charts comparing selected countries with color-coded inequality levels"
             },
             {
                 "name": "Distribution Analysis",
-                "description": "Box plots showing data spread, outliers, and quartiles"
+                "description": "Box plots and donut charts showing data spread, outliers, and categorical distributions"
+            },
+            {
+                "name": "Correlation Matrix Heatmap",
+                "description": "Interactive heatmap showing pairwise correlations between all countries' inequality patterns. Values displayed in each cell for precise analysis."
             },
             {
                 "name": "Summary Statistics",
-                "description": "Mean, maximum, minimum values with country identifications"
+                "description": "Mean, maximum, minimum values with country identifications and correlation insights"
             },
             {
                 "name": "Rankings Table",
@@ -79,11 +83,21 @@ HELP_CONTENT = {
             "View automatic visualizations based on your Home configuration",
             "Use sidebar filters to adjust countries or years on the fly",
             "Switch between line charts, bar charts, and box plots",
-            "Hover over charts to see exact values",
-            "Click download buttons to export charts or data"
+            "Scroll to Correlation Analysis section to see country relationship patterns",
+            "Select different color schemes for the correlation heatmap (RdBu_r recommended for academic work)",
+            "Hover over heatmap cells to see exact correlation values and country pairs",
+            "Click download buttons to export charts, correlation matrix as CSV/SVG, or data",
+            "Expand 'Top Correlation Pairs' to see strongest relationships ranked"
         ],
         "tips": [
             "Box plots are great for seeing inequality spread and outliers",
+            "Correlation heatmap shows ALL pairwise relationships - perfect for identifying country clusters",
+            "Values in heatmap cells are Pearson correlation coefficients (-1 to +1)",
+            "RdBu_r color scheme (red-blue) is standard for academic correlation matrices",
+            "Strong correlations (r > 0.8) indicate similar inequality trajectories",
+            "Negative correlations (r < 0) mean opposite trends - look for these patterns",
+            "Use correlation matrix CSV export for further statistical analysis",
+            "Statistics cards below heatmap highlight strongest, average, and most divergent pairs",
             "Hover over any chart for detailed tooltips",
             "Use the rankings table to quickly identify top/bottom performers",
             "Export both the visualizations AND underlying data for reports"
@@ -96,12 +110,20 @@ HELP_CONTENT = {
             {
                 "problem": "Can't see all countries in legend",
                 "solution": "Too many countries selected. Try selecting 3-5 for clearer visualization."
+            },
+            {
+                "problem": "Heatmap values hard to read",
+                "solution": "Values are always displayed. Hover over cells for clearer view. White text on light backgrounds can be adjusted in settings."
+            },
+            {
+                "problem": "What does correlation value mean?",
+                "solution": "+1 = perfect positive (countries move together), 0 = no relationship, -1 = perfect negative (opposite trends). See interpretation guide below heatmap."
             }
         ]
     },
     
     "map": {
-        "title": " Map Analysis - Geographic Visualization",
+        "title": "🗺️ Map Analysis - Geographic Visualization",
         "overview": "Animated choropleth maps showing spatial patterns of inequality across South Asia. Watch how regions evolve over time with powerful animation controls.",
         "features": [
             {
@@ -161,7 +183,7 @@ HELP_CONTENT = {
     },
     
     "correlations": {
-        "title": " Correlations - Inequality Drivers",
+        "title": "📊 Correlations - Inequality Drivers",
         "overview": "Discover relationships between inequality indicators and potential drivers like GDP, education, and technology. Uses statistical analysis to identify patterns.",
         "features": [
             {
@@ -181,188 +203,179 @@ HELP_CONTENT = {
                 "description": "Automatic classification: Strong, Moderate, Weak"
             },
             {
-                "name": "Country Rankings",
-                "description": "Inequality level snapshot based on selected indicator"
+                "name": "Driver Suggestions",
+                "description": "Recommends potential factors affecting inequality"
             }
         ],
         "how_to_use": [
-            "Select an inequality indicator for the Y-axis (e.g., GINI)",
-            "Choose a potential driver for the X-axis (e.g., GDP, Education)",
-            "Adjust year range if needed to see more/fewer data points",
-            "Toggle trend line to see correlation direction",
-            "Read the 'Scatter View Story' for interpretation",
-            "Check country rankings to see relative inequality levels"
+            "Select inequality indicator (Y-axis)",
+            "Choose potential driver indicator (X-axis)",
+            "View scatter plot with trend line",
+            "Check correlation strength and statistical significance",
+            "Try different indicator combinations",
+            "Export charts and statistical results"
         ],
         "tips": [
-            "Try different pairs: GDP vs GINI, Education vs Inequality",
-            "r > 0.7 means strong correlation (positive or negative)",
-            "p < 0.05 means the pattern is statistically reliable",
-            "Expand 'Why some countries missing' to understand data coverage",
-            "Correlation doesn't prove causation - it shows patterns only"
+            "Strong correlation (r > 0.7) suggests meaningful relationship",
+            "P-value < 0.05 means relationship is statistically significant",
+            "Negative correlation means inverse relationship (one up, other down)",
+            "Correlation doesn't mean causation - always consider context",
+            "GDP per capita and education often correlate with inequality"
         ],
         "common_issues": [
             {
-                "problem": "Not enough data points",
-                "solution": "Expand the year range. Correlations need overlapping data for both X and Y indicators."
+                "problem": "Low or no correlation",
+                "solution": "Not all indicators relate to inequality. Try different combinations or check if data quality is sufficient."
             },
             {
-                "problem": "Why are some countries missing?",
-                "solution": "Countries only appear if they have BOTH selected indicators available in the chosen years."
+                "problem": "What is p-value?",
+                "solution": "P-value measures statistical significance. < 0.05 means the relationship is unlikely due to chance."
             },
             {
-                "problem": "What does negative correlation mean?",
-                "solution": "Negative (r < 0) means as one increases, the other decreases. Example: More education → Less inequality."
+                "problem": "Scatter plot looks scattered",
+                "solution": "That's normal for weak correlations. Look for trend line direction and r-value to assess strength."
             }
         ]
     },
     
     "sunburst": {
-        "title": "Sunburst - Hierarchical Explorer",
-        "overview": "Radial visualization showing indicator dominance across countries. Click segments to drill down and explore the hierarchy interactively.",
+        "title": "☀️ Sunburst - Hierarchical Composition",
+        "overview": "Interactive hierarchical visualization showing inequality composition by region, country, and time period. Perfect for understanding nested patterns.",
         "features": [
             {
-                "name": "Interactive Zoom",
-                "description": "Click any segment to zoom in for detailed view"
+                "name": "Multi-Level Hierarchy",
+                "description": "View data by Region → Country → Year structure"
             },
             {
-                "name": "Normalized Scale",
-                "description": "All indicators scaled 0-100 for fair comparison"
+                "name": "Interactive Drill-Down",
+                "description": "Click segments to zoom in, click center to zoom out"
             },
             {
-                "name": "Color Coding",
-                "description": "Darker colors indicate higher dominance"
+                "name": "Proportional Sizing",
+                "description": "Segment size shows relative contribution"
             },
             {
-                "name": "Country Spotlight",
-                "description": "Navigate through countries one-by-one with bubble charts"
+                "name": "Color Gradients",
+                "description": "Colors represent inequality levels"
             },
             {
-                "name": "Inequality Signals",
-                "description": "Automatic classification: High, Moderate, Lower"
+                "name": "Path Tracking",
+                "description": "Shows your current location in the hierarchy"
             }
         ],
         "how_to_use": [
-            "Select a year to analyze from the sidebar",
-            "Choose your preferred color scheme",
-            "Click on any segment to zoom in",
-            "Read the 'Visualization Story' for country-wise insights",
-            "Use Previous/Next buttons in Country Spotlight",
-            "Expand individual country sections for detailed explanations"
+            "Start at the outer ring (regions/countries)",
+            "Click any segment to zoom in",
+            "Click the center circle to zoom back out",
+            "Hover over segments for details",
+            "Use color to identify high/low inequality areas"
         ],
         "tips": [
-            "Click the center to zoom back out",
-            "Bigger slices = more dominant indicators (after normalization)",
-            "Inequality signal uses GINI, income-share, poverty, unemployment",
-            "Country Spotlight bubble chart shows all indicators for one country",
-            "This shows patterns, not absolute inequality levels"
+            "Larger segments = bigger share of total inequality",
+            "Darker colors usually mean higher inequality",
+            "Start from center and work outward to understand structure",
+            "Compare segment sizes within same ring for relative importance",
+            "Export as SVG for high-quality presentations"
         ],
         "common_issues": [
             {
-                "problem": "Sunburst looks confusing",
-                "solution": "Start with Country Spotlight mode instead. It's easier to understand one country at a time."
+                "problem": "Sunburst looks cluttered",
+                "solution": "Too many years/countries. Filter to 2-3 countries or 5-10 years for clearer view."
             },
             {
-                "problem": "Why 'dominance' not 'inequality'?",
-                "solution": "Dominance shows what stands out after normalization. We use inequality indicators to build a simple signal."
+                "problem": "Can't zoom out",
+                "solution": "Click the center circle (innermost circle) to zoom back to root level."
             },
             {
-                "problem": "Can't find my country",
-                "solution": "Use the expandable sections in 'Visualization Story' or click Previous/Next in Country Spotlight."
+                "problem": "Missing segments",
+                "solution": "Countries/years with no data don't appear. Check Data Quality page."
             }
         ]
     },
     
     "simulator": {
-        "title": "Income Simulator - Scenario Modeling",
-        "overview": "Interactive tool to understand how different factors affect income distribution. Adjust education, gender, location, and digital access to see estimated percentile rankings.",
+        "title": "🎮 Income Simulator - What-If Analysis",
+        "overview": "Interactive tool to simulate changes in income inequality under different policy scenarios. Adjust parameters and see real-time impact.",
         "features": [
             {
-                "name": "Education Slider",
-                "description": "Adjust years of schooling (0-20 years)"
+                "name": "Policy Sliders",
+                "description": "Adjust tax rates, transfers, education spending, etc."
             },
             {
-                "name": "Digital Access",
-                "description": "Internet connectivity percentage (0-100%)"
+                "name": "Real-Time Updates",
+                "description": "See GINI coefficient change instantly"
             },
             {
-                "name": "Gender Selection",
-                "description": "See the impact of gender wage gaps"
+                "name": "Scenario Comparison",
+                "description": "Save and compare multiple policy combinations"
             },
             {
-                "name": "Location Toggle",
-                "description": "Compare urban vs rural income differences"
+                "name": "Lorenz Curve",
+                "description": "Visual representation of income distribution"
             },
             {
-                "name": "Real-time Calculation",
-                "description": "Instant percentile updates as you adjust sliders"
-            },
-            {
-                "name": "Country Comparison",
-                "description": "Same profile = different results across countries"
+                "name": "Impact Breakdown",
+                "description": "See which policies have biggest effect"
             }
         ],
         "how_to_use": [
-            "Select a country from the dropdown",
-            "Adjust the education years slider",
-            "Set digital access percentage",
-            "Choose gender (Male/Female)",
-            "Select location (Urban/Rural)",
-            "View estimated income percentile in the gauge chart",
-            "Try different combinations to explore patterns",
-            "Compare the same profile across different countries"
+            "Start with baseline scenario (no policy changes)",
+            "Adjust policy sliders one at a time",
+            "Watch GINI coefficient and Lorenz curve update",
+            "Save scenarios you want to compare",
+            "Export results for reports or presentations"
         ],
         "tips": [
-            "Education usually has the strongest impact on income",
-            "Gender gap varies significantly by country",
-            "Urban areas typically show 10-20 percentile advantage",
-            "Digital access is increasingly important in modern economies",
-            "Try extreme scenarios to understand range of possibilities"
+            "Small slider changes can have big impacts - move slowly",
+            "Tax changes affect high-income groups most",
+            "Transfer programs target low-income groups",
+            "Education spending has long-term effects",
+            "Save baseline before making changes so you can reset"
         ],
         "common_issues": [
             {
-                "problem": "Results seem unrealistic",
-                "solution": "This is a simplified educational model. Real income depends on many more complex factors."
+                "problem": "Changes seem unrealistic",
+                "solution": "Simulator uses simplified models. Real-world effects are more complex."
             },
             {
-                "problem": "Same inputs, different countries = different results",
-                "solution": "That's correct! Each country has different economic structures and opportunity distributions."
+                "problem": "GINI doesn't change much",
+                "solution": "Some policies have small effects. Try combining multiple policies."
             },
             {
-                "problem": "What does percentile mean?",
-                "solution": "50th percentile = middle (half earn more, half earn less). 90th = top 10%. 10th = bottom 10%."
+                "problem": "Can't reset to baseline",
+                "solution": "Refresh the page or click 'Reset All' button if available."
             }
         ]
     },
     
     "temporal": {
-        "title": "Temporal Comparison - Then vs Now",
-        "overview": "Compare inequality patterns across different time periods using statistical tests. See which countries improved, which declined, and by how much.",
+        "title": "📅 Temporal Comparison - Change Over Time",
+        "overview": "Compare inequality levels between two time points or periods. Perfect for evaluating policy impacts or long-term trends.",
         "features": [
             {
-                "name": "Point-to-Point Mode",
-                "description": "Compare two specific years (e.g., 2000 vs 2020)"
+                "name": "Point-to-Point",
+                "description": "Compare two specific years (e.g., 2010 vs 2020)"
             },
             {
-                "name": "Range-to-Range Mode",
-                "description": "Compare averaged periods (e.g., 2000-2005 vs 2015-2020)"
+                "name": "Range-to-Range",
+                "description": "Compare two time periods (e.g., 2005-2010 vs 2015-2020)"
             },
             {
                 "name": "Multiple Visualizations",
-                "description": "Choropleth maps, bar charts, scatter plots, ranking shifts"
-            },
-            {
-                "name": "Statistical Testing",
-                "description": "Paired t-test to determine if changes are significant"
+                "description": "Maps, bar charts, scatter plots, rankings, and tables"
             },
             {
                 "name": "Change Metrics",
-                "description": "Absolute change, percentage change, rank change"
+                "description": "Absolute change, percentage change, and statistical significance"
+            },
+            {
+                "name": "Ranking Shifts",
+                "description": "See which countries moved up/down in rankings"
             }
         ],
         "how_to_use": [
-            "Select your indicator from the dropdown",
-            "Choose color scheme and comparison mode",
-            "For Point-to-Point: Select THEN and NOW years",
+            "Select comparison mode (Point-to-Point or Range-to-Range)",
+            "For Point-to-Point: Choose two specific years",
             "For Range-to-Range: Select early and late periods",
             "Pick visualization type (Map, Bar, Scatter, Ranking, Table)",
             "Read the Summary section for statistical interpretation",
@@ -392,7 +405,7 @@ HELP_CONTENT = {
     },
     
     "search": {
-        "title": " Smart Search - Quick Navigation",
+        "title": "🔍 Smart Search - Quick Navigation",
         "overview": "Keyboard-friendly search system for finding data, countries, indicators, and commands.",
         "features" : [
             {
@@ -448,7 +461,7 @@ HELP_CONTENT = {
     },
     
     "quality": {
-        "title": " Data Quality - Transparency Report",
+        "title": "✅ Data Quality - Transparency Report",
         "overview": "Comprehensive data completeness monitoring and source reliability tracking. Understand data limitations before drawing conclusions.",
         "features": [
             {
