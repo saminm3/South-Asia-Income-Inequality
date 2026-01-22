@@ -1035,7 +1035,7 @@ st.markdown("""
 # ═══════════════════════════════════════════════════════════════════
 
 st.markdown("---")
-st.markdown('<div class="section-header" style="font-size: 1.5rem;">Correlation Analysis</div>', unsafe_allow_html=True)
+st.markdown('<div class="section-header" style="font-size: 1.5rem;">Country Correlation Analysis</div>', unsafe_allow_html=True)
 
 st.markdown("""
 <div style="background: rgba(59, 130, 246, 0.05); padding: 15px; border-radius: 8px; border-left: 3px solid #3b82f6; margin-bottom: 20px;">
