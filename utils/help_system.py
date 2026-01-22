@@ -129,7 +129,7 @@ def render_help_button(page_name: str):
             col_a, col_b = st.columns([1, 1])
             with col_a:
                 if st.button("📖 Full Documentation", key=f"help_link_{page_name}", type="primary"):
-                    st.switch_page("pages/9_help.py")
+                    st.switch_page("pages/9_Help.py")
             with col_b:
                 if st.button("✖ Close", key=f"close_help_{page_name}"):
                     st.session_state[f'show_help_{page_name}'] = False

@@ -132,7 +132,7 @@ if 'analysis_config' not in st.session_state:
 # Main Title
 # --------------------------------------------------
 st.title("🔍 Smart Search & Navigation Hub")
-st.caption("Quick access to data, insights, and navigation — keyboard-friendly!")
+st.caption("Quick access to data, insights, and navigation")
 
 st.markdown("""
 <div style='background: rgba(139, 92, 246, 0.1); padding: 15px; border-radius: 8px; border-left: 4px solid #8b5cf6; margin-bottom: 20px;'>
@@ -235,7 +235,7 @@ def apply_year_filter(year):
         'year_range': (year, year),
         'color_scale': 'Viridis'
     }
-    navigate_with_filter("pages/3_Map_analysis.py", config)
+    navigate_with_filter("pages/3_Map_Analysis.py", config)
 
 # --------------------------------------------------
 # SECTION 1: Smart Search Command Palette
@@ -523,7 +523,7 @@ with col2:
 
 with col3:
     if st.button(" Map Analysis", use_container_width=True, type="secondary", key="nav_map"):
-        st.switch_page("pages/3_Map_analysis.py")
+        st.switch_page("pages/3_Map_Analysis.py")
 
 with col4:
     if st.button(" Correlations", use_container_width=True, type="secondary", key="nav_corr"):
@@ -534,11 +534,11 @@ col5, col6, col7, col8 = st.columns(4)
 
 with col5:
     if st.button(" Income Simulator", use_container_width=True, type="secondary", key="nav_sim"):
-        st.switch_page("pages/5_Income_simulator.py")
+        st.switch_page("pages/5_Income_Simulator.py")
 
 with col6:
     if st.button(" Data Quality", use_container_width=True, type="secondary", key="nav_quality"):
-        st.switch_page("pages/6_Data_quality.py")
+        st.switch_page("pages/6_Data_Quality.py")
 
 with col7:
     if st.button(" Sunburst", use_container_width=True, type="secondary", key="nav_sunburst"):
@@ -546,7 +546,7 @@ with col7:
 
 with col8:
     if st.button("Temporal", use_container_width=True, type="secondary", key="nav_temporal"):
-        st.switch_page("pages/8_Temporal_comparison.py")
+        st.switch_page("pages/8_Temporal_Comparison.py")
 
 # Row 3: Help (centered)
 col_spacer, col_help, col_spacer2 = st.columns([3, 2, 3])
@@ -674,7 +674,7 @@ bookmarks = {
         "countries": df['country'].unique().tolist(),
         "indicator": detected_gini_indicator,
         "year_range": (int(df['year'].max()), int(df['year'].max())),
-        "page": "pages/3_Map_analysis.py"
+        "page": "pages/3_Map_Analysis.py"
     }
 }
 

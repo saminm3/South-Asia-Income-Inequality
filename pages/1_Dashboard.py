@@ -212,7 +212,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ═══════════════════════════════════════════════════════════════════
-# INLINE EXPORT FUNCTION FOR PLOTS (REPLACING export_plot_menu)
+# INLINE EXPORT FUNCTION FOR PLOTS 
 # ═══════════════════════════════════════════════════════════════════
 
 def ensure_public_analysis(df):
@@ -253,6 +253,16 @@ if filtered_df.empty:
     st.warning("⚠️ No data available for selected filters")
     st.stop()
 
+# FIX: Remove duplicates and scale values
+# Remove duplicate country-year rows by averaging
+filtered_df = filtered_df.groupby(['country', 'year', 'indicator']).agg({
+    'value': 'mean'
+}).reset_index()
+
+# Auto-scale if values are too large (should be 0-100 for GINI)
+if filtered_df['value'].max() > 100:
+    filtered_df['value'] = filtered_df['value'] / 1000
+    
 
 # ═══════════════════════════════════════════════════════════════════
 # API ENRICHMENT SECTION
@@ -398,7 +408,11 @@ st.markdown(f"""
 # ═══════════════════════════════════════════════════════════════════
 
 latest_year = int(filtered_df['year'].max())
-latest_data = filtered_df[filtered_df['year'] == latest_year].copy()
+latest_data = filtered_df[filtered_df['year'] == latest_year].groupby('country').agg({
+    'value': 'mean',
+    'year': 'first',
+    'indicator': 'first'
+}).reset_index()
 prev_year = latest_year - 1
 prev_data = filtered_df[filtered_df['year'] == prev_year]
 
@@ -411,11 +425,38 @@ else:
     yoy_change = 0
     yoy_pct = 0
 
-# Best and worst performers
-best_country = latest_data.loc[latest_data['value'].idxmin(), 'country'] if not latest_data.empty else "N/A"
-worst_country = latest_data.loc[latest_data['value'].idxmax(), 'country'] if not latest_data.empty else "N/A"
+# ═══════════════════════════════════════════════════════════════════
+# SMART BEST/WORST DETECTION (REPLACES LINES 429-458)
+# ═══════════════════════════════════════════════════════════════════
+
+# Detect indicator type based on name
+indicator_name = config['indicator'].lower()
+
+# Define indicator categories
+inequality_terms = ['gini', 'inequality', 'poverty', 'disparity', 'gap', 'ratio']
+income_terms = ['income', 'gdp', 'wage', 'salary', 'earnings', 'consumption', 'expenditure']
+
+# Determine if this is an income/positive indicator (higher = better)
+is_positive_indicator = any(term in indicator_name for term in income_terms)
+
+# Calculate best and worst based on indicator type
+if is_positive_indicator:
+    # For INCOME: HIGHER = BETTER, LOWER = WORSE
+    best_country = latest_data.loc[latest_data['value'].idxmax(), 'country'] if not latest_data.empty else "N/A"
+    worst_country = latest_data.loc[latest_data['value'].idxmin(), 'country'] if not latest_data.empty else "N/A"
+    best_value = latest_data['value'].max() if not latest_data.empty else 0
+    worst_value = latest_data['value'].min() if not latest_data.empty else 0
+else:
+    # For INEQUALITY: LOWER = BETTER, HIGHER = WORSE (default)
+    best_country = latest_data.loc[latest_data['value'].idxmin(), 'country'] if not latest_data.empty else "N/A"
+    worst_country = latest_data.loc[latest_data['value'].idxmax(), 'country'] if not latest_data.empty else "N/A"
+    best_value = latest_data['value'].min() if not latest_data.empty else 0
+    worst_value = latest_data['value'].max() if not latest_data.empty else 0
+
+# Calculate data coverage
 data_coverage = (filtered_df.notna().sum()['value'] / len(filtered_df) * 100)
 
+# Display metric cards
 col1, col2, col3, col4, col5= st.columns(5)
 
 with col1:
@@ -427,7 +468,6 @@ with col1:
     )
 
 with col2:
-    best_value = latest_data['value'].min() if not latest_data.empty else 0
     st.metric(
         label="Best Performer",
         value=best_country,
@@ -435,7 +475,6 @@ with col2:
     )
 
 with col3:
-    worst_value = latest_data['value'].max() if not latest_data.empty else 0
     st.metric(
         label="Needs Attention",
         value=worst_country,
@@ -455,7 +494,6 @@ with col5:
         label="Data Range",
         value=f"{config['year_range'][1] - config['year_range'][0] + 1} Years"
     )
-
 # ═══════════════════════════════════════════════════════════════════
 # API-DRIVEN INSIGHTS (APPEARS WHEN API ENRICHMENT IS ENABLED)
 # ═══════════════════════════════════════════════════════════════════
@@ -777,24 +815,88 @@ col_viz1, col_viz2 = st.columns([1.5, 1])
 
 with col_viz1:
     # Horizontal bar chart - Browser breakdown style
+    # ═══════════════════════════════════════════════════════════════
+    # FIX: Ensure we're calculating MEAN, not SUM
+    # ═══════════════════════════════════════════════════════════════
+    
     country_avg = filtered_df.groupby('country')['value'].mean().sort_values(ascending=True)
     
+    # DEBUG: Print to verify values are correct
+    print("DEBUG - Country averages:")
+    print(country_avg)
+    print(f"Min: {country_avg.min()}, Max: {country_avg.max()}")
+    
+# ═══════════════════════════════════════════════════════════════════
+    # SMART COLOR CODING (REPLACES LINES 805-817)
+    # ═══════════════════════════════════════════════════════════════════
+    
+    # Calculate thresholds (SAME as donut chart)
+    q1 = country_avg.quantile(0.33)
+    q3 = country_avg.quantile(0.67)
+    
+    # Detect indicator type (reuse from earlier)
+    indicator_name = config['indicator'].lower()
+    income_terms = ['income', 'gdp', 'wage', 'salary', 'earnings', 'consumption', 'expenditure']
+    is_positive_indicator = any(term in indicator_name for term in income_terms)
+    
+    # Assign colors based on indicator type
+    bar_colors = []
+    for val in country_avg.values:
+        if is_positive_indicator:
+            # For INCOME: LOW = BAD (red), HIGH = GOOD (green)
+            if val <= q1:
+                bar_colors.append('#ef4444')  # Red - Low Income (Bad)
+            elif val <= q3:
+                bar_colors.append('#f59e0b')  # Yellow - Moderate Income
+            else:
+                bar_colors.append('#10b981')  # Green - High Income (Good)
+        else:
+            # For INEQUALITY: LOW = GOOD (green), HIGH = BAD (red)
+            if val <= q1:
+                bar_colors.append('#10b981')  # Green - Low Inequality (Good)
+            elif val <= q3:
+                bar_colors.append('#f59e0b')  # Yellow - Moderate Inequality
+            else:
+                bar_colors.append('#ef4444')  # Red - High Inequality (Bad)
     fig_bars = go.Figure()
+    
+    # ═══════════════════════════════════════════════════════════════
+    # FIX: Format values properly and position them better
+    # ═══════════════════════════════════════════════════════════════
+    
+    # Format text based on value magnitude
+    if country_avg.max() > 1000:
+        # Values are in thousands (ERROR - shouldn't happen!)
+        text_values = [f'{v:,.0f}' for v in country_avg.values]
+        print("⚠️ WARNING: Values are too large! Check your data!")
+    elif country_avg.max() > 100:
+        # Values are 0-1000 range
+        text_values = [f'{v:.1f}' for v in country_avg.values]
+    else:
+        # Values are 0-100 range (normal for GINI)
+        text_values = [f'{v:.2f}' for v in country_avg.values]
     
     fig_bars.add_trace(go.Bar(
         y=country_avg.index,
         x=country_avg.values,
         orientation='h',
         marker=dict(
-            color=country_avg.values,
-            colorscale='RdYlGn_r',
+            color=bar_colors,  # Discrete colors matching donut chart
             showscale=False,
             line=dict(width=0)
         ),
-        text=[f'{v:.2f}' for v in country_avg.values],
-        textposition='outside',
-        textfont=dict(color='#ffffff', size=11),
-        hovertemplate='<b>%{y}</b><br>Average: %{x:.2f}<extra></extra>'
+        text=text_values,
+        textposition='outside',  # Position OUTSIDE the bars
+        textfont=dict(
+            color='#ffffff', 
+            size=11,
+            family='Arial'  # Use consistent font
+        ),
+        # ═══════════════════════════════════════════════════════════
+        # FIX: Better hover template
+        # ═══════════════════════════════════════════════════════════
+        hovertemplate='<b>%{y}</b><br>Average: %{x:.2f}<extra></extra>',
+        cliponaxis=False  # Allow text to extend beyond plot area
     ))
     
     # REQUIREMENT #5: PROPER AXIS LABELS (FIXED SPACING)
@@ -820,7 +922,10 @@ with col_viz1:
             ),
             color='#e2e8f0'
         ),
-        margin=dict(l=100, r=120, t=40, b=50),  # Increased right margin for values
+        # ═══════════════════════════════════════════════════════════
+        # FIX: Increase right margin so values don't get cut off
+        # ═══════════════════════════════════════════════════════════
+        margin=dict(l=100, r=150, t=40, b=50),  # Increased right margin to 150
         title=dict(
             text=f'Average by Country ({config["year_range"][0]}-{config["year_range"][1]})',
             font=dict(size=14, color='#ffffff'),
@@ -855,35 +960,65 @@ with col_viz1:
             'scale': 2
         }
     })
-
 with col_viz2:
+# ═══════════════════════════════════════════════════════════════════
+    # SMART CATEGORY ASSIGNMENT (REPLACES LINES 923-943)
+    # ═══════════════════════════════════════════════════════════════════
+    
     # Donut chart
     median_val = latest_data['value'].median()
     q1 = latest_data['value'].quantile(0.33)
     q3 = latest_data['value'].quantile(0.67)
     
+    # Detect indicator type (reuse from earlier)
+    indicator_name = config['indicator'].lower()
+    income_terms = ['income', 'gdp', 'wage', 'salary', 'earnings', 'consumption', 'expenditure']
+    is_positive_indicator = any(term in indicator_name for term in income_terms)
+    
+    # Assign categories based on indicator type
     categories = []
     for val in latest_data['value']:
-        if val <= q1:
-            categories.append('Low Inequality')
-        elif val <= q3:
-            categories.append('Moderate')
+        if is_positive_indicator:
+            # For INCOME: LOW = BAD, HIGH = GOOD
+            if val <= q1:
+                categories.append('Low Income')      # Bad (was bottom 33%)
+            elif val <= q3:
+                categories.append('Moderate')
+            else:
+                categories.append('High Income')     # Good (top 33%)
         else:
-            categories.append('High Inequality')
+            # For INEQUALITY: LOW = GOOD, HIGH = BAD
+            if val <= q1:
+                categories.append('Low Inequality')  # Good
+            elif val <= q3:
+                categories.append('Moderate')
+            else:
+                categories.append('High Inequality') # Bad
     
     category_counts = pd.Series(categories).value_counts()
     
-    # Define consistent color mapping (green=good, red=bad)
-    color_map = {
-        'Low Inequality': '#10b981',    # Green (GOOD)
-        'Moderate': '#f59e0b',          # Yellow/Orange (OK)
-        'High Inequality': '#ef4444'    # Red (BAD)
-    }
+    # Define color mapping (adapt to indicator type)
+    if is_positive_indicator:
+        # For INCOME indicators
+        color_map = {
+            'Low Income': '#ef4444',      # Red (BAD - low income)
+            'Moderate': '#f59e0b',        # Yellow/Orange (OK)
+            'High Income': '#10b981'      # Green (GOOD - high income)
+        }
+        ordered_categories = ['Low Income', 'Moderate', 'High Income']
+    else:
+        # For INEQUALITY indicators (default)
+        color_map = {
+            'Low Inequality': '#10b981',    # Green (GOOD)
+            'Moderate': '#f59e0b',          # Yellow/Orange (OK)
+            'High Inequality': '#ef4444'    # Red (BAD)
+        }
+        ordered_categories = ['Low Inequality', 'Moderate', 'High Inequality']
     
     # Ensure consistent order and colors
-    ordered_categories = ['Low Inequality', 'Moderate', 'High Inequality']
     ordered_values = [category_counts.get(cat, 0) for cat in ordered_categories]
     ordered_colors = [color_map[cat] for cat in ordered_categories]
+
     
     fig_donut = go.Figure(data=[go.Pie(
         labels=ordered_categories,
@@ -968,18 +1103,18 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# ═══════════════════════════════════════════════════════════════════
-# GEOGRAPHIC ARC MAP - COUNTRY CONNECTIONS
+# HEATMAP 
+
 # ═══════════════════════════════════════════════════════════════════
 
 st.markdown("---")
-st.markdown('<div class="section-header" style="font-size: 1.5rem;">Country Relationship Network</div>', unsafe_allow_html=True)
+st.markdown('<div class="section-header" style="font-size: 1.5rem;">Country Correlation Analysis</div>', unsafe_allow_html=True)
 
 st.markdown("""
 <div style="background: rgba(59, 130, 246, 0.05); padding: 15px; border-radius: 8px; border-left: 3px solid #3b82f6; margin-bottom: 20px;">
     <p style="color: #8b98a5; font-size: 0.9rem; margin: 0;">
-        <b style="color: #e2e8f0;">Geographic Connection Map:</b> This map shows correlation relationships between South Asian countries. 
-        Curved arcs connect countries with similar inequality patterns - thicker arcs indicate stronger correlations.
+        <b style="color: #e2e8f0;">Correlation Matrix:</b> Shows how strongly inequality patterns are related between countries. 
+        Values range from -1 (opposite trends) to +1 (similar trends). Warmer colors indicate stronger positive correlations.
     </p>
 </div>
 """, unsafe_allow_html=True)
@@ -988,317 +1123,275 @@ st.markdown("""
 country_trends = filtered_df.pivot_table(values='value', index='year', columns='country')
 correlation_matrix = country_trends.corr()
 
-# Country coordinates (latitude, longitude) for South Asia
-country_coords = {
-    'Afghanistan': (33.9391, 67.7100),
-    'Bangladesh': (23.6850, 90.3563),
-    'Bhutan': (27.5142, 90.4336),
-    'India': (20.5937, 78.9629),
-    'Maldives': (3.2028, 73.2207),
-    'Nepal': (28.3949, 84.1240),
-    'Pakistan': (30.3753, 69.3451),
-    'Sri Lanka': (7.8731, 80.7718)
-}
-
-# Get countries in dataset
-countries_in_data = list(correlation_matrix.columns)
-
-# Calculate average GINI for colors
-avg_gini = {country: country_trends[country].mean() for country in countries_in_data if country in country_coords}
-
-# ═══════════════════════════════════════════════════════════════════
-#INTERACTIVITY - Country Focus Filter
+#  CONTROLS - Only color scheme selector
 # ═══════════════════════════════════════════════════════════════════
 
-st.markdown("### Focus on Specific Country")
-col_filter, col_info = st.columns([3, 1])
-
-with col_filter:
-    selected_country_filter = st.selectbox(
-        "Select country to highlight its connections",
-        ["Show All Countries"] + sorted(countries_in_data),
-        index=0,
-        key="country_filter_arc_map",
-        help="Filter to show only one country's correlation network"
-    )
-
-with col_info:
-    if selected_country_filter != "Show All Countries":
-        # Count connections for selected country
-        selected_connections = 0
-        for other_country in countries_in_data:
-            if other_country != selected_country_filter:
-                corr_val = correlation_matrix.loc[selected_country_filter, other_country]
-                if abs(corr_val) > 0.7:
-                    selected_connections += 1
-        
-        st.metric(
-            "Connections",
-            selected_connections,
-            help=f"{selected_country_filter}'s correlations"
-        )
-
-if selected_country_filter != "Show All Countries":
-    st.info(f"🔍 Showing correlations for **{selected_country_filter}** only. Select 'Show All Countries' to reset.")
-
-# ═══════════════════════════════════════════════════════════════════
-# Create base map
-# ═══════════════════════════════════════════════════════════════════
-
-fig_arc_map = go.Figure()
-
-# Add country markers with GINI-based colors
-for country in countries_in_data:
-    if country in country_coords:
-        lat, lon = country_coords[country]
-        gini_val = avg_gini[country]
-        
-        # Determine color based on GINI
-        if gini_val < 30:
-            color = '#10b981'  # Green
-        elif gini_val < 35:
-            color = '#34d399'  # Light green
-        elif gini_val < 40:
-            color = '#f59e0b'  # Yellow
-        else:
-            color = '#ef4444'  # Red
-        
-        # FIX #2: Highlight selected country
-        is_selected = (country == selected_country_filter)
-        marker_size = 22 if is_selected else 15
-        border_width = 3 if is_selected else 2
-        border_color = '#ffffff' if is_selected else '#1e293b'
-        text_size = 12 if is_selected else 11
-        
-        # Add marker
-        fig_arc_map.add_trace(go.Scattergeo(
-            lon=[lon],
-            lat=[lat],
-            mode='markers+text',
-            marker=dict(
-                size=marker_size,
-                color=color,
-                line=dict(width=border_width, color=border_color)
-            ),
-            text=country,
-            textposition='top center',
-            textfont=dict(size=text_size, color='#ffffff', family='Arial Black'),
-            name=country,
-            hovertemplate=f'<b>{country}</b><br>Avg GINI: {gini_val:.2f}<br>{"🎯 SELECTED" if is_selected else "Click dropdown to focus"}<extra></extra>',
-            showlegend=False
-        ))
-
-# ═══════════════════════════════════════════════════════════════════
-#  IMPROVED ARC CALCULATION - Great Circle Method
-# ═══════════════════════════════════════════════════════════════════
-
-def calculate_great_circle_arc(lat1, lon1, lat2, lon2, num_points=50):
-    """Calculate smooth great circle arc between two points"""
-    lat1_rad = np.radians(lat1)
-    lon1_rad = np.radians(lon1)
-    lat2_rad = np.radians(lat2)
-    lon2_rad = np.radians(lon2)
-    
-    lats = []
-    lons = []
-    
-    for i in range(num_points + 1):
-        t = i / num_points
-        
-        # Spherical interpolation
-        cos_angle = (np.sin(lat1_rad) * np.sin(lat2_rad) + 
-                     np.cos(lat1_rad) * np.cos(lat2_rad) * 
-                     np.cos(lon2_rad - lon1_rad))
-        cos_angle = np.clip(cos_angle, -1.0, 1.0)
-        angle = np.arccos(cos_angle)
-        
-        if angle < 1e-10:
-            lats.append(lat1 + t * (lat2 - lat1))
-            lons.append(lon1 + t * (lon2 - lon1))
-            continue
-        
-        sin_angle = np.sin(angle)
-        a = np.sin((1 - t) * angle) / sin_angle
-        b = np.sin(t * angle) / sin_angle
-        
-        x = a * np.cos(lat1_rad) * np.cos(lon1_rad) + b * np.cos(lat2_rad) * np.cos(lon2_rad)
-        y = a * np.cos(lat1_rad) * np.sin(lon1_rad) + b * np.cos(lat2_rad) * np.sin(lon2_rad)
-        z = a * np.sin(lat1_rad) + b * np.sin(lat2_rad)
-        
-        lat = np.degrees(np.arctan2(z, np.sqrt(x**2 + y**2)))
-        lon = np.degrees(np.arctan2(y, x))
-        
-        # Gentle upward curve for aesthetics
-        if 0.3 < t < 0.7:
-            curve_factor = 1 - abs(2*t - 1)
-            lat += 3 * curve_factor
-        
-        lats.append(lat)
-        lons.append(lon)
-    
-    return lats, lons
-
-# Add arcs for strong correlations
-threshold = 0.7
-arc_count = 0
-
-for i, country1 in enumerate(countries_in_data):
-    for j, country2 in enumerate(countries_in_data):
-        if i < j and country1 in country_coords and country2 in country_coords:
-            corr_value = correlation_matrix.loc[country1, country2]
-            
-            if abs(corr_value) > threshold:
-                # FIX #2: Filter by selected country
-                if selected_country_filter != "Show All Countries":
-                    if country1 != selected_country_filter and country2 != selected_country_filter:
-                        continue  # Skip arcs not connected to selected country
-                
-                lat1, lon1 = country_coords[country1]
-                lat2, lon2 = country_coords[country2]
-                
-                # FIX #1: Use improved great circle calculation
-                lats, lons = calculate_great_circle_arc(lat1, lon1, lat2, lon2, num_points=50)
-                
-                # Line color and width based on correlation
-                if corr_value > 0:
-                    base_color = '16, 185, 129'  # Green
-                else:
-                    base_color = '239, 68, 68'  # Red
-                
-                # FIX #2: Highlight connections to selected country
-                is_connected_to_selected = (
-                    selected_country_filter != "Show All Countries" and
-                    (country1 == selected_country_filter or country2 == selected_country_filter)
-                )
-                
-                if is_connected_to_selected:
-                    line_width = abs(corr_value) * 4.5  # Thicker
-                    opacity = 0.95  # More opaque
-                else:
-                    line_width = abs(corr_value) * 3
-                    opacity = abs(corr_value) * 0.7
-                
-                line_color = f'rgba({base_color}, {opacity})'
-                
-                fig_arc_map.add_trace(go.Scattergeo(
-                    lon=lons,
-                    lat=lats,
-                    mode='lines',
-                    line=dict(width=line_width, color=line_color),
-                    hovertemplate=f'<b>{country1} ↔ {country2}</b><br>Correlation: {corr_value:.3f}<extra></extra>',
-                    showlegend=False
-                ))
-                arc_count += 1
-
-# Update map layout
-fig_arc_map.update_geos(
-    projection_type='natural earth',
-    showcountries=True,
-    countrycolor='rgba(100, 116, 139, 0.3)',
-    showland=True,
-    landcolor='#0a0e27',
-    showocean=True,
-    oceancolor='#050810',
-    showlakes=True,
-    lakecolor='#050810',
-    coastlinecolor='rgba(100, 116, 139, 0.5)',
-    coastlinewidth=1,
-    center=dict(lat=20, lon=78),
-    lataxis_range=[0, 40],
-    lonaxis_range=[60, 100],
-    bgcolor='rgba(0,0,0,0)'
+color_scheme = st.selectbox(
+    "Color Scheme",
+    ["RdBu_r", "RdYlGn", "Viridis", "Spectral", "PiYG"],
+    help="Color palette for the heatmap (RdBu_r is recommended for academic papers)"
 )
 
-# Dynamic title based on filter
-if selected_country_filter != "Show All Countries":
-    title_text = f'Geographic Connection Map - {selected_country_filter}: {arc_count} Connections'
-else:
-    title_text = f'Geographic Connection Map - {arc_count} Strong Correlations'
+# ═══════════════════════════════════════════════════════════════════
+# CREATE HEATMAP - ALWAYS WITH VALUES
+# ═══════════════════════════════════════════════════════════════════
 
-fig_arc_map.update_layout(
-    height=800,
+fig_corr = go.Figure()
+
+# Add heatmap trace - ALWAYS showing values
+fig_corr.add_trace(go.Heatmap(
+    z=correlation_matrix.values,
+    x=correlation_matrix.columns,
+    y=correlation_matrix.index,
+    colorscale=color_scheme,
+    zmid=0,  # Center colorscale at 0
+    zmin=-1,
+    zmax=1,
+    text=correlation_matrix.values.round(3),  # Always show values
+    texttemplate='%{text}',  # Always display text
+    textfont=dict(size=11, color='#000000'),
+    hovertemplate='<b>%{y} ↔ %{x}</b><br>Correlation: %{z:.3f}<extra></extra>',
+    colorbar=dict(
+        title='Correlation',
+        tickmode='linear',
+        tick0=-1,
+        dtick=0.25,
+        len=0.7,
+        thickness=15,
+        tickfont=dict(size=10)
+    )
+))
+
+# Update layout
+fig_corr.update_layout(
+    height=600,
     paper_bgcolor='rgba(0,0,0,0)',
     plot_bgcolor='rgba(0,0,0,0)',
-    font=dict(color='#ffffff'),
-    margin=dict(l=20, r=20, t=40, b=20),
+    font=dict(color='#e2e8f0', size=11),
+    xaxis=dict(
+        side='bottom',
+        tickangle=-45,
+        tickfont=dict(size=11),
+        showgrid=False
+    ),
+    yaxis=dict(
+        tickfont=dict(size=11),
+        showgrid=False,
+        autorange='reversed'  # Match typical correlation matrix layout
+    ),
     title=dict(
-        text=title_text,
-        font=dict(size=16, color='#ffffff'),
+        text=f'Country Inequality Correlation Matrix ({config["year_range"][0]}-{config["year_range"][1]})',
+        font=dict(size=15, color='#ffffff'),
         x=0.5,
         xanchor='center'
-    )
+    ),
+    margin=dict(l=120, r=120, t=80, b=120)
 )
 
-# Download options
-col_spacer_arc, col_downloads_arc = st.columns([10, 1])
-with col_downloads_arc:
-    with st.popover("⬇️", help="Download in multiple formats"):
+# ═══════════════════════════════════════════════════════════════════
+# DOWNLOAD OPTIONS
+# ═══════════════════════════════════════════════════════════════════
+
+col_spacer_corr, col_downloads_corr = st.columns([10, 1])
+with col_downloads_corr:
+    with st.popover("⬇️", help="Download correlation matrix"):
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         
-        st.download_button("🌐 HTML", fig_arc_map.to_html(include_plotlyjs='cdn'), f"arc_map_{timestamp}.html", "text/html", key="arc_html", use_container_width=True)
-        st.download_button("📊 JSON", fig_arc_map.to_json(), f"arc_map_{timestamp}.json", "application/json", key="arc_json", use_container_width=True)
+        # HTML
+        st.download_button(
+            "🌐 HTML", 
+            fig_corr.to_html(include_plotlyjs='cdn'), 
+            f"correlation_matrix_{timestamp}.html", 
+            "text/html", 
+            key="corr_html", 
+            use_container_width=True
+        )
         
+        # CSV export of correlation values
+        csv_buffer = correlation_matrix.to_csv()
+        st.download_button(
+            "📊 CSV (Values)", 
+            csv_buffer,
+            f"correlation_matrix_{timestamp}.csv", 
+            "text/csv",
+            key="corr_csv", 
+            use_container_width=True
+        )
+        
+        # JSON
+        st.download_button(
+            "📄 JSON", 
+            fig_corr.to_json(), 
+            f"correlation_matrix_{timestamp}.json", 
+            "application/json", 
+            key="corr_json", 
+            use_container_width=True
+        )
+        
+        # SVG
         try:
-            svg_bytes = fig_arc_map.to_image(format="svg", width=1400, height=1000)
-            st.download_button("🎨 SVG", svg_bytes, f"arc_map_{timestamp}.svg", "image/svg+xml", key="arc_svg", use_container_width=True)
+            svg_bytes = fig_corr.to_image(format="svg", width=1400, height=1400)
+            st.download_button(
+                "🎨 SVG", 
+                svg_bytes, 
+                f"correlation_matrix_{timestamp}.svg", 
+                "image/svg+xml", 
+                key="corr_svg", 
+                use_container_width=True
+            )
         except:
-            st.button("🎨 SVG", disabled=True, key="arc_svg", use_container_width=True)
+            st.button("🎨 SVG", disabled=True, key="corr_svg", use_container_width=True)
 
-st.plotly_chart(fig_arc_map, use_container_width=True, config={
+# Display the chart
+st.plotly_chart(fig_corr, use_container_width=True, config={
     'displayModeBar': 'hover',
     'displaylogo': False,
     'modeBarButtonsToRemove': ['select2d', 'lasso2d'],
     'toImageButtonOptions': {
         'format': 'png',
-        'filename': 'arc_map',
-        'height': 1000,
+        'filename': 'correlation_matrix',
+        'height': 1400,
         'width': 1400,
         'scale': 2
     }
 })
 
-# Legend for arc map
-st.markdown("### 📖 Understanding the Map")
+# ═══════════════════════════════════════════════════════════════════
+# CORRELATION INSIGHTS - Key Statistics
+# ═══════════════════════════════════════════════════════════════════
 
-col_arc1, col_arc2, col_arc3 = st.columns(3)
+st.markdown("### Key Correlation Insights")
 
-with col_arc1:
-    st.markdown("""
-    <div style="background: #0f1419; padding: 1rem; border-radius: 8px; border: 1px solid rgba(16, 185, 129, 0.3);">
-        <div style="color: #10b981; font-weight: 600; margin-bottom: 0.5rem;">🟢 Country Markers</div>
-        <div style="color: #94a3b8; font-size: 0.85rem;">Green = Low inequality<br>Yellow = Moderate<br>Red = High inequality</div>
+col_insight1, col_insight2, col_insight3 = st.columns(3)
+
+# Calculate statistics
+mask = np.ones(correlation_matrix.shape, dtype=bool)
+np.fill_diagonal(mask, False)
+
+corr_values = correlation_matrix.values[mask]
+max_corr_idx = np.unravel_index(
+    np.argmax(np.where(mask, correlation_matrix.values, -np.inf)), 
+    correlation_matrix.shape
+)
+max_corr_countries = (
+    correlation_matrix.index[max_corr_idx[0]], 
+    correlation_matrix.columns[max_corr_idx[1]]
+)
+max_corr_value = correlation_matrix.iloc[max_corr_idx[0], max_corr_idx[1]]
+
+min_corr_idx = np.unravel_index(
+    np.argmin(np.where(mask, correlation_matrix.values, np.inf)), 
+    correlation_matrix.shape
+)
+min_corr_value = correlation_matrix.iloc[min_corr_idx[0], min_corr_idx[1]]
+
+avg_corr = corr_values.mean()
+
+# Display statistics - REPLACE FROM HERE
+with col_insight1:
+    st.markdown(f"""
+    <div class="stat-card" style="min-height: 180px;">
+        <div style="font-size: 0.875rem; color: #94a3b8; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">STRONGEST CORRELATION</div>
+        <div style="font-size: 1.5rem; color: #10b981; font-weight: 600; margin: 12px 0;">
+            {max_corr_value:.3f}
+        </div>
+        <div style="font-size: 0.9rem; color: #94a3b8; margin-top: 12px; line-height: 1.4;">
+            {max_corr_countries[0]} ↔ {max_corr_countries[1]}
+        </div>
     </div>
     """, unsafe_allow_html=True)
 
-with col_arc2:
-    st.markdown("""
-    <div style="background: #0f1419; padding: 1rem; border-radius: 8px; border: 1px solid rgba(16, 185, 129, 0.3);">
-        <div style="color: #10b981; font-weight: 600; margin-bottom: 0.5rem;">━━ Green Arcs</div>
-        <div style="color: #94a3b8; font-size: 0.85rem;">Positive correlation<br>Similar patterns</div>
+with col_insight2:
+    st.markdown(f"""
+    <div class="stat-card" style="min-height: 180px;">
+        <div style="font-size: 0.875rem; color: #94a3b8; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">AVERAGE CORRELATION</div>
+        <div style="font-size: 1.5rem; color: #ffffff; font-weight: 600; margin: 12px 0;">
+            {avg_corr:.3f}
+        </div>
+        <div style="font-size: 0.9rem; color: #94a3b8; margin-top: 12px; line-height: 1.4;">
+            Overall regional similarity
+        </div>
     </div>
     """, unsafe_allow_html=True)
 
-with col_arc3:
-    st.markdown("""
-    <div style="background: #0f1419; padding: 1rem; border-radius: 8px; border: 1px solid rgba(239, 68, 68, 0.3);">
-        <div style="color: #ef4444; font-weight: 600; margin-bottom: 0.5rem;">━━ Red Arcs</div>
-        <div style="color: #94a3b8; font-size: 0.85rem;">Negative correlation<br>Opposite trends</div>
+with col_insight3:
+    if min_corr_value < 0:
+        min_corr_countries = (
+            correlation_matrix.index[min_corr_idx[0]], 
+            correlation_matrix.columns[min_corr_idx[1]]
+        )
+        label_text = "MOST DIVERGENT"
+        color = "#ef4444"
+        desc = f"{min_corr_countries[0]} ↔ {min_corr_countries[1]}"
+    else:
+        label_text = "WEAKEST CORRELATION"
+        color = "#f59e0b"
+        min_corr_countries = (
+            correlation_matrix.index[min_corr_idx[0]], 
+            correlation_matrix.columns[min_corr_idx[1]]
+        )
+        desc = f"{min_corr_countries[0]} ↔ {min_corr_countries[1]}"
+    
+    st.markdown(f"""
+    <div class="stat-card" style="min-height: 180px;">
+        <div style="font-size: 0.875rem; color: #94a3b8; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">{label_text}</div>
+        <div style="font-size: 1.5rem; color: {color}; font-weight: 600; margin: 12px 0;">
+            {min_corr_value:.3f}
+        </div>
+        <div style="font-size: 0.9rem; color: #94a3b8; margin-top: 12px; line-height: 1.4;">
+            {desc}
+        </div>
     </div>
     """, unsafe_allow_html=True)
+# ═══════════════════════════════════════════════════════════════════
+# INTERPRETATION GUIDE
+# ═══════════════════════════════════════════════════════════════════
 
 st.markdown("""
 <div style="background: rgba(59, 130, 246, 0.1); padding: 1rem; border-radius: 8px; margin-top: 1rem; border-left: 3px solid #3b82f6;">
     <div style="color: #e2e8f0; font-size: 0.9rem;">
-        <strong style="color: #60a5fa;">💡 Key Insights:</strong><br>
-        • <strong>Select a country</strong> from the dropdown to focus on its specific correlations<br>
-        • <strong>Arc thickness</strong> shows correlation strength - thicker arcs mean stronger relationships<br>
-        • <strong>Improved arcs</strong> now follow proper geographic paths (great circle routes)<br>
-        • <strong>Green arcs</strong> connect countries with similar inequality trends over time<br>
-        • <strong>Red arcs</strong> show countries moving in opposite directions<br>
-        • Hover over arcs or markers to see detailed statistics
+        <strong style="color: #60a5fa;">💡 How to Interpret This Matrix:</strong><br>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 0.5rem;">
+            <div>
+                • <strong>+1.0</strong> = Perfect positive correlation (countries move together)<br>
+                • <strong>0.8 to 1.0</strong> = Very strong correlation<br>
+                • <strong>0.6 to 0.8</strong> = Strong correlation<br>
+                • <strong>0.4 to 0.6</strong> = Moderate correlation
+            </div>
+            <div>
+                • <strong>0.2 to 0.4</strong> = Weak correlation<br>
+                • <strong>0.0</strong> = No correlation (independent patterns)<br>
+                • <strong>Negative values</strong> = Opposite trends<br>
+                • <strong>Diagonal</strong> = Always 1.0 (country vs itself)
+            </div>
+        </div>
     </div>
 </div>
 """, unsafe_allow_html=True)
+
+# Optional: Show top correlations table
+with st.expander("📊 View Top Correlation Pairs"):
+    # Get all pairwise correlations (excluding diagonal)
+    pairs = []
+    for i in range(len(correlation_matrix)):
+        for j in range(i+1, len(correlation_matrix)):
+            pairs.append({
+                'Country 1': correlation_matrix.index[i],
+                'Country 2': correlation_matrix.columns[j],
+                'Correlation': correlation_matrix.iloc[i, j]
+            })
+    
+    # Sort by absolute correlation
+    pairs_df = pd.DataFrame(pairs)
+    pairs_df['Abs Correlation'] = pairs_df['Correlation'].abs()
+    pairs_df = pairs_df.sort_values('Abs Correlation', ascending=False)
+    
+    # Display top 10
+    st.dataframe(
+        pairs_df[['Country 1', 'Country 2', 'Correlation']].head(10),
+        use_container_width=True,
+        hide_index=True
+    )
 # ═══════════════════════════════════════════════════════════════════
 # BOTTOM SECTION: Rankings & Timeline
 # ═══════════════════════════════════════════════════════════════════
@@ -1317,7 +1410,8 @@ with col_bottom1:
     </div>
     """, unsafe_allow_html=True)
     
-    rankings = latest_data.sort_values('value').reset_index(drop=True)
+    rankings = latest_data.groupby('country')['value'].mean().reset_index()
+    rankings = rankings.sort_values('value').reset_index(drop=True)
     
     for idx, row in rankings.iterrows():
         rank = idx + 1
