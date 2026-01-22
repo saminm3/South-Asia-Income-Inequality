@@ -24,7 +24,6 @@ from utils.utils import (
 )
 from utils.indicator_metadata import (
     get_available_indicators_by_category,
-    get_indicator_description
 )
 
 # --------------------------------------------------
@@ -900,6 +899,7 @@ try:
         fig_scatter.update_traces(marker=dict(size=12))
         st.plotly_chart(fig_scatter, use_container_width=True)
 
+
     elif viz_option == "Ranking Shift":
         # Calculate rank improvement (negative rank_change = improvement)
         cmp["rank_improvement"] = -cmp["rank_change"]
@@ -1380,6 +1380,28 @@ try:
 except Exception as e:
     st.error(f"❌ Error creating visualization: {str(e)}")
     st.write("Debug info:", str(e))
+# --------------------------------------------------
+# Initialize fig variable for export
+# --------------------------------------------------
+# Track which figure to export based on selected visualization
+export_fig = None
+
+if viz_option == "Choropleth Map":
+    export_fig = fig_now  # Export the NOW map as primary
+elif viz_option == "Bar Chart":
+    export_fig = fig_now  # Export the NOW bar chart
+elif viz_option == "Scatter Plot":
+    export_fig = fig_scatter
+elif viz_option == "Ranking Shift":
+    export_fig = fig_rank
+elif viz_option == "Distribution Comparison":
+    export_fig = fig_box
+elif viz_option == "Delta Map (Change Visualization)":
+    export_fig = fig_delta
+elif viz_option == "Sankey Diagram (Rank Flow)":
+    export_fig = fig_sankey
+elif viz_option == "Heatmap Matrix":
+    export_fig = fig_heat_diff  # Export the change heatmap
 
 # Map visualization options to help keys
 viz_help_mapping = {
@@ -1668,15 +1690,19 @@ try:
             mime="text/tab-separated-values",
             use_container_width=True
         )
-    
-    # Visualization export instructions
-    if 'fig' not in locals():
-        st.warning("⚠️ No visualization available to export")
-        st.stop()
+except Exception as e:
+    st.error(f"❌ Error in export section: {str(e)}")
+    st.caption("Please try a different export format or contact support if the issue persists.")
 
-    st.markdown("---")
-    st.markdown("### Export Visualizations")
+# --------------------------------------------------
+# Visualization Export Section (FIXED)
+# --------------------------------------------------
+st.markdown("---")
+st.markdown("### Export Visualizations")
 
+if export_fig is None:
+    st.info("ℹ️ Visualization export not available for this view")
+else:
     col1, col2 = st.columns(2)
 
     with col1:
@@ -1696,20 +1722,23 @@ try:
         "Large (1920x1080)": (1920, 1080),
         "Extra Large (2560x1440)": (2560, 1440),
         "Print Quality (3840x2160)": (3840, 2160)
-        }
+    }
 
     width, height = size_map.get(viz_size, (1200, 800))
     viz_filename = f"Comparison_{indicator}_{period_then}_vs_{period_now}".replace(" ", "_")
 
     if viz_format == "HTML (Interactive)":
-        html_bytes = fig.to_html(include_plotlyjs="cdn").encode("utf-8")
-        st.download_button(
-            "Download HTML",
-            data=html_bytes,
-            file_name=f"{viz_filename}.html",
-            mime="text/html",
-            use_container_width=True
-        )
+        try:
+            html_bytes = export_fig.to_html(include_plotlyjs="cdn").encode("utf-8")
+            st.download_button(
+                "⬇️ Download HTML",
+                data=html_bytes,
+                file_name=f"{viz_filename}.html",
+                mime="text/html",
+                use_container_width=True
+            )
+        except Exception as e:
+            st.error(f"❌ Error exporting HTML: {str(e)}")
     else:
         fmt_map = {
             "PNG (High Quality)": "png",
@@ -1719,17 +1748,16 @@ try:
         }
         fmt = fmt_map[viz_format]
         try:
-            img_bytes = fig.to_image(format=fmt, width=width, height=height)
+            img_bytes = export_fig.to_image(format=fmt, width=width, height=height)
             st.download_button(
-                f"Download {viz_format}",
+                f"⬇️ Download {viz_format}",
                 data=img_bytes,
-            file_name=f"{viz_filename}.{fmt}",
-            use_container_width=True
+                file_name=f"{viz_filename}.{fmt}",
+                mime=f"image/{fmt}",
+                use_container_width=True
             )
-        except Exception:
-            st.error("❌ Image export unavailable. Install Kaleido: pip install kaleido")
+        except Exception as e:
+            st.error(f"❌ Image export unavailable: {str(e)}")
+            st.info("💡 Install Kaleido for image export: `pip install kaleido`")
 
-
-except Exception as e:
-    st.error(f"❌ Error in export section: {str(e)}")
-    st.caption("Please try a different export format or contact support if the issue persists.")
+st.caption("Temporal Comparison | South Asia Inequality Analysis Platform")
