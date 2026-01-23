@@ -12,7 +12,7 @@ NAV_PAGES = [
     ("Correlations", "pages/4_Correlations.py"),
     ("Income Simulator", "pages/5_Income_Simulator.py"),
     ("Data Quality", "pages/6_Data_Quality.py"),
-    ("Sunburst", "pages/7_Sunburst.py"),
+    ("Indicator Insights", "pages/7_Indicator_Insights.py"),
     ("Temporal Comparison", "pages/8_Temporal_Comparison.py"),
     ("Help", "pages/9_Help.py"),
 ]

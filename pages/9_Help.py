@@ -260,7 +260,7 @@ with tab2:
         ("dashboard", "Dashboard"),
         ("map", "Map Analysis"),
         ("correlations", "Correlations"),
-        ("sunburst", "Sunburst"),
+        ("Indicator Insights", "Indicator Insights"),
         ("simulator", "Income Simulator"),
         ("quality", "Data Quality"),
         ("search", "Smart Search"),

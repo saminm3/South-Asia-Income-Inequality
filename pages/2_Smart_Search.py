@@ -324,7 +324,7 @@ def smart_search(query, dataframe):
         'map': {'name': 'Geographic Map', 'page': 'pages/3_Map_analysis.py', 'description': 'Choropleth map with animation'},
         'correlation': {'name': ' Correlations', 'page': 'pages/4_Correlations.py', 'description': 'Analyze relationships'},
         'dashboard': {'name': ' Dashboard', 'page': 'pages/1_Dashboard.py', 'description': 'Multi-dimensional overview'},
-        'sunburst': {'name': 'Sunburst', 'page': 'pages/7_Sunburst.py', 'description': 'Hierarchical visualization'},
+        'Indicator Insights': {'name': 'Indicator Insights', 'page': 'pages/7_Indicator_Insights.py', 'description': 'Hierarchical visualization'},
         'simulator': {'name': 'Simulator', 'page': 'pages/5_Income_simulator.py', 'description': 'Income inequality modeling'},
         'quality': {'name': 'Data Quality', 'page': 'pages/6_Data_quality.py', 'description': 'Data completeness monitor'},
         'temporal': {'name': ' Temporal', 'page': 'pages/8_Temporal_comparison.py', 'description': 'Time comparison analysis'}
@@ -541,8 +541,8 @@ with col6:
         st.switch_page("pages/6_Data_Quality.py")
 
 with col7:
-    if st.button(" Sunburst", use_container_width=True, type="secondary", key="nav_sunburst"):
-        st.switch_page("pages/7_Sunburst.py")
+    if st.button(" Indicator Insights", use_container_width=True, type="secondary", key="nav_sunburst"):
+        st.switch_page("pages/7_Indicator_Insights.py")
 
 with col8:
     if st.button("Temporal", use_container_width=True, type="secondary", key="nav_temporal"):
@@ -667,7 +667,7 @@ bookmarks = {
         "description": "Compare all countries side-by-side",
         "countries": df['country'].unique().tolist(),
         "indicator": detected_gini_indicator,
-        "page": "pages/7_Sunburst.py"
+        "page": "pages/7_Indicator_Insights.py"
     },
     "🗺️ Latest Year Geographic View": {
         "description": "Map visualization of most recent data",

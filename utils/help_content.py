@@ -123,7 +123,7 @@ HELP_CONTENT = {
     },
     
     "map": {
-        "title": "🗺️ Map Analysis - Geographic Visualization",
+        "title": "Map Analysis - Geographic Visualization",
         "overview": "Animated choropleth maps showing spatial patterns of inequality across South Asia. Watch how regions evolve over time with powerful animation controls.",
         "features": [
             {
@@ -183,7 +183,7 @@ HELP_CONTENT = {
     },
     
     "correlations": {
-        "title": "📊 Correlations - Inequality Drivers",
+        "title": "Correlations - Inequality Drivers",
         "overview": "Discover relationships between inequality indicators and potential drivers like GDP, education, and technology. Uses statistical analysis to identify patterns.",
         "features": [
             {
@@ -238,8 +238,8 @@ HELP_CONTENT = {
         ]
     },
     
-    "sunburst": {
-        "title": "☀️ Sunburst - Hierarchical Composition",
+    "Indicator Insights": {
+        "title": " Indicator Insights Explorer",
         "overview": "Interactive hierarchical visualization showing inequality composition by region, country, and time period. Perfect for understanding nested patterns.",
         "features": [
             {
@@ -294,7 +294,7 @@ HELP_CONTENT = {
     },
     
     "simulator": {
-        "title": "🎮 Income Simulator - What-If Analysis",
+        "title": " Income Simulator - What-If Analysis",
         "overview": "Interactive tool to simulate changes in income inequality under different policy scenarios. Adjust parameters and see real-time impact.",
         "features": [
             {
@@ -349,7 +349,7 @@ HELP_CONTENT = {
     },
     
     "temporal": {
-        "title": "📅 Temporal Comparison - Change Over Time",
+        "title": " Temporal Comparison - Change Over Time",
         "overview": "Compare inequality levels between two time points or periods. Perfect for evaluating policy impacts or long-term trends.",
         "features": [
             {
@@ -405,7 +405,7 @@ HELP_CONTENT = {
     },
     
     "search": {
-        "title": "🔍 Smart Search - Quick Navigation",
+        "title": " Smart Search - Quick Navigation",
         "overview": "Keyboard-friendly search system for finding data, countries, indicators, and commands.",
         "features" : [
             {
@@ -461,7 +461,7 @@ HELP_CONTENT = {
     },
     
     "quality": {
-        "title": "✅ Data Quality - Transparency Report",
+        "title": " Data Quality - Transparency Report",
         "overview": "Comprehensive data completeness monitoring and source reliability tracking. Understand data limitations before drawing conclusions.",
         "features": [
             {
