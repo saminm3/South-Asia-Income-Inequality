@@ -18,7 +18,7 @@ st.set_page_config(
     page_icon="🌟",
     layout="wide"
 )
-render_help_button("sunburst")
+render_help_button("Indicator Insights")
 apply_all_styles()
 
 # Load custom CSS
