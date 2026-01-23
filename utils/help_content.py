@@ -239,59 +239,81 @@ HELP_CONTENT = {
     },
     
     "Indicator Insights": {
-        "title": " Indicator Insights Explorer",
-        "overview": "Interactive hierarchical visualization showing inequality composition by region, country, and time period. Perfect for understanding nested patterns.",
-        "features": [
-            {
-                "name": "Multi-Level Hierarchy",
-                "description": "View data by Region → Country → Year structure"
-            },
-            {
-                "name": "Interactive Drill-Down",
-                "description": "Click segments to zoom in, click center to zoom out"
-            },
-            {
-                "name": "Proportional Sizing",
-                "description": "Segment size shows relative contribution"
-            },
-            {
-                "name": "Color Gradients",
-                "description": "Colors represent inequality levels"
-            },
-            {
-                "name": "Path Tracking",
-                "description": "Shows your current location in the hierarchy"
-            }
-        ],
-        "how_to_use": [
-            "Start at the outer ring (regions/countries)",
-            "Click any segment to zoom in",
-            "Click the center circle to zoom back out",
-            "Hover over segments for details",
-            "Use color to identify high/low inequality areas"
-        ],
-        "tips": [
-            "Larger segments = bigger share of total inequality",
-            "Darker colors usually mean higher inequality",
-            "Start from center and work outward to understand structure",
-            "Compare segment sizes within same ring for relative importance",
-            "Export as SVG for high-quality presentations"
-        ],
-        "common_issues": [
-            {
-                "problem": "Sunburst looks cluttered",
-                "solution": "Too many years/countries. Filter to 2-3 countries or 5-10 years for clearer view."
-            },
-            {
-                "problem": "Can't zoom out",
-                "solution": "Click the center circle (innermost circle) to zoom back to root level."
-            },
-            {
-                "problem": "Missing segments",
-                "solution": "Countries/years with no data don't appear. Check Data Quality page."
-            }
-        ]
-    },
+    "title": "Indicator Insights Explorer",
+    "overview": (
+        "A dominance-based visual explorer showing which indicators stand out within each country "
+        "for a selected year. Values are normalized per indicator (0–100) to enable fair comparison, "
+        "with a simple descriptive inequality signal derived from inequality-related indicators."
+    ),
+    "features": [
+        {
+            "name": "Sunburst Dominance View",
+            "description": (
+                "Hierarchical view (Region → Country → Indicator) where slice size reflects normalized dominance, "
+                "not raw indicator values."
+            )
+        },
+        {
+            "name": "Data Availability Context",
+            "description": (
+                "Highlights visible data coverage per country-year to avoid confusing missing data with low inequality."
+            )
+        },
+        {
+            "name": "Country Story (Inequality Signal)",
+            "description": (
+                "Relative inequality signal based on Gini, income shares, poverty, and unemployment. Descriptive, not causal."
+            )
+        },
+        {
+            "name": "Country Spotlight (Bubble View)",
+            "description": (
+                "Focused bubble chart for a single country where bubble size represents normalized dominance."
+            )
+        },
+        {
+            "name": "Top Dominant Indicators",
+            "description": (
+                "Displays indicators with the highest overall dominance across selected countries."
+            )
+        }
+    ],
+    "how_to_use": [
+        "Select a year (and color scheme) from the sidebar.",
+        "Refer to the chart guide below the sunburst to understand size and color meanings.",
+        "Hover over segments to view actual values and normalized dominance.",
+        "Compare countries using the country-wise inequality signal.",
+        "Use Country Spotlight to examine dominant indicators for a single country."
+    ],
+    "tips": [
+        "Country circle size represents data availability, not inequality.",
+        "Slice size reflects indicator dominance after normalization (0–100).",
+        "Color intensity shows relative dominance, not good or bad performance.",
+        "Inequality signals are relative to the selected countries and year.",
+        "Missing segments usually indicate missing data for that year."
+    ],
+    "common_issues": [
+        {
+            "problem": "One country appears larger than others",
+            "solution": (
+                "Circle size reflects data coverage, not inequality. Compare indicator composition and inequality signals instead."
+            )
+        },
+        {
+            "problem": "Colors appear to indicate good or bad performance",
+            "solution": (
+                "Colors represent normalized dominance intensity only. Use tooltips for actual values."
+            )
+        },
+        {
+            "problem": "Some indicators or countries are missing",
+            "solution": (
+                "This usually indicates missing data for the selected year. Try another year or consult the Data Quality page."
+            )
+        }
+    ]
+},
+
     
     "simulator": {
         "title": " Income Simulator - What-If Analysis",
