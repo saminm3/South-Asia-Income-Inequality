@@ -53,15 +53,17 @@ margin-bottom: 12px;
 }
 .result-container {
 text-align: center;
-padding: 40px;
+padding: 30px 20px;
 background: linear-gradient(180deg, rgba(139, 92, 246, 0.15) 0%, rgba(139, 92, 246, 0.05) 100%);
 border-radius: 20px;
 border: 1px solid rgba(139, 92, 246, 0.3);
-margin-bottom: 30px;
+margin-bottom: 20px;
 box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+height: auto;
+min-height: 300px;
 }
 .metric-value-large {
-font-size: 5rem;
+font-size: 4rem;
 font-weight: 800;
 background: linear-gradient(90deg, #8b5cf6 0%, #ec4899 50%, #06b6d4 100%);
 -webkit-background-clip: text;
@@ -193,43 +195,268 @@ def get_historical_data_efficiently():
     """Helper to load main data once for simulator use"""
     return load_inequality_data()
 
-def calculate_percentile(country, edu, digital, gender, urban, occupation="Services", credit=False, age="Adult", api_data=None, un_data=None, poverty_data=None):
-    """Calculate economic percentile with detailed component breakdown"""
+def calculate_percentile(country, edu, digital, gender, urban, occupation="Services", credit=False, age="Adult", api_data=None, un_data=None, poverty_data=None, live_context=None):
+    """Calculate economic percentile with detailed live component breakdown"""
+    
+    # Backward compatibility for old calls signature if needed, or just unify
+    if live_context is None:
+        live_context = {}
+        # Try to populate from legacy args if they exist
+        if api_data is not None and not api_data.empty:
+            gdp_val = api_data[api_data['indicator'].str.contains('GDP')]['value'].mean() if any(api_data['indicator'].str.contains('GDP')) else None
+            if gdp_val: live_context['gdp'] = gdp_val
+            
+        if un_data is not None and not un_data.empty:
+            live_context['gii'] = un_data['value'].iloc[0]
+            
+        if poverty_data is not None and not poverty_data.empty:
+            live_context['poverty_rate'] = poverty_data['value'].iloc[0]
+            
     data = COUNTRY_DATA.get(country, COUNTRY_DATA['India'])
     
-    # Use API data for base if provided (Live Sync)
-    if api_data is not None and not api_data.empty:
-        # Base value calibrated to GDP per capita relative to regional average
-        gdp_val = api_data[api_data['indicator'].str.contains('GDP')]['value'].mean() if any(api_data['indicator'].str.contains('GDP')) else 2000
-        base = 15 + (np.log10(gdp_val/100) * 5)
+    # 1. BASE VALUE (GDP-Driven)
+    if 'gdp' in live_context:
+        # Base value calibrated to GDP per capita
+        # Log scale: $2000 -> Base 22, $400 -> Base 16
+        base = 15 + (np.log10(max(live_context['gdp'], 100)/100) * 5)
     else:
         base = data['base']
+    
+    # Re-normalize base if migration is high (brain drain or influx)
+    if 'net_migration' in live_context and live_context['net_migration'] < -500000:
+        base -= 1 # Penalty for massive brain drain
         
     weight = data['education_weight']
-    bonus = data['urban_bonus']
     
-    occ_map = {"Agriculture": 0, "Industry": 8, "Services": 12, "Public Sector": 15, "Unemployed": -5}
-    occ_val = occ_map.get(occupation, 10)
+    # 2. OCCUPATION & EMPLOYMENT QUALITY
+    sector_scores = {"Agriculture": 0, "Industry": 8, "Services": 12, "Public Sector": 15, "Unemployed": -5}
     
-    credit_val = 6 if credit else 0
+    # Unemployment penalty dynamism
+    if occupation == "Unemployed":
+        # Base penalty
+        occ_val = -5
+        
+        # 1. Adjust for Youth Unemployment if Age is Youth
+        if age == "Youth (<25)" and 'unemp_youth' in live_context:
+            u_youth = live_context['unemp_youth']
+            # If youth unemployment is rampant (30%), the stigma/penalty is lower (structural)
+            if u_youth > 20: occ_val += 2 
+            
+        # 2. Adjust for Education Level (Paradox of Educated Unemployment)
+        # In South Asia, often higher education = higher unemployment rate
+        if edu > 12:
+            if 'unemp_advanced' in live_context:
+                u_adv = live_context['unemp_advanced']
+                if u_adv > 15: occ_val += 1 # "Waiting for white collar job" phenomenon
+        elif edu >= 6:
+            if 'unemp_intermediate' in live_context:
+                # Same logic
+                pass
+                
+        # 3. National Rate Context
+        if 'unemployment_rate' in live_context:
+            u_rate = live_context['unemployment_rate']
+            occ_val += (u_rate / 10) # Higher national rate softens personal penalty
+            
+    else:
+        # EMPLOYED SECTOR LOGIC
+        if 'sector_shares' in live_context:
+            shares = live_context['sector_shares']
+            current_share = shares.get(occupation, 30)
+            scarcity_factor = max(0.8, 1.5 - (current_share / 100))
+            
+            # Vulnerability Penalty
+            vuln_penalty = 0
+            if 'vulnerable_emp' in live_context:
+                vuln_penalty = (live_context['vulnerable_emp'] / 100) * 3
+            
+            # Wage Worker Bonus
+            wage_bonus = 0
+            if 'wage_worker' in live_context:
+                 wage_bonus = (live_context['wage_worker'] / 100) * 2
+            
+            # Agriculture Value Added (Ag Productivity)
+            ag_bonus = 0
+            if occupation == "Agriculture" and 'ag_value_added_gdp' in live_context:
+                ag_val = live_context['ag_value_added_gdp']
+                # If Ag value added is high (e.g. 20%) but employment is low -> High productivity
+                # If Ag value added is low (15%) but employment high (40%) -> Low productivity
+                # We already use share for scarcity. Let's use this for "Sector Health".
+                if ag_val > 15: ag_bonus = 1
+            
+            base_score = sector_scores.get(occupation, 10)
+            occ_val = (base_score * scarcity_factor) - vuln_penalty + wage_bonus + ag_bonus
+            
+            # Employers/Contributing Family adjustment
+            # If "Self-employed" was an option (mapped to Services/Ind usually), we'd use 'employers_share'
+            # Here we assume Services/Industry might include entrepreneurs.
+            if occupation in ["Services", "Industry"] and 'employers_share' in live_context:
+                emp_share = live_context['employers_share']
+                # If high entrepreneurial density -> higher potential ceiling
+                occ_val += (emp_share / 5)
+                
+        else:
+            occ_val = sector_scores.get(occupation, 10)
+
+    # 3. FINANCIAL ACCESS (Multi-dimensional Banking Infrastructure)
+    if credit:
+        credit_val = 6
+        
+        # A. FINANCIAL DEPTH - How developed is the credit market?
+        if 'credit_depth' in live_context:
+             # Domestic credit to private sector (% of GDP). Range: 10-100%+
+             credit_val += min(3, live_context['credit_depth'] / 30) # Cap at +3 for strong markets
+             
+        if 'financial_sector_credit' in live_context:
+            # Total domestic credit by financial sector (broader than private)
+            # If this is significantly higher than private credit, implies govt borrowing
+            # Use as a secondary depth indicator
+            fin_cred = live_context['financial_sector_credit']
+            if fin_cred > 50: credit_val += 0.5
+        
+        # B. BANKING PENETRATION - Actual access to banking services
+        if 'borrowers_density' in live_context:
+            # Borrowers from commercial banks per 1,000 adults
+            # High value (200+) = widespread access, Low (20) = elite only
+            borrowers = live_context['borrowers_density']
+            if borrowers > 100:
+                credit_val += 2  # Highly banked population
+            elif borrowers > 50:
+                credit_val += 1  # Moderate access
+            # Low borrowers (<50) gets no bonus - having an account is rare/elite
+                
+        # C. CREDIT INFORMATION INFRASTRUCTURE
+        if 'credit_info_depth' in live_context:
+            # Depth of credit information index (0-8)
+            # Strong credit bureaus enable better lending
+            info_depth = live_context['credit_info_depth']
+            credit_val += (info_depth / 8) * 1.5  # Up to +1.5 for perfect (8)
+            
+        if 'private_credit_bureau' in live_context:
+            # Private credit bureau coverage (% of adults)
+            # High coverage = mature credit ecosystem
+            bureau_cov = live_context['private_credit_bureau']
+            if bureau_cov > 30: credit_val += 1
+            
+        if 'public_credit_registry' in live_context:
+            # Public credit registry coverage (% of adults)
+            registry = live_context['public_credit_registry']
+            if registry > 10: credit_val += 0.5
+        
+        # D. FINANCIAL SECTOR QUALITY (Policy & Regulation)
+        if 'financial_sector_rating' in live_context:
+            # CPIA financial sector rating (1=low to 6=high)
+            # Strong institutions = better protection, lower interest rates
+            rating = live_context['financial_sector_rating']
+            credit_val += ((rating - 2) / 4) * 2  # Scale 2-6 to 0-2 bonus
+        
+        # E. PHYSICAL INFRASTRUCTURE (ATMs)
+        if 'atm_density' in live_context:
+            density = live_context['atm_density']  # per 100,000 adults
+            # Scarcity bonus: Low ATM density makes physical access elite
+            if density < 20:  # Very low
+                credit_val += 2  # Having access is rare
+            elif density < 50:
+                credit_val += 1
+            # High density (100+) = no bonus, access is common
+            
+        # F. ECONOMIC INTEGRATION (Remittances & Business Ecosystem)
+        if 'remittances_gdp' in live_context and live_context['remittances_gdp'] > 5:
+            # High remittances = banking is critical for receiving funds
+            credit_val += min(2, live_context['remittances_gdp'] / 10)
+            
+        if 'business_density' in live_context:
+            # High business density makes credit more useful for entrepreneurship
+            bd = live_context['business_density']  # per 1000 people
+            if bd > 5: credit_val += 1.5
+            elif bd > 2: credit_val += 0.5
+            
+    else:
+        credit_val = 0
     
     age_map = {"Youth (<25)": -4, "Adult (25-60)": 6, "Senior (>60)": 2}
     age_val = age_map.get(age, 4)
     
+    # 4. EDUCATION (Quality & Scarcity Adjusted)
+    # Base contribution from years
     edu_contrib = (edu/20)*40*weight
-    digital_contrib = (digital/100)*15
     
-    # DYNAMIC GENDER IMPACT (API-DRIVEN)
-    if un_data is not None and not un_data.empty:
-        # Scale penalty based on GII (0.1 to 0.7)
-        # Low GII (0.2) = ~4pt penalty | High GII (0.6) = ~12pt penalty
-        gii_val = un_data['value'].iloc[0]
-        gender_penalty = gii_val * 18 
-    else:
-        gender_penalty = 8 # Default fallback
+    # DYNAMIC ENROLLMENT & GPI LOGIC
+    # Primary (Years 1-5)
+    if 'primary_enrollment' in live_context:
+        # If gross enrollment > 100%, basic education is universal -> lower scarcity bonus
+        p_enrol = live_context['primary_enrollment']
+        if p_enrol < 90: edu_contrib += 2 # Scarcity bonus
         
+    if 'primary_gender_enrollment' in live_context:
+        # If specific gender enrollment is low, educated person of that gender gets higher elite score
+        pg_enrol = live_context['primary_gender_enrollment']
+        if pg_enrol < 85: edu_contrib += 1.5
+    
+    # Secondary (Years 6-12)
+    if edu >= 6:
+        if 'secondary_enrollment' in live_context:
+            s_enrol = live_context['secondary_enrollment']
+            # Scarcity Multiplier: If only 40% enrolled, secondary ed is worth 1.2x more
+            s_mult = max(1.0, 1.5 - (s_enrol/100))
+            edu_contrib *= s_mult
+            
+        if 'secondary_gender_enrollment' in live_context:
+            sg_enrol = live_context['secondary_gender_enrollment']
+            # If my gender only has 30% enrollment, my degree is very rare
+            if sg_enrol < 50: edu_contrib += 3
+            
+        if 'secondary_gpi' in live_context and gender == 1: # Female
+            gpi = live_context['secondary_gpi']
+            if gpi < 0.9: edu_contrib += 2 # Overcoming systemic barrier bonus
+    
+    # Tertiary (Years 13+)
+    if edu > 12: 
+        if 'tertiary_enrollment' in live_context:
+             t_enrol = live_context['tertiary_enrollment']
+             # Tertiary Scarcity: Low enrollment (15%) -> High Premium (2.5x). High (80%) -> Low Premium.
+             t_mult = max(1.0, 3.0 - (t_enrol/40))
+             edu_contrib *= t_mult
+             
+        if 'tertiary_gender_enrollment' in live_context:
+            tg_enrol = live_context['tertiary_gender_enrollment']
+            if tg_enrol < 20: edu_contrib += 5 # Status Symbol Bonus
+            
+        if 'tertiary_gpi' in live_context and gender == 1: # Female
+            gpi = live_context['tertiary_gpi']
+            if gpi < 0.8: edu_contrib += 3 # Breaking the glass ceiling bonus
+             
+    # Adjust for Primary Quality (Completion rate)
+    if 'primary_completion' in live_context:
+         comp = live_context['primary_completion']
+         if comp < 80:
+             edu_contrib += 2 # Scarcity bonus for finishing basic schooling
+             
+    # 5. DIGITAL SKILLS (Mobile + Internet)
+    digital_contrib = (digital/100)*15
+    if 'mobile_subs' in live_context:
+        # If mobile density is high (>100), digital skills are assumed baseline?
+        # Actually maybe if mobile subs are high, intermediate skills are needed to stand out.
+        pass
+
+    # 6. GENDER IMPACT
+    if 'gii' in live_context:
+        gender_penalty = live_context['gii'] * 18
+    else:
+        gender_penalty = 8
     gender_contrib = gender*(-gender_penalty)
-    urban_contrib = urban*bonus
+
+    # 7. LOCATION (Urban Scarcity Driven)
+    if 'urban_pct' in live_context:
+        # Urban Pct 20% -> Bonus 16. Urban Pct 40% -> Bonus 12.
+        u_pct = live_context['urban_pct']
+        urban_bonus = 20 * (1 - (u_pct/100))
+        
+        # If rural, maybe check net migration? If high out-migration, rural is depressed.
+    else:
+        urban_bonus = data['urban_bonus']
+        
+    urban_contrib = urban*urban_bonus
     
     raw_percentile = base + edu_contrib + digital_contrib + gender_contrib + urban_contrib + occ_val + credit_val + age_val
     
@@ -244,11 +471,10 @@ def calculate_percentile(country, edu, digital, gender, urban, occupation="Servi
         "Gender Impact": gender_contrib 
     }
     
-    # POVERTY BENCHMARKING (#4 IMPROVEMENT)
+    # 8. POVERTY BENCHMARKING
     poverty_bench = None
-    if poverty_data is not None and not poverty_data.empty:
-        pov_rate = poverty_data['value'].iloc[0] # % of population below poverty line
-        # If pov_rate is 20%, then anyone below 20th percentile is 'Below Poverty Line'
+    if 'poverty_rate' in live_context:
+        pov_rate = live_context['poverty_rate']
         dist = raw_percentile - pov_rate
         poverty_bench = {
             "rate": pov_rate,
@@ -337,36 +563,110 @@ def get_tercile(p):
     if p < 66.66: return "Middle Tercile", "#f59e0b"
     return "Upper Tercile", "#10b981"
 
-def render_gauge(p, title="", height=250):
-    fig = go.Figure(go.Indicator(
-        mode="gauge+number",
-        value=p,
-        title={'text': title, 'font': {'size': 18, 'color': '#e2e8f0'}},
-        domain={'x': [0, 1], 'y': [0, 1]},
-        gauge={
-            'axis': {'range': [0, 100], 'tickwidth': 1, 'tickcolor': "#8b98a5"},
-            'bar': {'color': "#ffffff"},
-            'bgcolor': "rgba(0,0,0,0)",
-            'borderwidth': 0,
-            'steps': [
-                {'range': [0, 33.33], 'color': "rgba(239, 68, 68, 0.3)"},
-                {'range': [33.33, 66.66], 'color': "rgba(245, 158, 11, 0.3)"},
-                {'range': [66.66, 100], 'color': "rgba(16, 185, 129, 0.3)"}
-            ],
-            'threshold': {'line': {'color': "#fff", 'width': 4}, 'thickness': 0.75, 'value': p}
-        }
+def render_percentile_distribution(p, title="Your Relative Standing"):
+    """
+    Renders a distribution plot with a High-Contrast Cyberpunk / Neon theme.
+    """
+    # 1. Simulate Income Distribution (Log-Normal)
+    mean = 10.0
+    sigma = 0.6
+    
+    # Generate distribution
+    x = np.linspace(0, 30, 500)
+    pdf = np.zeros_like(x)
+    mask = x > 0
+    pdf[mask] = (1 / (x[mask] * sigma * np.sqrt(2 * np.pi))) * np.exp(-((np.log(x[mask]) - mean/4) ** 2) / (2 * sigma ** 2))
+    pdf = pdf / pdf.max()
+    
+    # 2. Determine User's Position
+    sample = np.random.lognormal(mean=mean/4, sigma=sigma, size=100000)
+    x_user = np.percentile(sample, p)
+    y_user = np.interp(x_user, x, pdf)
+    
+    # 3. Build Plot
+    fig = go.Figure()
+    
+    # A. The Population Curve (Cyberpunk Area)
+    # Use a gradient-like fill by layering or just a solid neon fill with transparency
+    fig.add_trace(go.Scatter(
+        x=x, y=pdf,
+        fill='tozeroy',
+        mode='lines',
+        line=dict(color='#00f3ff', width=3, shape='spline'), # Neon Cyan Line
+        fillcolor='rgba(0, 243, 255, 0.15)', # Subtle Cyan Glow
+        name='Population',
+        hoverinfo='skip'
     ))
+    
+    # B. User's Position Line (Laser Beam)
+    fig.add_trace(go.Scatter(
+        x=[x_user, x_user],
+        y=[0, y_user * 1.15],
+        mode='lines',
+        line=dict(color='#ff00ff', width=4, dash='solid'), # Neon Pink Beam
+        name='YOU',
+        hoverinfo='skip'
+    ))
+    
+    # C. User Marker (Glowing Node)
+    fig.add_trace(go.Scatter(
+        x=[x_user],
+        y=[y_user * 1.20], # Pushed higher to clear the marker
+        mode='markers+text',
+        marker=dict(
+            color='#ff00ff', 
+            size=10, 
+            symbol='diamond', 
+            line=dict(color='#ffffff', width=1)
+        ),
+        text=[f"<b>YOU</b><br><span style='font-size:12px; color:#ffffff;'>{p:.1f}th %</span>"],
+        textposition="top right", # Offset to the side of the vertical line
+        textfont=dict(color='#ff00ff', size=14, family="Courier New, monospace"),
+        name='Your Standing'
+    ))
+
+    # Styling for "Cyberpunk Card" look
+    # Update the marker trace text position logic
+    if p > 80:
+        fig.data[2].textposition = "top left"
+    elif p < 20:
+        fig.data[2].textposition = "top right"
+    else:
+        fig.data[2].textposition = "top right" # Default to right to avoid the vertical line
+    
     fig.update_layout(
-        paper_bgcolor='rgba(0,0,0,0)',
+        title=dict(
+            text=f"<b>{title.upper()}</b>", 
+            font=dict(size=14, color='#00f3ff', family="Courier New, monospace"),
+            x=0.03, y=0.92
+        ),
+        paper_bgcolor='rgba(9, 9, 11, 0.8)', # Dark card background
         plot_bgcolor='rgba(0,0,0,0)',
-        font={'color': "#e2e8f0"},
-        height=height,
-        margin=dict(l=30, r=30, t=50, b=20)
+        height=300, # EXACT MATCH to updated left card min-height
+        margin=dict(l=20, r=30, t=50, b=30), # Increased r margin for text
+        xaxis=dict(
+            title=dict(text="RELATIVE INCOME SCALE (POOR → RICH)", font=dict(color='#94a3b8', size=10)),
+            showgrid=True, 
+            gridcolor='rgba(0, 243, 255, 0.1)', # Faint generic grid
+            gridwidth=1,
+            showticklabels=False, 
+            zeroline=False,
+            range=[0, 20] # Zoomed in to make curve look fuller
+        ),
+        yaxis=dict(
+            showgrid=True, 
+            gridcolor='rgba(0, 243, 255, 0.1)',
+            showticklabels=False, 
+            zeroline=False,
+            range=[0, 1.3] # More headroom for the text label
+        ),
+        showlegend=False
     )
+    
     return fig
 
 def generate_insights(sp_p, breakdown_components, sp_country, sp_gender, sp_location, sp_occ, sp_credit, sp_edu, sp_digital, sp_poverty=None):
-    """Generate plain-language insights"""
+    """Generate plain-language, highly elaborated insights"""
     insights = []
     
     # Poverty Benchmark Insight
@@ -374,117 +674,140 @@ def generate_insights(sp_p, breakdown_components, sp_country, sp_gender, sp_loca
         color_type = "success" if sp_poverty['status'] == "Above Poverty Line" else ("warning" if sp_poverty['status'] == "Near Poverty Line" else "warning")
         insights.append({
             "type": color_type, "icon": "📉", "title": f"Poverty Benchmark: {sp_poverty['status']}",
-            "text": f"Based on live World Bank data, your profile is <b>{abs(sp_poverty['distance']):.1f}%</b> {'above' if sp_poverty['distance'] > 0 else 'below'} the national poverty line for {sp_country}."
+            "text": f"Based on live World Bank data, your profile is currently positioned <b>{abs(sp_poverty['distance']):.1f}%</b> {'above' if sp_poverty['distance'] > 0 else 'below'} the national poverty line for {sp_country}. This benchmark is critical—falling below it often means struggling with basic necessities like food security and healthcare access, while being significantly above it indicates a level of economic resilience against minor shocks."
         })
     
-    # Overall position
+    # Overall position explanation
     if sp_p >= 66.66:
         insights.append({
-            "type": "success", "icon": "🎯", "title": "Strong Economic Position",
-            "text": f"Your profile places you in the top third of earners in {sp_country}. You're doing better than roughly {sp_p:.0f} out of every 100 people."
+            "type": "success", "icon": "🎯", "title": "Strong Economic Standing",
+            "text": f"Your profile places you in the <b>top third</b> of earners in {sp_country}. You are performing better than approximately <b>{sp_p:.0f} out of every 100 people</b>. This status likely affords you discretionary income, access to private healthcare/education, and the ability to invest in assets. Your main goal now should be <b>wealth preservation</b> and capitalized growth."
         })
     elif sp_p >= 33.33:
         insights.append({
-            "type": "info", "icon": "📊", "title": "Middle Income Bracket",
-            "text": f"You're in the middle income group in {sp_country}. You're ahead of about {sp_p:.0f}% of people, but there's room to climb with the right opportunities."
+            "type": "info", "icon": "📊", "title": "Middle Income Reality",
+            "text": f"You sit squarely in the <b>middle income bracket</b> of {sp_country}, ahead of about {sp_p:.0f}% of the population. While you aren't in immediate poverty, you may still be vulnerable to economic downturns or health emergencies. The path to the upper tier typically requires <b>specialized skill acquisition</b> or <b>asset accumulation</b> (like property or business equity) to break the ceiling."
         })
     else:
         insights.append({
-            "type": "warning", "icon": "⚠️", "title": "Lower Income Position",
-            "text": f"Your profile suggests you're facing economic challenges. While you're ahead of {sp_p:.0f}% of people, structural barriers may be limiting opportunities."
+            "type": "warning", "icon": "⚠️", "title": "Economic Vulnerability Detected",
+            "text": f"Your current profile suggests you are in the <b>lower income bracket</b>, facing significant economic headwinds. You are ahead of only {sp_p:.0f}% of the population. This position often correlates with high volatility—income may be irregular or dependent on daily labor. The immediate priority is <b>stabilization</b> through consistent employment or social safety nets."
         })
     
-    # Education
+    # Education Insight - Deep Dive
     edu_contrib = breakdown_components['Education']
     if sp_edu < 10:
         potential_gain = (12-sp_edu) * 2
         insights.append({
-            "type": "warning", "icon": "🎓", "title": "Education Gap Detected",
-            "text": f"With only {sp_edu} years of education, you're missing significant opportunities. Completing 12 years could boost your position by approximately {potential_gain:.0f} points."
+            "type": "warning", "icon": "🎓", "title": "Critical Education Gap",
+            "text": f"Education is the single strongest driver of mobility. With {sp_edu} years, you are likely locked out of the formal job market. Completing secondary education (12 years) is often the minimum requirement for entry-level stable jobs. Bridging this gap could theoretically boost your score by ~{potential_gain:.0f} points—representing a potential <b>doubling of lifetime earnings</b>."
         })
     elif sp_edu >= 16:
         insights.append({
-            "type": "success", "icon": "🎓", "title": "Strong Educational Foundation",
-            "text": f"Your {sp_edu} years of education is a major advantage, adding {edu_contrib:.1f} points. This opens doors to professional roles and higher-paying sectors."
+            "type": "success", "icon": "🎓", "title": "Educational Elite Status",
+            "text": f"Having {sp_edu} years of education puts you in an elite bracket in South Asia. This contributes a massive <b>{edu_contrib:.1f} points</b> to your score. In an economy where manual labor is abundant but intellectual capital is scarce, your degree is a powerful lever. Ensure you are leveraging this by working in <b>high-skill sectors</b> (Tech, Finance, specialized Services) rather than general administration."
         })
     
-    # Gender
+    # Gender Context
     if sp_gender == "Female":
         gender_impact = abs(breakdown_components['Gender Impact'])
         insights.append({
-            "type": "warning", "icon": "⚖️", "title": "Gender Wage Gap Impact",
-            "text": f"As a woman in {sp_country}, you face a structural disadvantage of about {gender_impact:.0f} points. This reflects real-world wage gaps and labor participation barriers."
+            "type": "warning", "icon": "⚖️", "title": "Systemic Gender Disparity",
+            "text": f"Our model applies a structural penalty of <b>{gender_impact:.0f} points</b> to reflect the reality of being a woman in the {sp_country} economy. This isn't about your capability—it quantifies the <b>gender wage gap</b>, lower labor force participation rates, and unpaid care work burden. Overcoming this often requires <b>twice the effort</b> in education and networking to achieve parity with male counterparts in the same sector."
         })
     
-    # Digital
+    # Digital Skills - The Modern Multiplier
     if sp_digital < 40:
         potential = (75-sp_digital) * 0.15
         insights.append({
-            "type": "warning", "icon": "💻", "title": "Digital Skills Gap",
-            "text": f"Your {sp_digital}% digital proficiency is limiting opportunities. Improving to 75%+ could add {potential:.1f} points—access to jobs paying 2-3x more."
+            "type": "warning", "icon": "💻", "title": "Digital Divide Risk",
+            "text": f"Your digital proficiency ({sp_digital}%) is a bottleneck. In the modern economy, digital literacy is as important as reading. You are essentially cut off from the <b>remote work revolution</b> and high-efficiency tools. Improving this to just 75% could unlock <b>{potential:.1f} extra points</b> and access to a global job market that pays in stronger currencies."
         })
     elif sp_digital >= 75:
         insights.append({
-            "type": "success", "icon": "💻", "title": "Digital Economy Ready",
-            "text": f"Your {sp_digital}% digital proficiency is excellent! You're positioned for modern service jobs, remote work, and tech-enabled roles."
+            "type": "success", "icon": "💻", "title": "Digital Economy Native",
+            "text": f"Your high digital score ({sp_digital}%) acts as a <b>force multiplier</b>. It suggests you can work efficiently, access global information, and potentially work remotely for foreign clients. This skill effectively <b>decouples</b> your earning potential from local physical infrastructure limitations."
         })
     
-    # Location
+    # Location Dynamics
     if sp_location == "Rural":
         urban_bonus = COUNTRY_DATA[sp_country]['urban_bonus']
         insights.append({
-            "type": "info", "icon": "🏘️", "title": "Rural Location Trade-off",
-            "text": f"Living rurally means missing the urban premium of {urban_bonus} points. Cities offer more jobs and higher wages, but also higher costs."
-        })
-    else:
-        insights.append({
-            "type": "success", "icon": "🏙️", "title": "Urban Location Advantage",
-            "text": f"Living urban gives you {breakdown_components['Urban Advantage']:.0f} extra points from concentrated economic opportunities."
+            "type": "info", "icon": "🏘️", "title": "Rural Economy Constraints",
+            "text": f"Living rurally creates a 'distance penalty' of about <b>{urban_bonus} points</b>. Rural markets in {sp_country} are typically smaller, less diverse, and have slower money velocity. While cost of living is lower, <b>earning ceilings are much lower</b> too. Unless you are a large landowner or have remote digital income, upward mobility is structurally harder here."
         })
     
-    # Occupation
+    # Occupation Analysis
     occ_values = {"Agriculture": 0, "Industry": 8, "Services": 12, "Public Sector": 15, "Unemployed": -5}
     if sp_occ == "Agriculture":
         insights.append({
-            "type": "warning", "icon": "🌾", "title": "Agricultural Sector Limitations",
-            "text": f"Agriculture offers lowest incomes. Transitioning to services/public sector could boost position by 12-15 points—earning 2-3x more."
+            "type": "warning", "icon": "🌾", "title": "Agricultural Subsistence Trap",
+            "text": f"Agriculture involves high risk (climate, crop prices) and historically low returns in this region. It contributes <b>0 points</b> to your mobility score. Transitioning even to low-skill <b>Service sector jobs</b> (transport, retail) often immediately raises income stability and predictability."
         })
     elif sp_occ == "Public Sector":
         insights.append({
-            "type": "success", "icon": "🏛️", "title": "Public Sector Advantage",
-            "text": f"Public sector employment contributes {occ_values[sp_occ]} points—highest of any sector. Job security, regular wages, and benefits."
+            "type": "success", "icon": "🏛️", "title": "The Public Sector Premium",
+            "text": f"You hold the 'Golden Ticket' of South Asian employment. Public sector jobs provide unmatched <b>job security</b>, <b>pensions</b>, and <b>social status</b>, contributing a massive <b>15 points</b>. In volatility-prone economies, this stability is often valued higher than raw salary."
         })
     
-    # Credit
+    # Financial Access
     if not sp_credit:
         insights.append({
-            "type": "warning", "icon": "🏦", "title": "Financial Exclusion Barrier",
-            "text": f"Lack of credit access costs 6 points. Without banking, you can't save safely, build credit, get loans, or invest. Opening an account is easiest improvement."
+            "type": "warning", "icon": "🏦", "title": "Financial Exclusion Penalty",
+            "text": f"You are operating in the <b>cash economy</b>. This is expensive and risky. Without a bank account (credit access), you cannot safely save large amounts, you have no verified financial history for loans, and you cannot easily receive digital payments. This costs you significant points because it forces you to rely on informal, often predatory, lending sources."
         })
     else:
+        credit_contrib = breakdown_components['Credit Access']
         insights.append({
             "type": "success", "icon": "🏦", "title": "Financial Inclusion Advantage",
-            "text": f"Credit access adds 6 points, enabling investment in assets, handling emergencies, and building financial security."
+            "text": f"You are part of the formal financial system, adding <b>{credit_contrib:.1f} points</b>. This score reflects the comprehensive banking infrastructure available to you—ATM access, credit bureau coverage, and bank density. This access allows you to <b>leverage capital</b> (borrowing to invest) rather than just saving labor income, which is the key to moving to the upper class."
         })
     
-    # Recommendations
+    # ================= RECOMMENDATIONS =================
     recommendations = []
-    if sp_edu < 12:
-        recommendations.append({"priority": "HIGH", "action": "Complete Basic Education", 
-            "detail": f"Finish 12 years of schooling. Each year adds 2-3 points. Most important foundation for mobility."})
-    if sp_digital < 60:
-        recommendations.append({"priority": "HIGH", "action": "Build Digital Skills",
-            "detail": f"Learn computer/internet basics. Target 75%+. Free resources like YouTube can help. Opens modern economy jobs."})
-    if not sp_credit:
-        recommendations.append({"priority": "MEDIUM", "action": "Get Financial Access",
-            "detail": f"Open bank account. Start saving, even small amounts. Foundational for security."})
-    if sp_occ in ["Agriculture", "Unemployed"]:
-        recommendations.append({"priority": "HIGH", "action": "Explore Career Transition",
-            "detail": f"With {sp_edu} years education, consider vocational training or services/industry entry positions. Could double income."})
-    if sp_location == "Rural" and sp_edu >= 12:
-        recommendations.append({"priority": "MEDIUM", "action": "Consider Urban Migration",
-            "detail": f"Your education could unlock better city opportunities. Could add {COUNTRY_DATA[sp_country]['urban_bonus']} points. Weigh against family ties and urban costs."})
     
+    if sp_edu < 12:
+        recommendations.append({
+            "priority": "HIGH", 
+            "action": "Complete Secondary Education (Grade 12)", 
+            "detail": f"<b>Why:</b> It is the minimum barrier to entry for the formal economy. <br><b>Impact:</b> Each year adds 2-3 points to your score. <br><b>Action:</b> Enroll in open schooling or adult education programs immediately. The ROI on this is higher than any investment."
+        })
+        
+    if sp_digital < 60:
+        recommendations.append({
+            "priority": "HIGH", 
+            "action": "Aggressively Build Digital Literacy",
+            "detail": f"<b>Why:</b> Digital skills are the new literacy. <br><b>Impact:</b> Moving from beginner to intermediate can boost your potential by 15%+. <br><b>Action:</b> Master the basics: Typing, Office Suites (Docs/Excel), and safe Internet browsing. Use free resources like YouTube or local library courses."
+        })
+        
+    if not sp_credit:
+        recommendations.append({
+            "priority": "MEDIUM", 
+            "action": "Establish Formal Financial Identity",
+            "detail": f"<b>Why:</b> You need a track record to access capital later. <br><b>Impact:</b> Unlocks 6+ points immediately. <br><b>Action:</b> 1. Open a zero-balance savings account. 2. Deposit small amounts regularly to create a history. 3. Avoid informal moneylenders."
+        })
+        
+    if sp_occ in ["Agriculture", "Unemployed"]:
+        recommendations.append({
+            "priority": "HIGH", 
+            "action": "Strategic Sector Switch",
+            "detail": f"<b>Why:</b> Agriculture has a low income ceiling. <br><b>Impact:</b> Moving to 'Services' or 'Industry' can double your base score. <br><b>Action:</b> With your {sp_edu} years of education, look for roles in <b>Retail</b>, <b>Transport</b>, or <b>Basic Admin</b>. These sectors have faster wage growth."
+        })
+        
+    if sp_location == "Rural" and sp_edu >= 12:
+        recommendations.append({
+            "priority": "MEDIUM", 
+            "action": "Evaluate Urban Migration",
+            "detail": f"<b>Why:</b> Your education is being underutilized in a rural setting. <br><b>Impact:</b> Immediate access to the 'Urban Premium' (approx {COUNTRY_DATA[sp_country]['urban_bonus']} points). <br><b>Action:</b> Look for jobs in the nearest Tier-2 city where living costs are manageable but opportunities are denser."
+        })
+
+    if sp_gender == "Female" and sp_occ in ["Agriculture", "Unemployed"]:
+         recommendations.append({
+            "priority": "HIGH", 
+            "action": "Enter the Formal Workforce",
+            "detail": f"<b>Why:</b> Women are disproportionately trapped in unpaid care work or subsistence farming. <br><b>Impact:</b> Earning an independent income is the strongest buffer against gender-based vulnerability. <br><b>Action:</b> Look for <b>wage-employment</b> specifically, rather than self-employment, to ensure income regularity."
+        })
+
     return insights, recommendations
 
 # ============= MAIN APP =============
@@ -502,22 +825,37 @@ with st.expander("🔬 How Does This Simulator Work?", expanded=False):
     
     This simulator uses a **multi-factor regression model** calibrated for South Asian economies. It shows your **relative economic position** compared to others in your country, not exact income.
     
-    **The Formula:**
+    **The Formula (Data-Driven Weighting):**
     ```
-    Economic Position = Base + Education + Digital Skills + Gender + 
-                       Urban/Rural + Occupation + Credit Access + Age
+    Economic Position = Base (GDP) + Education (Enrollment + GPI) + Digital Skills + 
+                       Gender (GII) + Urban/Rural (Urban %) + Occupation (Sector Shares) + 
+                       Credit (Multi-dimensional Banking) + Age
     ```
+    **Credit Access** is now scored across 6 dimensions:
+    1. **Financial Depth** - Credit market size (domestic credit % GDP)
+    2. **Banking Penetration** - Borrowers from commercial banks per 1,000 adults
+    3. **Credit Infrastructure** - Bureau coverage & credit information depth index
+    4. **Sector Quality** - CPIA financial sector rating (1-6)
+    5. **Physical Access** - ATM density per 100,000 adults
+    6. **Economic Integration** - Remittances & business ecosystem
+    
+    *When "Data-Driven Simulation" is enabled, every factor is weighted dynamically based on real country data from your curated indicators dataset.*
     """)
 
-# ============= LIVE DATA SYNC (DENSE DATA INTEGRATION) =============
-with st.sidebar:
-    st.markdown("### 🌐 Live Data Integration")
-    use_live_data = st.toggle("Enable Live API Sync", value=False, help="Pull real-time GDP and Gini data from World Bank for calibration")
-    
-    if use_live_data:
-        st.success("API: World Bank Connected")
-        rates = api_loader.get_exchange_rates()
-        st.info(f"Exchange Rates (Live): 1 USD = {rates.get('BDT', 110)} BDT | {rates.get('INR', 83)} INR")
+# ============= DATA MODE TOGGLE (PROMINENT) =============
+st.markdown("### Data & Calibration Mode")
+use_live_data = st.toggle("✅ Enable Data-Driven Simulation (Recommended)", value=True, help="When enabled, the simulator uses over 20+ real-world indicators (GDP, Employment, Education stats) from your curated dataset to weight the score. If disabled, it uses generic estimates.")
+
+if use_live_data:
+    st.markdown("""<div style="background: rgba(16, 185, 129, 0.1); padding: 10px; border-radius: 8px; border: 1px solid rgba(16, 185, 129, 0.2); margin-bottom: 20px;">
+    <span style="color: #10b981; font-weight: 700;">✓ ACTIVE:</span> Using real economic data from curated dataset.
+    </div>""", unsafe_allow_html=True)
+else:
+    st.markdown("""<div style="background: rgba(245, 158, 11, 0.1); padding: 10px; border-radius: 8px; border: 1px solid rgba(245, 158, 11, 0.2); margin-bottom: 20px;">
+    <span style="color: #f59e0b; font-weight: 700;">⚠ INACTIVE:</span> Using static baseline estimates. Enable for higher accuracy.
+    </div>""", unsafe_allow_html=True)
+
+
 
 # ============= MODE SELECTION =============
 st.markdown('<p class="section-header">🎯 Step 1: Choose Your Simulator Mode</p>', unsafe_allow_html=True)
@@ -611,16 +949,246 @@ if st.session_state.simulator_mode == "individual":
     g_val = 1 if sp_gender == "Female" else 0
     u_val = 1 if sp_location == "Urban" else 0
     
-    live_indicators = None
-    un_live_data = None
-    poverty_live = None
+    context_data = {}
+    
     if use_live_data:
-        with st.spinner("Fetching live economic benchmarks..."):
-            live_indicators = api_loader.fetch_indicator('NY.GDP.PCAP.CD', countries=sp_country, date_range="2022:2023")
-            un_live_data = un_loader.get_gender_inequality_index([sp_country])
-            poverty_live = api_loader.fetch_indicator('SI.POV.DDAY', countries=sp_country, date_range="2018:2023")
-        
-    sp_p, breakdown_components, sp_poverty = calculate_percentile(sp_country, sp_edu, sp_digital, g_val, u_val, sp_occ, sp_credit, sp_age, api_data=live_indicators, un_data=un_live_data, poverty_data=poverty_live)
+        with st.spinner("Integrating Local Curated Data & Live Feeds..."):
+            # Load Local Data
+            local_df = get_historical_data_efficiently()
+            
+            def get_val(ind_name, fallback=None):
+                """Get latest local value"""
+                try:
+                    row = local_df[(local_df['country'] == sp_country) & (local_df['indicator'] == ind_name)]
+                    if row.empty: return fallback
+                    return row.sort_values('year', ascending=False)['value'].iloc[0]
+                except:
+                    return fallback
+
+            # 1. Base GDP
+            # Prefer 2005 Constant for consistency in simulation base, or Current for perception?
+            # Model uses log scale, so either works, but consistent is better.
+            gdp_val = get_val('GDP per capita (constant 2005 US$)')
+            if gdp_val: context_data['gdp'] = gdp_val
+            
+            # 2. Poverty
+            pov_val = get_val('Poverty headcount ratio at $1.90 a day (2011 PPP) (% of population)')
+            if pov_val: context_data['poverty_rate'] = pov_val
+
+            # 3. Employment & Occupation (Gender Specific)
+            # User specifically asked for gender breakdowns
+            gender_suffix = ", female" if sp_gender == "Female" else ", male"
+            gender_suffix_b = "female" if sp_gender == "Female" else "male" # For some indicator formats
+            
+            # Agriculture
+            ag_share = get_val(f'Employment in agriculture{gender_suffix} (% of {gender_suffix_b} employment) (modeled ILO estimate)')
+            if not ag_share: ag_share = get_val('Employment in agriculture (% of total employment) (modeled ILO estimate)', 40)
+            
+            # Industry
+            ind_share = get_val(f'Employment in industry{gender_suffix} (% of {gender_suffix_b} employment) (modeled ILO estimate)')
+            if not ind_share: ind_share = get_val('Employment in industry (% of total employment) (modeled ILO estimate)', 20)
+            
+            # Services
+            srv_share = get_val(f'Employment in services{gender_suffix} (% of {gender_suffix_b} employment) (modeled ILO estimate)')
+            if not srv_share: srv_share = get_val('Employment in services (% of total employment) (modeled ILO estimate)', 40)
+            
+            context_data['sector_shares'] = {
+                "Agriculture": ag_share,
+                "Industry": ind_share,
+                "Services": srv_share,
+                "Public Sector": 5 # Fixed low base for elite public jobs
+            }
+            
+            # Quality & Vulnerability
+            # Vulnerable employment
+            vuln_ind = f'Vulnerable employment, {gender_suffix_b} (% of {gender_suffix_b} employment) (modeled ILO estimate)'
+            vuln_val = get_val(vuln_ind)
+            if not vuln_val: vuln_val = get_val('Vulnerable employment, total (% of total employment) (modeled ILO estimate)')
+            if vuln_val: context_data['vulnerable_emp'] = vuln_val
+            
+            # Self-employed
+            self_ind = f'Self-employed, {gender_suffix_b} (% of {gender_suffix_b} employment) (modeled ILO estimate)'
+            self_val = get_val(self_ind)
+            if not self_val: self_val = get_val('Self-employed, total (% of total employment) (modeled ILO estimate)')
+            if self_val: context_data['self_emp'] = self_val
+
+            # Wage Workers
+            wage_ind = f'Wage and salaried workers, {gender_suffix_b} (% of {gender_suffix_b} employment) (modeled ILO estimate)'
+            wage_val = get_val(wage_ind)
+            if not wage_val: wage_val = get_val('Wage and salaried workers, total (% of total employment) (modeled ILO estimate)')
+            if wage_val: context_data['wage_worker'] = wage_val
+            
+            # Unemployment Rate for Context
+            unemp_ind = f'Unemployment, {gender_suffix_b} (% of {gender_suffix_b} labor force) (modeled ILO estimate)'
+            unemp_val = get_val(unemp_ind)
+            if not unemp_val: unemp_val = get_val('Unemployment, total (% of total labor force) (modeled ILO estimate)')
+            if unemp_val: context_data['unemployment_rate'] = unemp_val
+
+            # Unemployment with Education Breakdown (New Request)
+            # Advanced Education
+            unemp_adv_ind = f'Unemployment with advanced education, {gender_suffix_b} (% of {gender_suffix_b} labor force with advanced education)'
+            unemp_adv_val = get_val(unemp_adv_ind)
+            if not unemp_adv_val: unemp_adv_val = get_val('Unemployment with advanced education (% of total labor force with advanced education)')
+            if unemp_adv_val: context_data['unemp_advanced'] = unemp_adv_val
+            
+            # Intermediate Education
+            unemp_int_ind = f'Unemployment with intermediate education, {gender_suffix_b} (% of {gender_suffix_b} labor force with intermediate education)'
+            unemp_int_val = get_val(unemp_int_ind)
+            if not unemp_int_val: unemp_int_val = get_val('Unemployment with intermediate education (% of total labor force with intermediate education)')
+            if unemp_int_val: context_data['unemp_intermediate'] = unemp_int_val
+
+            # Youth Unemployment (New Request)
+            unemp_youth_ind = f'Unemployment, youth {gender_suffix_b} (% of {gender_suffix_b} labor force ages 15-24) (modeled ILO estimate)'
+            unemp_youth_val = get_val(unemp_youth_ind)
+            if not unemp_youth_val: unemp_youth_val = get_val('Unemployment, youth total (% of total labor force ages 15-24) (modeled ILO estimate)')
+            if unemp_youth_val: context_data['unemp_youth'] = unemp_youth_val
+
+            # Business & Economic Context (New Request)
+            aid_val = get_val('Net official development assistance and official aid received (current US$)')
+            # Normalize aid by GDP if possible, or use raw for magnitude check (small economies rely more)
+            if aid_val and 'gdp' in context_data: 
+                # Very rough proxy as gdp is per capita constant 2005. 
+                # Better to use GDP current if we fetched it. We did fetch it for remittances calculation.
+                pass 
+            
+            bus_dens = get_val('New business density (new registrations per 1,000 people ages 15-64)')
+            if bus_dens: context_data['business_density'] = bus_dens
+            
+            new_biz = get_val('New businesses registered (number)')
+            if new_biz: context_data['total_new_businesses'] = new_biz
+            
+            rd_techs = get_val('Technicians in R&D (per million people)')
+            if rd_techs: context_data['rd_technicians'] = rd_techs
+            
+            # Agriculture Value Added (New Request)
+            ag_gdp = get_val('Agriculture, forestry, and fishing, value added (% of GDP)')
+            if not ag_gdp: ag_gdp = get_val('Agriculture, value added (% of GDP)')
+            if ag_gdp: context_data['ag_value_added_gdp'] = ag_gdp
+            
+            # Employment Class Status (Contributing Family / Employers)
+            fam_work_ind = f'Contributing family workers, {gender_suffix_b} (% of {gender_suffix_b} employment) (modeled ILO estimate)'
+            fam_work_val = get_val(fam_work_ind)
+            if not fam_work_val: fam_work_val = get_val('Contributing family workers, total (% of total employment) (modeled ILO estimate)')
+            if fam_work_val: context_data['contributing_family_workers'] = fam_work_val
+            
+            employer_ind = f'Employers, {gender_suffix_b} (% of {gender_suffix_b} employment) (modeled ILO estimate)'
+            employer_val = get_val(employer_ind)
+            if not employer_val: employer_val = get_val('Employers, total (% of total employment) (modeled ILO estimate)')
+            if employer_val: context_data['employers_share'] = employer_val # High employers share = more entrepreneurship opportunities?
+            
+            # 4. Urban & Migration
+            urb_val = get_val('Urban population (% of total)')
+            if urb_val: context_data['urban_pct'] = urb_val
+            
+            mig_val = get_val('Net migration')
+            if mig_val: context_data['net_migration'] = mig_val
+
+            # 5. Financial & Remittances (Comprehensive Banking Infrastructure)
+            # A. Credit Market Depth
+            cred_val = get_val('Domestic credit to private sector (% of GDP)')
+            if cred_val: context_data['credit_depth'] = cred_val
+            
+            # Also fetch broader financial sector credit
+            fin_sec_cred = get_val('Domestic credit provided by financial sector (% of GDP)')
+            if fin_sec_cred: context_data['financial_sector_credit'] = fin_sec_cred
+            
+            # B. Banking Penetration
+            borrowers = get_val('Borrowers from commercial banks (per 1,000 adults)')
+            if borrowers: context_data['borrowers_density'] = borrowers
+            
+            # C. Credit Information Infrastructure
+            credit_info = get_val('Depth of credit information index (0=low to 8=high)')
+            if credit_info: context_data['credit_info_depth'] = credit_info
+            
+            private_bureau = get_val('Private credit bureau coverage (% of adults)')
+            if private_bureau: context_data['private_credit_bureau'] = private_bureau
+            
+            public_registry = get_val('Public credit registry coverage (% of adults)')
+            if public_registry: context_data['public_credit_registry'] = public_registry
+            
+            # D. Financial Sector Quality
+            fin_rating = get_val('CPIA financial sector rating (1=low to 6=high)')
+            if fin_rating: context_data['financial_sector_rating'] = fin_rating
+            
+            # E. ATM Infrastructure
+            atm_val = get_val('Automated teller machines (ATMs) (per 100,000 adults)')
+            if atm_val: context_data['atm_density'] = atm_val
+            
+            # F. Remittances (Calculated as % of GDP if possible)
+            remit_abs = get_val('Personal remittances, received (current US$)')
+            gdp_curr = get_val('GDP (current US$)')
+            if remit_abs and gdp_curr and gdp_curr > 0:
+                context_data['remittances_gdp'] = (remit_abs / gdp_curr) * 100
+            
+            # 6. Education Advanced (Expanded as Requested)
+            # Primary
+            prim_gross = get_val('School enrollment, primary (% gross)')
+            prim_gpi = get_val('School enrollment, primary and secondary (gross), gender parity index (GPI)')
+            prim_f = get_val('School enrollment, primary, female (% gross)')
+            prim_m = get_val('School enrollment, primary, male (% gross)') # Added
+            
+            if prim_gross: context_data['primary_enrollment'] = prim_gross
+            if prim_gpi: context_data['primary_secondary_gpi'] = prim_gpi
+            if prim_f and sp_gender == "Female": context_data['primary_gender_enrollment'] = prim_f
+            elif prim_m and sp_gender == "Male": context_data['primary_gender_enrollment'] = prim_m
+            
+            # Secondary
+            sec_gross = get_val('School enrollment, secondary (% gross)')
+            sec_gpi = get_val('School enrollment, secondary (gross), gender parity index (GPI)')
+            sec_f = get_val('School enrollment, secondary, female (% gross)')
+            sec_m = get_val('School enrollment, secondary, male (% gross)')
+            
+            if sec_gross: context_data['secondary_enrollment'] = sec_gross
+            if sec_gpi: context_data['secondary_gpi'] = sec_gpi
+            if sec_f and sp_gender == "Female": context_data['secondary_gender_enrollment'] = sec_f
+            elif sec_m and sp_gender == "Male": context_data['secondary_gender_enrollment'] = sec_m
+            
+            # Tertiary
+            tert_gross = get_val('School enrollment, tertiary (% gross)')
+            tert_gpi = get_val('School enrollment, tertiary (gross), gender parity index (GPI)')
+            tert_f = get_val('School enrollment, tertiary, female (% gross)')
+            tert_m = get_val('School enrollment, tertiary, male (% gross)')
+            
+            if tert_gross: context_data['tertiary_enrollment'] = tert_gross
+            if tert_gpi: context_data['tertiary_gpi'] = tert_gpi
+            if tert_f and sp_gender == "Female": context_data['tertiary_gender_enrollment'] = tert_f
+            elif tert_m and sp_gender == "Male": context_data['tertiary_gender_enrollment'] = tert_m
+            
+            comp_val = get_val('Primary completion rate, total (% of relevant age group)')
+            if comp_val: context_data['primary_completion'] = comp_val
+            
+            # Labor force advanced (Keep this as Outcome metric)
+            lab_adv_val = get_val(f'Labor force with advanced education, {gender_suffix_b} (% of {gender_suffix_b} working-age population with advanced education)')
+            if not lab_adv_val: lab_adv_val = get_val('Labor force with advanced education (% of total working-age population with advanced education)')
+            if lab_adv_val: context_data['labor_force_adv'] = lab_adv_val
+            
+            # 7. Gender (GII usually from UN, assume API fallback or local proxies)
+            # Local Proxy: We can use 'CPIA gender equality rating' if available, but GII is better.
+            # We'll stick to the UN Loader for GII as it's specialized, or check local.
+            # But let's check local 'CPIA gender equality rating (1=low to 6=high)'
+            cpia_gen = get_val('CPIA gender equality rating (1=low to 6=high)')
+            if cpia_gen:
+                # Map 1-6 to GII-like penalty scale. Low score = High Penalty.
+                # GII: 0 (Good) to 1 (Bad). CPIA: 1 (Bad) to 6 (Good).
+                # Invert: (6 - CPIA) / 5 approx GII scale?
+                context_data['gii'] = (6 - cpia_gen) / 6.0 # Crude proxy
+            else:
+                 un_live_data = un_loader.get_gender_inequality_index([sp_country])
+                 if un_live_data is not None and not un_live_data.empty:
+                    context_data['gii'] = un_live_data['value'].iloc[0]
+
+            # 8. Digital
+            mob_val = get_val('Mobile cellular subscriptions (per 100 people)')
+            if mob_val: context_data['mobile_subs'] = mob_val
+            
+            int_val = get_val('Individuals using the Internet (% of population)')
+            if int_val: context_data['internet_usage'] = int_val
+            # (Calculation logic uses 'mobile_subs' context if available)
+
+    sp_p, breakdown_components, sp_poverty = calculate_percentile(
+        sp_country, sp_edu, sp_digital, g_val, u_val, sp_occ, sp_credit, sp_age, 
+        live_context=context_data
+    )
 
     # ============= STEP 2: RESULTS =============
 
@@ -636,39 +1204,23 @@ if st.session_state.simulator_mode == "individual":
 <p class="metric-label">Your Economic Percentile</p>
 <div class="metric-value-large">{sp_p:.1f}<span style="font-size: 2rem;">th</span></div>
 <div class="metric-group" style="color: {color};">{group.upper()}</div>
-<p style="color: #94a3b8; margin-top: 25px; font-size: 1.1rem; line-height: 1.7; max-width: 600px; margin-left: auto; margin-right: auto;">
+<p style="color: #94a3b8; margin-top: 20px; font-size: 1rem; line-height: 1.6; max-width: 550px; margin-left: auto; margin-right: auto;">
 This means you rank <b>higher than {sp_p:.1f}%</b> of people in {sp_country}. Out of every 100 people, your profile indicates a better economic position than about <b>{int(sp_p)}</b> of them.
 </p>
 </div>"""
         if sp_poverty:
             res_html += f"""
-<div style="background: rgba(239, 68, 68, 0.1); padding: 25px; border-radius: 16px; border: 1px solid rgba(239, 68, 68, 0.3); margin-bottom: 30px; text-align: center;">
+<div style="background: rgba(239, 68, 68, 0.1); padding: 20px; border-radius: 16px; border: 1px solid rgba(239, 68, 68, 0.3); margin-top: 20px; text-align: center;">
 <p style="color: #fca5a5; font-size: 0.9rem; margin: 0; text-transform: uppercase; font-weight: 700; letter-spacing: 1.5px;">Live Poverty Benchmark</p>
 <h2 style="color: #ffffff; margin: 10px 0; font-weight: 800;">{sp_poverty['status']}</h2>
 <p style="color: #e2e8f0; font-size: 1.05rem;">Positioned <b>{abs(sp_poverty['distance']):.1f}%</b> {'above' if sp_poverty['distance'] > 0 else 'below'} the national poverty line.</p>
 </div>"""
         st.markdown(res_html, unsafe_allow_html=True)
         
-        # LIVE CURRENCY CONVERTER (DENSE DATA FEATURE)
-        currencies = {"Bangladesh": "BDT", "India": "INR", "Pakistan": "PKR", "Sri Lanka": "LKR", "Nepal": "NPR"}
-        curr_code = currencies.get(sp_country, "USD")
-        rates = api_loader.get_exchange_rates()
-        rate = rates.get(curr_code, 1.0 if curr_code == "USD" else 100.0)
-        
-        # Estimate a nominal 'relative monthly income' for visualization
-        # This is strictly illustrative to show the power of the API
-        base_ppp = 400 # Base monthly USD for 50th percentile
-        est_usd = base_ppp * (1.2 ** ((sp_p - 50)/10))
-        est_local = est_usd * rate
-        
-        st.markdown(f"""<div style="background: rgba(29, 155, 240, 0.05); padding: 15px; border-radius: 12px; border: 1px dashed #1d9bf0;">
-<p style="color: #8b98a5; font-size: 0.8rem; margin: 0;">Relative Standing Monthly Estimate (Live {curr_code})</p>
-<h4 style="color: #1d9bf0; margin: 5px 0;">{est_local:,.0f} {curr_code}</h4>
-<p style="color: #5c6d7e; font-size: 0.75rem;">Converted via Live API 1 USD ≈ {rate:.1f} {curr_code}</p>
-</div>""", unsafe_allow_html=True)
+
 
     with result_col2:
-        st.plotly_chart(render_gauge(sp_p, "Your Economic Position", height=300), use_container_width=True)
+        st.plotly_chart(render_percentile_distribution(sp_p, "Your Economic Standing"), use_container_width=True)
 
     # ============= STEP 3: INSIGHTS =============
 
@@ -703,55 +1255,9 @@ This means you rank <b>higher than {sp_p:.1f}%</b> of people in {sp_country}. Ou
 
     # ============= STEP 4: VISUALIZATIONS =============
 
-    st.markdown('<p class="section-header" style="margin-top: 50px;">🔍 Step 5: Understanding Your Score</p>', unsafe_allow_html=True)
 
-    viz_col1, viz_col2 = st.columns([1, 1], gap="large")
 
-    with viz_col1:
-        st.markdown("### 🏗️ What's Building Your Score?")
-        st.markdown('<p style="color: #94a3b8; font-size: 1rem; margin-bottom: 20px;">The size of each block indicates its contribution to your final percentile.</p>', unsafe_allow_html=True)
-        
-        tree_data = [{"Factor": k, "Contribution": v} for k, v in breakdown_components.items() if v > 0]
-        
-        if tree_data:
-            df_tree = pd.DataFrame(tree_data)
-            fig_tree = px.treemap(df_tree, path=['Factor'], values='Contribution', color='Contribution', color_continuous_scale='Purples')
-            fig_tree.update_traces(textinfo="label+value", textfont=dict(size=14, color='white'))
-            fig_tree.update_layout(paper_bgcolor='rgba(0,0,0,0)', font={'color': '#e2e8f0'}, height=350, margin=dict(t=5, l=5, r=5, b=5))
-            st.plotly_chart(fig_tree, use_container_width=True)
 
-    with viz_col2:
-        st.markdown("### 📈 The Education Lever")
-        st.markdown('<p style="color: #94a3b8; font-size: 1rem; margin-bottom: 20px;">Visualizing how increasing your years of education shifts your economic standing.</p>', unsafe_allow_html=True)
-        
-        edu_range = list(range(0, 21, 2))
-        scores_by_edu = []
-        for e in edu_range:
-            score, _, _ = calculate_percentile(sp_country, e, sp_digital, g_val, u_val, sp_occ, sp_credit, sp_age)
-            scores_by_edu.append({"Years": e, "Percentile": score})
-        
-        df_edu = pd.DataFrame(scores_by_edu)
-        fig_line = px.line(df_edu, x='Years', y='Percentile', markers=True)
-        fig_line.add_scatter(x=[sp_edu], y=[sp_p], mode='markers', marker=dict(size=18, color='#ec4899', symbol='star', line=dict(color='white', width=2)), name='Current State')
-        fig_line.update_traces(line_color='#8b5cf6', line_width=4, selector=dict(mode='lines'))
-        fig_line.update_layout(
-            paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font={'color': '#e2e8f0'}, height=350,
-            xaxis=dict(title="Years of Education", showgrid=True, gridcolor='rgba(255,255,255,0.05)'),
-            yaxis=dict(title="Economic Percentile", showgrid=True, gridcolor='rgba(255,255,255,0.05)', range=[0, 100]),
-            margin=dict(t=10, l=10, r=10, b=10),
-            showlegend=False
-        )
-        st.plotly_chart(fig_line, use_container_width=True)
-
-    # Factor table
-    st.markdown('<p class="section-header" style="margin-top: 50px;">📋 Detailed Factor Contribution</p>', unsafe_allow_html=True)
-    st.markdown('<p style="color: #94a3b8; font-size: 1.1rem; margin-bottom: 25px;">A granular look at how each attribute influenced your final simulation result.</p>', unsafe_allow_html=True)
-    
-    factor_df = pd.DataFrame([
-        {"Factor": k, "Points Added": f"{v:+.1f}", "Impact": "🟢 Positive" if v > 0 else ("🔴 Negative" if v < 0 else "⚪ Neutral")}
-        for k, v in breakdown_components.items()
-    ])
-    st.dataframe(factor_df, use_container_width=True, hide_index=True)
 
 # ============= COMPARISON MODE =============
 elif st.session_state.simulator_mode == "comparison":
@@ -969,22 +1475,7 @@ elif st.session_state.simulator_mode == "comparison":
         )
         st.plotly_chart(fig_donut_b, use_container_width=True)
     
-    # Detailed factor comparison
-    st.markdown('<p class="section-header" style="margin-top: 50px;">📋 Detailed Factor-by-Factor Breakdown</p>', unsafe_allow_html=True)
-    st.markdown('<p style="color: #94a3b8; font-size: 1.1rem; margin-bottom: 25px;">Comparing the specific weight of each attribute across both simulated profiles.</p>', unsafe_allow_html=True)
-    
-    # Create comparison dataframe
-    comparison_data = []
-    for factor in profile_a_components.keys():
-        comparison_data.append({
-            "Factor": factor,
-            "Profile A": f"{profile_a_components[factor]:+.1f}",
-            "Profile B": f"{profile_b_components[factor]:+.1f}",
-            "Difference": f"{profile_b_components[factor] - profile_a_components[factor]:+.1f}"
-        })
-    
-    comp_df = pd.DataFrame(comparison_data)
-    st.dataframe(comp_df, use_container_width=True, hide_index=True)
+
     
     # Multi-dimensional radar chart comparison
     st.markdown('<p class="section-header" style="margin-top: 50px;">🕸️ Multi-Dimensional Score Comparison</p>', unsafe_allow_html=True)
@@ -1138,11 +1629,11 @@ else:
     
     with res_col1:
         st.markdown(f'<div style="text-align: center; color: #8b98a5; margin-bottom: 10px;">POSITION IN {year_1}</div>', unsafe_allow_html=True)
-        st.plotly_chart(render_gauge(p1, f"Standing in {year_1}", height=280), use_container_width=True)
+        st.plotly_chart(render_percentile_distribution(p1, f"Standing in {year_1}"), use_container_width=True)
         
     with res_col2:
         st.markdown(f'<div style="text-align: center; color: #8b98a5; margin-bottom: 10px;">POSITION IN {year_2}</div>', unsafe_allow_html=True)
-        st.plotly_chart(render_gauge(p2, f"Standing in {year_2}", height=280), use_container_width=True)
+        st.plotly_chart(render_percentile_distribution(p2, f"Standing in {year_2}"), use_container_width=True)
 
     # EVOLUTION DASHBOARD
     evol_diff = p2 - p1

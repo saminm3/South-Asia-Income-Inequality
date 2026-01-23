@@ -85,16 +85,11 @@ class WorldBankAPILoader:
         'life_expectancy': 'SP.DYN.LE00.IN',
         'population': 'SP.POP.TOTL',
         'population_growth': 'SP.POP.GROW',
-        'fertility_rate': 'SP.DYN.TFRT.IN',
         'urban_population_pct': 'SP.URB.TOTL.IN.ZS',
-        'health_expenditure_gdp': 'SH.XPD.CHEX.GD.ZS',
-        'infant_mortality': 'SP.DYN.IMRT.IN',
         'maternal_mortality': 'SH.STA.MMRT',
         'physicians_per_1000': 'SH.MED.PHYS.ZS',
-        'hospital_beds': 'SH.MED.BEDS.ZS',
         
         # --- ENVIRONMENT & ENERGY ---
-        'co2_emissions': 'EN.ATM.CO2E.PC',
         'renewable_energy_share': 'EG.FEC.RNEW.ZS',
         'pm25_pollution': 'EN.ATM.PM25.MC.M3',
         'electricity_renewables': 'EG.ELC.RNEW.ZS',

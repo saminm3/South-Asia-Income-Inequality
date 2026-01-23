@@ -1,0 +1,283 @@
+# List of Indicators (Total: ~277)
+
+The "Total Indicators: 277" statistic on the Home page is derived from two sources:
+
+1. **211 Curated Indicators** (from `curated_indicators.csv`)
+2. **66 Live API Indicators** (fetched from World Bank API)
+
+**Note:** There is overlap between these two sets (e.g., GDP, GINI, Unemployment). The system counts them separately as they come from different sources (Static Dataset vs. Live API).
+
+---
+
+## 1. Curated Indicators (211)
+
+_Source: Local Processed Data_
+
+- Access to electricity (% of population)
+- Age dependency ratio (% of working-age population)
+- Agriculture, forestry, and fishing, value added (% of GDP)
+- Agriculture, value added (% of GDP)
+- Agriculture, value added (annual % growth)
+- Agriculture, value added (constant 2005 US$)
+- Automated teller machines (ATMs) (per 100,000 adults)
+- Borrowers from commercial banks (per 1,000 adults)
+- Bottom 50% Income Share
+- CPIA economic management cluster average (1=low to 6=high)
+- CPIA financial sector rating (1=low to 6=high)
+- CPIA gender equality rating (1=low to 6=high)
+- CPIA macroeconomic management rating (1=low to 6=high)
+- CPIA policies for social inclusion/equity cluster average (1=low to 6=high)
+- CPIA property rights and rule-based governance rating (1=low to 6=high)
+- CPIA social protection rating (1=low to 6=high)
+- Consumer price index (2010 = 100)
+- Contributing family workers, female (% of female employment) (modeled ILO estimate)
+- Contributing family workers, male (% of male employment) (modeled ILO estimate)
+- Contributing family workers, total (% of total employment) (modeled ILO estimate)
+- Depth of credit information index (0=low to 8=high)
+- Domestic credit provided by financial sector (% of GDP)
+- Domestic credit to private sector (% of GDP)
+- Electric power consumption (kWh per capita)
+- Employers, female (% of female employment) (modeled ILO estimate)
+- Employers, male (% of male employment) (modeled ILO estimate)
+- Employers, total (% of total employment) (modeled ILO estimate)
+- Employment in agriculture (% of total employment) (modeled ILO estimate)
+- Employment in agriculture, female (% of female employment) (modeled ILO estimate)
+- Employment in agriculture, male (% of male employment) (modeled ILO estimate)
+- Employment in industry (% of total employment) (modeled ILO estimate)
+- Employment in industry, female (% of female employment) (modeled ILO estimate)
+- Employment in industry, male (% of male employment) (modeled ILO estimate)
+- Employment in services (% of total employment) (modeled ILO estimate)
+- Employment in services, female (% of female employment) (modeled ILO estimate)
+- Employment in services, male (% of male employment) (modeled ILO estimate)
+- Export value index (2000 = 100)
+- Export volume index (2000 = 100)
+- Exports of goods and services (% of GDP)
+- Exports of goods and services (annual % growth)
+- External debt stocks, total (DOD, current US$)
+- Fixed broadband Internet subscribers (per 100 people)
+- Foreign direct investment, net inflows (% of GDP)
+- Foreign direct investment, net inflows (BoP, current US$)
+- Foreign direct investment, net outflows (% of GDP)
+- GDP (current US$)
+- GDP Per Capita
+- GDP growth (annual %)
+- GDP per capita (constant 2005 US$)
+- GDP per capita, PPP (constant 2011 international $)
+- GDP per person employed (constant 1990 PPP $)
+- GINI Coefficient
+- GINI index (World Bank estimate)
+- GNI per capita, Atlas method (current US$)
+- GNI per capita, PPP (current international $)
+- GNI, Atlas method (current US$)
+- GNI, PPP (current international $)
+- Government expenditure on education as % of GDP (%)
+- Government expenditure on education, total (% of GDP)
+- Gross capital formation (% of GDP)
+- Gross capital formation (annual % growth)
+- Gross enrolment ratio, primary, female (%)
+- Gross enrolment ratio, primary, gender parity index (GPI)
+- Gross fixed capital formation, private sector (% of GDP)
+- High-technology exports (% of manufactured exports)
+- ICT goods imports (% total goods imports)
+- Imports of goods and services (% of GDP)
+- Income share held by lowest 20%
+- Individuals using the Internet (% of population)
+- Industry (including construction), value added (% of GDP)
+- Industry, value added (% of GDP)
+- Industry, value added (annual % growth)
+- Industry, value added (constant 2005 US$)
+- Inflation, GDP deflator (annual %)
+- Inflation, consumer prices (annual %)
+- Informal payments to public officials (% of firms)
+- International migrant stock (% of population)
+- Labor force participation rate, female (% of female population ages 15+) (modeled ILO estimate)
+- Labor force participation rate, male (% of male population ages 15+) (modeled ILO estimate)
+- Labor force participation rate, total (% of total population ages 15+) (modeled ILO estimate)
+- Labor force with advanced education (% of total working-age population with advanced education)
+- Labor force with advanced education, female (% of female working-age population with advanced education)
+- Labor force with advanced education, male (% of male working-age population with advanced education)
+- Labor force with basic education (% of total working-age population with basic education)
+- Labor force with basic education, female (% of female working-age population with basic education)
+- Labor force with basic education, male (% of male working-age population with basic education)
+- Labor force with intermediate education (% of total working-age population with intermediate education)
+- Labor force with intermediate education, female (% of female working-age population with intermediate education)
+- Labor force with intermediate education, male (% of male working-age population with intermediate education)
+- Labor force, total
+- Literacy rate, adult female (% of females ages 15 and above)
+- Literacy rate, adult male (% of males ages 15 and above)
+- Literacy rate, adult total (% of people ages 15 and above)
+- Literacy rate, youth female (% of females ages 15-24)
+- Literacy rate, youth male (% of males ages 15-24)
+- Literacy rate, youth total (% of people ages 15-24)
+- Manufacturing, value added (% of GDP)
+- Manufacturing, value added (annual % growth)
+- Manufacturing, value added (constant 2005 US$)
+- Market capitalization of listed companies (% of GDP)
+- Mean Income
+- Median Income
+- Merchandise trade (% of GDP)
+- Middle 40% Income Share
+- Military expenditure (% of GDP)
+- Mobile cellular subscriptions (per 100 people)
+- Mortality rate, under-5 (per 1,000 live births)
+- Net barter terms of trade index (2015 = 100)
+- Net migration
+- Net official development assistance and official aid received (current US$)
+- New business density (new registrations per 1,000 people ages 15-64)
+- New businesses registered (number)
+- Number of visits or required meetings with tax officials
+- Out-of-school children of primary school age, both sexes (number)
+- Own-account workers, female (% of female employment) (modeled ILO estimate)
+- Own-account workers, male (% of male employment) (modeled ILO estimate)
+- Own-account workers, total (% of male employment) (modeled ILO estimate)
+- Personal remittances, paid (current US$)
+- Personal remittances, received (current US$)
+- Personal transfers, receipts (BoP, current US$)
+- Population ages 0-14 (% of total)
+- Population ages 0-14, total
+- Population ages 15-64 (% of total)
+- Population ages 15-64, total
+- Population ages 65 and above (% of total)
+- Population ages 65 and above, total
+- Population density (people per sq. km of land area)
+- Population growth (annual %)
+- Population, total
+- Poverty headcount ratio at $1.90 a day (2011 PPP) (% of population)
+- Poverty headcount ratio at $3.00 a day (2021 PPP) (% of population)
+- Poverty headcount ratio at national poverty lines (% of population)
+- Prevalence of HIV, total (% of population ages 15-49)
+- Prevalence of underweight, weight for age (% of children under 5)
+- Primary completion rate, female (% of relevant age group)
+- Primary completion rate, male (% of relevant age group)
+- Primary completion rate, total (% of relevant age group)
+- Private credit bureau coverage (% of adults)
+- Public credit registry coverage (% of adults)
+- Research and development expenditure (% of GDP)
+- Researchers in R&D (per million people)
+- Revenue, excluding grants (% of GDP)
+- Rural population
+- Rural population (% of total population)
+- School enrollment, primary (% gross)
+- School enrollment, primary and secondary (gross), gender parity index (GPI)
+- School enrollment, primary, female (% gross)
+- School enrollment, primary, male (% gross)
+- School enrollment, secondary (% gross)
+- School enrollment, secondary (gross), gender parity index (GPI)
+- School enrollment, secondary, female (% gross)
+- School enrollment, secondary, male (% gross)
+- School enrollment, tertiary (% gross)
+- School enrollment, tertiary (gross), gender parity index (GPI)
+- School enrollment, tertiary, female (% gross)
+- School enrollment, tertiary, male (% gross)
+- Self-employed, female (% of female employment) (modeled ILO estimate)
+- Self-employed, male (% of male employment) (modeled ILO estimate)
+- Self-employed, total (% of total employment) (modeled ILO estimate)
+- Surface area (sq. km)
+- Tax payments (number)
+- Tax revenue (% of GDP)
+- Taxes on income, profits and capital gains (% of total taxes)
+- Technicians in R&D (per million people)
+- Telephone lines (per 100 people)
+- Terrestrial and marine protected areas (% of total territorial area)
+- Time required to enforce a contract (days)
+- Time required to obtain an operating license (days)
+- Time required to register property (days)
+- Time required to start a business (days)
+- Time to prepare and pay taxes (hours)
+- Time to resolve insolvency (years)
+- Top 1% Income Share
+- Top 10% Income Share
+- Total debt service (% of exports of goods, services and primary income)
+- Total employment, total (ages 15+)
+- Unemployment with advanced education (% of total labor force with advanced education)
+- Unemployment with advanced education, female (% of female labor force with advanced education)
+- Unemployment with advanced education, male (% of male labor force with advanced education)
+- Unemployment with intermediate education (% of total labor force with intermediate education)
+- Unemployment with intermediate education, female (% of female labor force with intermediate education)
+- Unemployment with intermediate education, male (% of male labor force with intermediate education)
+- Unemployment, female (% of female labor force) (modeled ILO estimate)
+- Unemployment, male (% of male labor force) (modeled ILO estimate)
+- Unemployment, total (% of total labor force) (modeled ILO estimate)
+- Unemployment, youth female (% of female labor force ages 15-24) (modeled ILO estimate)
+- Unemployment, youth male (% of male labor force ages 15-24) (modeled ILO estimate)
+- Unemployment, youth total (% of total labor force ages 15-24) (modeled ILO estimate)
+- Urban population
+- Urban population (% of total)
+- Urban population growth (annual %)
+- Vulnerable employment, female (% of female employment) (modeled ILO estimate)
+- Vulnerable employment, male (% of male employment) (modeled ILO estimate)
+- Vulnerable employment, total (% of total employment) (modeled ILO estimate)
+- Wage and salaried workers, female (% of female employment) (modeled ILO estimate)
+- Wage and salaried workers, male (% of male employment) (modeled ILO estimate)
+- Wage and salaried workers, total (% of total employment) (modeled ILO estimate)
+
+---
+
+## 2. API Indicators (69 Available, ~66 Active)
+
+_Source: World Bank Open Data API (Live)_
+
+- access_electricity_rural
+- air_transport_passengers
+- arable_land
+- atm_access
+- central_govt_debt
+- child_labor
+- debt_service
+- education_expenditure
+- electricity_access
+- electricity_renewables
+- employment_agriculture
+- employment_industry
+- employment_services
+- exports_gdp
+- fdi_inflows
+- female_business_owners
+- female_labor_participation
+- female_stem_graduates
+- fixed_broadband
+- foreign_reserves
+- forest_area
+- gdp_growth
+- gdp_per_capita
+- gini_index
+- gni_per_capita
+- high_tech_exports
+- imports_gdp
+- income_highest_20
+- income_lowest_20
+- income_share_highest_10
+- inflation
+- internet_usage
+- labor_force_total
+- life_expectancy
+- literacy_rate
+- logistics_performance
+- maternal_mortality
+- merchandise_trade
+- mobile_subscriptions
+- multidimensional_poverty
+- new_business_density
+- nondiscrimination_law
+- personal_remittances
+- physicians_per_1000
+- pm25_pollution
+- population
+- population_growth
+- poverty_215
+- poverty_365
+- poverty_headcount
+- primary_completion
+- pupil_teacher_ratio_primary
+- rail_lines_total
+- renewable_energy_share
+- researchers_rd
+- school_enrollment_secondary
+- secure_servers
+- tertiary_enrollment
+- total_reserves
+- unemployment
+- urban_population_pct
+- vulnerable_employment
+- women_in_parliament
+- youth_unemployment
