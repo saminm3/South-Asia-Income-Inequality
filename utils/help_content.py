@@ -64,7 +64,7 @@ HELP_CONTENT = {
             },
             {
                 "name": "Distribution Analysis",
-                "description": "Box plots and donut charts showing data spread, outliers, and categorical distributions"
+                "description": "Box plots and radar bar charts showing data spread, outliers, and categorical distributions"
             },
             {
                 "name": "Correlation Matrix Heatmap",
