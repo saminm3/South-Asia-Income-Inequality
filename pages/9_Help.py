@@ -165,11 +165,11 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # Create tabs
-tab1, tab2, tab3, tab4 = st.tabs([
+tab1, tab2, tab3 = st.tabs([
     "Quick Start", 
     "Features Guide", 
-    "Troubleshooting",
-    "Data Sources & Methodology"
+    "Troubleshooting"
+    
 ])
 
 # ========================================
@@ -355,7 +355,7 @@ with tab3:
     st.markdown("""
     <div class='feature-box'>
         <strong>2. Refresh the Page</strong><br>
-        • Press F5 or click browser refresh<br>
+        • Click browser refresh<br>
         • This clears cached data and reloads visualizations
     </div>
     """, unsafe_allow_html=True)
@@ -364,7 +364,6 @@ with tab3:
     <div class='feature-box'>
         <strong>3. Check Browser Compatibility</strong><br>
         • Use Chrome, Firefox, or Safari (latest versions)<br>
-        • Enable JavaScript<br>
         • Clear browser cache if issues persist
     </div>
     """, unsafe_allow_html=True)
@@ -380,154 +379,6 @@ with tab3:
     
     st.markdown("</div>", unsafe_allow_html=True)
 
-# ========================================
-# TAB 4: DATA SOURCES & METHODOLOGY
-# ========================================
-with tab4:
-    st.markdown("## Data Sources & Methodology")
-    
-    st.markdown("<div class='help-card'>", unsafe_allow_html=True)
-    st.markdown("### Primary Data Sources")
-    
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        st.markdown("""
-        <div class='feature-box'>
-            <strong>🌍 World Bank Open Data</strong><br>
-            • GDP per capita (current USD)<br>
-            • Labor force participation rates<br>
-            • Education indicators<br>
-            • Updated: Quarterly
-        </div>
-        """, unsafe_allow_html=True)
-        
-        st.markdown("""
-        <div class='feature-box'>
-            <strong>🌐 Natural Earth</strong><br>
-            • Geographic boundaries (GeoJSON)<br>
-            • Country polygons for mapping<br>
-            • Version: 5.1.1
-        </div>
-        """, unsafe_allow_html=True)
-    
-    with col2:
-        st.markdown("""
-        <div class='feature-box'>
-            <strong>UNDP Human Development Reports</strong><br>
-            • Human Development Index (HDI)<br>
-            • Income inequality (GINI index)<br>
-            • Education & health metrics<br>
-            • Updated: Annually
-        </div>
-        """, unsafe_allow_html=True)
-        
-        st.markdown("""
-        <div class='feature-box'>
-            <strong> National Statistical Agencies</strong><br>
-            • Country-specific data<br>
-            • Household surveys<br>
-            • Census data
-        </div>
-        """, unsafe_allow_html=True)
-    
-    st.markdown("</div>", unsafe_allow_html=True)
-    
-    # Indicator Definitions
-    st.markdown("<div class='help-card'>", unsafe_allow_html=True)
-    st.markdown("### Indicator Definitions")
-    
-    st.markdown("""
-    <div class='feature-box'>
-        <strong>GINI Index (Income Inequality)</strong><br>
-        • Ranges from 0 (perfect equality) to 100 (perfect inequality)<br>
-        • Higher values = more inequality<br>
-        • Based on household income/consumption surveys<br>
-        • Updated every 3-5 years (expensive to measure)
-    </div>
-    """, unsafe_allow_html=True)
-    
-    st.markdown("""
-    <div class='feature-box'>
-        <strong>Human Development Index (HDI)</strong><br>
-        • Composite index: life expectancy, education, income<br>
-        • Ranges from 0 to 1 (higher is better)<br>
-        • Published annually by UNDP
-    </div>
-    """, unsafe_allow_html=True)
-    
-    st.markdown("""
-    <div class='feature-box'>
-        <strong>GDP per Capita</strong><br>
-        • Gross Domestic Product divided by population<br>
-        • Measured in current USD<br>
-        • Does not account for purchasing power parity (PPP)
-    </div>
-    """, unsafe_allow_html=True)
-    
-    st.markdown("""
-    <div class='feature-box'>
-        <strong>Labor Force Participation Rate</strong><br>
-        • Percentage of working-age population in labor force<br>
-        • Includes employed and actively seeking employment<br>
-        • Reported by ILO and national agencies
-    </div>
-    """, unsafe_allow_html=True)
-    
-    st.markdown("</div>", unsafe_allow_html=True)
-    
-    # Data Processing
-    st.markdown("<div class='help-card'>", unsafe_allow_html=True)
-    st.markdown("### Data Processing & Integrity")
-    
-    st.markdown("""
-    <div class='tip-box'>
-        <strong>✅ What We Do:</strong><br>
-        • Validate data types and ranges<br>
-        • Merge datasets from multiple sources<br>
-        • Standardize country names and codes<br>
-        • Track data completeness and quality<br>
-        • Update datasets quarterly
-    </div>
-    """, unsafe_allow_html=True)
-    
-    st.markdown("""
-    <div class='issue-box'>
-        <strong>❌ What We DON'T Do:</strong><br>
-        • Fill missing data with estimates or interpolation<br>
-        • Adjust historical data retroactively<br>
-        • Make assumptions about future trends<br>
-        • Cherry-pick favorable data points
-    </div>
-    """, unsafe_allow_html=True)
-    
-    st.markdown("</div>", unsafe_allow_html=True)
-    
-    # Coverage Information
-    st.markdown("<div class='help-card'>", unsafe_allow_html=True)
-    st.markdown("### Coverage & Limitations")
-    
-    st.markdown("""
-    **Countries Covered:**
-    - Afghanistan, Bangladesh, Bhutan, India, Maldives, Nepal, Pakistan, Sri Lanka
-    
-    **Time Period:**
-    - 2000-2024 (availability varies by country and indicator)
-    
-    **Known Limitations:**
-    - GINI data has gaps (surveys are expensive and infrequent)
-    - Some countries have limited historical data
-    - Pandemic period (2020-2021) has data collection challenges
-    - Afghanistan data limited due to conflict
-    
-    **Data Quality:**
-    - Visit the Data Quality page for detailed completeness reports
-    - Green badges (80%+) indicate reliable coverage
-    - Yellow badges (60-79%) suggest caution
-    - Red badges (<60%) mean insufficient data for robust analysis
-    """)
-    
-    st.markdown("</div>", unsafe_allow_html=True)
 
 # Footer
 st.markdown("---")
