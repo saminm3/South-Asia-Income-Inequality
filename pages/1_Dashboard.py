@@ -426,32 +426,26 @@ else:
     yoy_pct = 0
 
 # ═══════════════════════════════════════════════════════════════════
-# SMART BEST/WORST DETECTION (REPLACES LINES 429-458)
-# ═══════════════════════════════════════════════════════════════════
+# SMART BEST/WORST DETECTION
 
-# Detect indicator type based on name
+#  SMART INDICATOR TYPE DETECTION
 indicator_name = config['indicator'].lower()
+negative_terms = ['gini', 'inequality', 'poverty', 'disparity', 'gap', 'unemployment', 'mortality', 'malnutrition', 'deficit']
+is_negative_indicator = any(term in indicator_name for term in negative_terms)
+is_positive_indicator = not is_negative_indicator
 
-# Define indicator categories
-inequality_terms = ['gini', 'inequality', 'poverty', 'disparity', 'gap', 'ratio']
-income_terms = ['income', 'gdp', 'wage', 'salary', 'earnings', 'consumption', 'expenditure']
-
-# Determine if this is an income/positive indicator (higher = better)
-is_positive_indicator = any(term in indicator_name for term in income_terms)
-
-# Calculate best and worst based on indicator type
 if is_positive_indicator:
-    # For INCOME: HIGHER = BETTER, LOWER = WORSE
+    # For INCOME: HIGHER = BETTER
     best_country = latest_data.loc[latest_data['value'].idxmax(), 'country'] if not latest_data.empty else "N/A"
     worst_country = latest_data.loc[latest_data['value'].idxmin(), 'country'] if not latest_data.empty else "N/A"
     best_value = latest_data['value'].max() if not latest_data.empty else 0
     worst_value = latest_data['value'].min() if not latest_data.empty else 0
 else:
-    # For INEQUALITY: LOWER = BETTER, HIGHER = WORSE (default)
+    # For INEQUALITY: LOWER = BETTER
     best_country = latest_data.loc[latest_data['value'].idxmin(), 'country'] if not latest_data.empty else "N/A"
     worst_country = latest_data.loc[latest_data['value'].idxmax(), 'country'] if not latest_data.empty else "N/A"
     best_value = latest_data['value'].min() if not latest_data.empty else 0
-    worst_value = latest_data['value'].max() if not latest_data.empty else 0
+    worst_value = latest_data['value'].max() if not latest_data.empty else 0 
 
 # Calculate data coverage
 data_coverage = (filtered_df.notna().sum()['value'] / len(filtered_df) * 100)
@@ -494,6 +488,10 @@ with col5:
         label="Data Range",
         value=f"{config['year_range'][1] - config['year_range'][0] + 1} Years"
     )
+    
+    
+
+
 # ═══════════════════════════════════════════════════════════════════
 # API-DRIVEN INSIGHTS (APPEARS WHEN API ENRICHMENT IS ENABLED)
 # ═══════════════════════════════════════════════════════════════════
@@ -809,97 +807,59 @@ st.plotly_chart(fig_area, use_container_width=True, config={
 # SECONDARY VISUALIZATIONS ROW
 # ═══════════════════════════════════════════════════════════════════
 
+st.markdown("---")
 st.markdown('<div class="section-header">Country Comparison & Distribution</div>', unsafe_allow_html=True)
 
-col_viz1, col_viz2 = st.columns([1.5, 1])
+col_viz1, col_viz2 = st.columns([1.5, 1], gap="large")  # ✅ FIX: Added gap="large"
 
 with col_viz1:
-    # Horizontal bar chart - Browser breakdown style
-    # ═══════════════════════════════════════════════════════════════
-    # FIX: Ensure we're calculating MEAN, not SUM
-    # ═══════════════════════════════════════════════════════════════
-    
+    # Horizontal bar chart
     country_avg = filtered_df.groupby('country')['value'].mean().sort_values(ascending=True)
     
-    # DEBUG: Print to verify values are correct
-    print("DEBUG - Country averages:")
-    print(country_avg)
-    print(f"Min: {country_avg.min()}, Max: {country_avg.max()}")
-    
-# ═══════════════════════════════════════════════════════════════════
-    # SMART COLOR CODING (REPLACES LINES 805-817)
-    # ═══════════════════════════════════════════════════════════════════
-    
-    # Calculate thresholds (SAME as donut chart)
+    # Calculate thresholds
     q1 = country_avg.quantile(0.33)
     q3 = country_avg.quantile(0.67)
     
-    # Detect indicator type (reuse from earlier)
-    indicator_name = config['indicator'].lower()
-    income_terms = ['income', 'gdp', 'wage', 'salary', 'earnings', 'consumption', 'expenditure']
-    is_positive_indicator = any(term in indicator_name for term in income_terms)
-    
-    # Assign colors based on indicator type
+    # ✅ FIX: Correct color logic
     bar_colors = []
     for val in country_avg.values:
         if is_positive_indicator:
-            # For INCOME: LOW = BAD (red), HIGH = GOOD (green)
-            if val <= q1:
-                bar_colors.append('#ef4444')  # Red - Low Income (Bad)
-            elif val <= q3:
-                bar_colors.append('#f59e0b')  # Yellow - Moderate Income
+            # For POSITIVE (income, electricity, etc): HIGH = GREEN (good), LOW = RED (bad)
+            if val >= q3:
+                bar_colors.append('#10b981')  # Green - High value (GOOD)
+            elif val >= q1:
+                bar_colors.append('#f59e0b')  # Yellow - Moderate
             else:
-                bar_colors.append('#10b981')  # Green - High Income (Good)
+                bar_colors.append('#ef4444')  # Red - Low value (BAD)
         else:
-            # For INEQUALITY: LOW = GOOD (green), HIGH = BAD (red)
+            # For INEQUALITY: LOW = GREEN (good), HIGH = RED (bad)
             if val <= q1:
-                bar_colors.append('#10b981')  # Green - Low Inequality (Good)
+                bar_colors.append('#10b981')  # Green - Low inequality (GOOD)
             elif val <= q3:
-                bar_colors.append('#f59e0b')  # Yellow - Moderate Inequality
+                bar_colors.append('#f59e0b')  # Yellow - Moderate
             else:
-                bar_colors.append('#ef4444')  # Red - High Inequality (Bad)
-    fig_bars = go.Figure()
+                bar_colors.append('#ef4444')  # Red - High inequality (BAD)
     
-    # ═══════════════════════════════════════════════════════════════
-    # FIX: Format values properly and position them better
-    # ═══════════════════════════════════════════════════════════════
-    
-    # Format text based on value magnitude
+    # Format text
     if country_avg.max() > 1000:
-        # Values are in thousands (ERROR - shouldn't happen!)
         text_values = [f'{v:,.0f}' for v in country_avg.values]
-        print("⚠️ WARNING: Values are too large! Check your data!")
     elif country_avg.max() > 100:
-        # Values are 0-1000 range
         text_values = [f'{v:.1f}' for v in country_avg.values]
     else:
-        # Values are 0-100 range (normal for GINI)
         text_values = [f'{v:.2f}' for v in country_avg.values]
     
+    fig_bars = go.Figure()
     fig_bars.add_trace(go.Bar(
         y=country_avg.index,
         x=country_avg.values,
         orientation='h',
-        marker=dict(
-            color=bar_colors,  # Discrete colors matching donut chart
-            showscale=False,
-            line=dict(width=0)
-        ),
+        marker=dict(color=bar_colors, showscale=False, line=dict(width=0)),
         text=text_values,
-        textposition='outside',  # Position OUTSIDE the bars
-        textfont=dict(
-            color='#ffffff', 
-            size=11,
-            family='Arial'  # Use consistent font
-        ),
-        # ═══════════════════════════════════════════════════════════
-        # FIX: Better hover template
-        # ═══════════════════════════════════════════════════════════
-        hovertemplate='<b>%{y}</b><br>Average: %{x:.2f}<extra></extra>',
-        cliponaxis=False  # Allow text to extend beyond plot area
+        textposition='outside',
+        textfont=dict(color='#ffffff', size=11, family='Arial'),
+        hovertemplate='<b>%{y}</b><br>Value: %{x:.2f}<extra></extra>'
     ))
     
-    # REQUIREMENT #5: PROPER AXIS LABELS (FIXED SPACING)
     fig_bars.update_layout(
         height=350,
         paper_bgcolor='rgba(0,0,0,0)',
@@ -908,24 +868,15 @@ with col_viz1:
         xaxis=dict(
             showgrid=True,
             gridcolor='rgba(100, 116, 139, 0.2)',
-            title=dict(
-                text=f'<b>Average {y_label_short}</b>',  # Shorter label
-                font=dict(size=13, color='#94a3b8')
-            ),
+            title=dict(text=f'<b>{y_label_short}</b>', font=dict(size=13, color='#94a3b8')),
             color='#94a3b8'
         ),
         yaxis=dict(
             showgrid=False,
-            title=dict(
-                text='<b>Country</b>',
-                font=dict(size=13, color='#94a3b8')
-            ),
+            title=dict(text='<b>Country</b>', font=dict(size=13, color='#94a3b8')),
             color='#e2e8f0'
         ),
-        # ═══════════════════════════════════════════════════════════
-        # FIX: Increase right margin so values don't get cut off
-        # ═══════════════════════════════════════════════════════════
-        margin=dict(l=100, r=150, t=40, b=50),  # Increased right margin to 150
+        margin=dict(l=100, r=150, t=40, b=50),
         title=dict(
             text=f'Average by Country ({config["year_range"][0]}-{config["year_range"][1]})',
             font=dict(size=14, color='#ffffff'),
@@ -938,10 +889,8 @@ with col_viz1:
     with col_downloads2:
         with st.popover("⬇️", help="Download in multiple formats"):
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            
             st.download_button("🌐 HTML", fig_bars.to_html(include_plotlyjs='cdn'), f"country_avg_{timestamp}.html", "text/html", key="bar_html", use_container_width=True)
             st.download_button("📊 JSON", fig_bars.to_json(), f"country_avg_{timestamp}.json", "application/json", key="bar_json", use_container_width=True)
-            
             try:
                 svg_bytes = fig_bars.to_image(format="svg", width=1400, height=1000)
                 st.download_button("🎨 SVG", svg_bytes, f"country_avg_{timestamp}.svg", "image/svg+xml", key="bar_svg", use_container_width=True)
@@ -952,156 +901,166 @@ with col_viz1:
         'displayModeBar': 'hover',
         'displaylogo': False,
         'modeBarButtonsToRemove': ['select2d', 'lasso2d', 'autoScale2d'],
-        'toImageButtonOptions': {
-            'format': 'png',
-            'filename': f'average_by_country_{config["indicator"]}',
-            'height': 1000,
-            'width': 1400,
-            'scale': 2
-        }
+        'toImageButtonOptions': {'format': 'png', 'filename': f'average_by_country_{config["indicator"]}', 'height': 1000, 'width': 1400, 'scale': 2}
     })
+
 with col_viz2:
-# ═══════════════════════════════════════════════════════════════════
-    # SMART CATEGORY ASSIGNMENT (REPLACES LINES 923-943)
-    # ═══════════════════════════════════════════════════════════════════
+    # Title section - no title text, just empty space to match bar chart height
+    st.markdown("""
+    <div style="margin-bottom: 15px;">
+        <h3 style="font-size: 1rem; color: #ffffff; font-weight: 600; margin: 0;">
+           
     
-    # Donut chart
-    median_val = latest_data['value'].median()
-    q1 = latest_data['value'].quantile(0.33)
-    q3 = latest_data['value'].quantile(0.67)
-    
-    # Detect indicator type (reuse from earlier)
-    indicator_name = config['indicator'].lower()
-    income_terms = ['income', 'gdp', 'wage', 'salary', 'earnings', 'consumption', 'expenditure']
-    is_positive_indicator = any(term in indicator_name for term in income_terms)
-    
-    # Assign categories based on indicator type
-    categories = []
-    for val in latest_data['value']:
-        if is_positive_indicator:
-            # For INCOME: LOW = BAD, HIGH = GOOD
-            if val <= q1:
-                categories.append('Low Income')      # Bad (was bottom 33%)
-            elif val <= q3:
-                categories.append('Moderate')
-            else:
-                categories.append('High Income')     # Good (top 33%)
-        else:
-            # For INEQUALITY: LOW = GOOD, HIGH = BAD
-            if val <= q1:
-                categories.append('Low Inequality')  # Good
-            elif val <= q3:
-                categories.append('Moderate')
-            else:
-                categories.append('High Inequality') # Bad
-    
-    category_counts = pd.Series(categories).value_counts()
-    
-    # Define color mapping (adapt to indicator type)
-    if is_positive_indicator:
-        # For INCOME indicators
-        color_map = {
-            'Low Income': '#ef4444',      # Red (BAD - low income)
-            'Moderate': '#f59e0b',        # Yellow/Orange (OK)
-            'High Income': '#10b981'      # Green (GOOD - high income)
-        }
-        ordered_categories = ['Low Income', 'Moderate', 'High Income']
-    else:
-        # For INEQUALITY indicators (default)
-        color_map = {
-            'Low Inequality': '#10b981',    # Green (GOOD)
-            'Moderate': '#f59e0b',          # Yellow/Orange (OK)
-            'High Inequality': '#ef4444'    # Red (BAD)
-        }
-        ordered_categories = ['Low Inequality', 'Moderate', 'High Inequality']
-    
-    # Ensure consistent order and colors
-    ordered_values = [category_counts.get(cat, 0) for cat in ordered_categories]
-    ordered_colors = [color_map[cat] for cat in ordered_categories]
+    </div>
+    """, unsafe_allow_html=True)
 
     
-    fig_donut = go.Figure(data=[go.Pie(
-        labels=ordered_categories,
-        values=ordered_values,
-        hole=0.6,
-        marker=dict(
-            colors=ordered_colors,
-            line=dict(color='#0a0e27', width=2)
-        ),
-        textinfo='label+percent',
-        textposition='outside',
-        textfont=dict(color='#ffffff', size=11),
-        hovertemplate='<b>%{label}</b><br>Countries: %{value}<br>%{percent}<extra></extra>'
-    )])
+    # Prepare data
+    country_latest = latest_data[['country', 'value']].copy()
+    country_latest = country_latest.sort_values('value', ascending=False)
+    country_latest = country_latest.set_index('country')['value']
+    country_latest = country_latest.fillna(country_latest.mean())
+
     
-    fig_donut.update_layout(
-        height=350,
+    # Normalize to 0-100
+    max_val = country_latest.max()
+    min_val = country_latest.max()
+    if max_val != min_val:
+        normalized = ((country_latest - min_val) / (max_val - min_val) * 100).values
+    else:
+        normalized = [50] * len(country_latest)
+    
+    # ✅ FIX: Correct color assignment
+    q1_radial = country_latest.quantile(0.33)
+    q3_radial = country_latest.quantile(0.67)
+    
+    bar_colors_radial = []
+    for val in country_latest.values:
+        if is_positive_indicator:
+            # For POSITIVE: HIGH = GREEN (good), LOW = RED (bad)
+            if val >= q3_radial:
+                bar_colors_radial.append('#10b981')  # Green - High value (GOOD)
+            elif val >= q1_radial:
+                bar_colors_radial.append('#f59e0b')  # Yellow - Moderate
+            else:
+                bar_colors_radial.append('#ef4444')  # Red - Low value (BAD)
+        else:
+            # For INEQUALITY: LOW = GREEN (good), HIGH = RED (bad)
+            if val <= q1_radial:
+                bar_colors_radial.append('#10b981')  # Green - Low inequality
+            elif val <= q3_radial:
+                bar_colors_radial.append('#f59e0b')  # Yellow - Moderate
+            else:
+                bar_colors_radial.append('#ef4444')  # Red - High inequality
+    
+    # Create radial chart
+    fig_radial = go.Figure()
+    
+    fig_radial.add_trace(go.Barpolar(
+        r=normalized,
+        theta=country_latest.index,
+        marker=dict(color=bar_colors_radial, line=dict(color='#0a0e27', width=2)),
+        hovertemplate='<b>%{theta}</b><br>Actual: %{customdata:.2f}<br>Score: %{r:.0f}/100<extra></extra>',
+        customdata=country_latest.index,
+        opacity=0.9
+    ))
+    
+    fig_radial.update_layout(
+        polar=dict(
+            radialaxis=dict(
+                visible=True,
+                range=[0, 100],
+                showticklabels=True,
+                tickfont=dict(size=9, color='#94a3b8'),
+                gridcolor='rgba(100, 116, 139, 0.3)',
+                tickmode='linear',
+                tick0=0,
+                dtick=25
+            ),
+            angularaxis=dict(
+                gridcolor='rgba(100, 116, 139, 0.3)',
+                linecolor='rgba(100, 116, 139, 0.5)',
+                showticklabels=True,
+                tickfont=dict(size=10, color='#ffffff', weight='bold')
+            ),
+            bgcolor='rgba(0,0,0,0)'
+        ),
         paper_bgcolor='rgba(0,0,0,0)',
         plot_bgcolor='rgba(0,0,0,0)',
         font=dict(color='#e2e8f0'),
-        margin=dict(l=20, r=20, t=40, b=60),
+        height=380,
+        margin=dict(l=80, r=80, t=60, b=40),  # ✅ FIX: Increased top margin
         showlegend=False,
         title=dict(
-            text=f'Distribution by Category ({latest_year})',
+            text=f'Latest Year Snapshot ({latest_year})',
             font=dict(size=14, color='#ffffff'),
             x=0.5,
-            xanchor='center'
-        ),
-        annotations=[dict(
-            text=f'<b>{len(latest_data)}</b><br>Countries',
-            x=0.5, y=0.5,
-            font=dict(size=16, color='#ffffff'),
-            showarrow=False
-        )]
+            xanchor='center',
+            y=0.98  # ✅ FIX: Position title higher
+        )
     )
-    
-    # Download options
+# Download options
     col_spacer3, col_downloads3 = st.columns([10, 1])
     with col_downloads3:
         with st.popover("⬇️", help="Download in multiple formats"):
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            
-            st.download_button("🌐 HTML", fig_donut.to_html(include_plotlyjs='cdn'), f"distribution_{timestamp}.html", "text/html", key="donut_html", use_container_width=True)
-            st.download_button("📊 JSON", fig_donut.to_json(), f"distribution_{timestamp}.json", "application/json", key="donut_json", use_container_width=True)
-            
+            st.download_button("🌐 HTML", fig_radial.to_html(include_plotlyjs='cdn'), f"radial_{timestamp}.html", "text/html", key="radial_html", use_container_width=True)
+            st.download_button("📊 JSON", fig_radial.to_json(), f"radial_{timestamp}.json", "application/json", key="radial_json", use_container_width=True)
             try:
-                svg_bytes = fig_donut.to_image(format="svg", width=1400, height=1000)
-                st.download_button("🎨 SVG", svg_bytes, f"distribution_{timestamp}.svg", "image/svg+xml", key="donut_svg", use_container_width=True)
+                svg_bytes = fig_radial.to_image(format="svg", width=1400, height=1400)
+                st.download_button("🎨 SVG", svg_bytes, f"radial_{timestamp}.svg", "image/svg+xml", key="radial_svg", use_container_width=True)
             except:
-                st.button("🎨 SVG", disabled=True, key="donut_svg", use_container_width=True)
+                st.button("🎨 SVG", disabled=True, key="radial_svg", use_container_width=True)
     
-    st.plotly_chart(fig_donut, use_container_width=True, config={
+    st.plotly_chart(fig_radial, use_container_width=True, config={
         'displayModeBar': 'hover',
         'displaylogo': False,
-        'modeBarButtonsToRemove': ['select2d', 'lasso2d', 'autoScale2d'],
-        'toImageButtonOptions': {
-            'format': 'png',
-            'filename': 'distribution_breakdown',
-            'height': 1000,
-            'width': 1400,
-            'scale': 2
-        }
+        'modeBarButtonsToRemove': ['select2d', 'lasso2d'],
+        'toImageButtonOptions': {'format': 'png', 'filename': 'radial_comparison', 'height': 1400, 'width': 1400, 'scale': 2}
     })
-
-# Color scheme legend for both charts
-st.markdown("""
-<div style="background: rgba(59, 130, 246, 0.05); padding: 12px; border-radius: 8px; margin-top: 1rem; border-left: 3px solid #3b82f6;">
-    <div style="display: flex; justify-content: center; gap: 2rem; align-items: center; flex-wrap: wrap;">
-        <div style="display: flex; align-items: center; gap: 0.5rem;">
-            <div style="width: 20px; height: 20px; background: #10b981; border-radius: 4px;"></div>
-            <span style="color: #e2e8f0; font-size: 0.9rem;"><strong>Green</strong> = Low Inequality (Good)</span>
-        </div>
-        <div style="display: flex; align-items: center; gap: 0.5rem;">
-            <div style="width: 20px; height: 20px; background: #f59e0b; border-radius: 4px;"></div>
-            <span style="color: #e2e8f0; font-size: 0.9rem;"><strong>Yellow</strong> = Moderate Inequality</span>
-        </div>
-        <div style="display: flex; align-items: center; gap: 0.5rem;">
-            <div style="width: 20px; height: 20px; background: #ef4444; border-radius: 4px;"></div>
-            <span style="color: #e2e8f0; font-size: 0.9rem;"><strong>Red</strong> = High Inequality (Needs Attention)</span>
+    
+    
+# ✅ FIX: DYNAMIC LEGEND (adapts to indicator type)
+if is_positive_indicator:
+    legend_html = """
+    <div style="background: rgba(59, 130, 246, 0.05); padding: 12px; border-radius: 8px; margin-top: 1rem; border-left: 3px solid #3b82f6;">
+        <div style="display: flex; justify-content: center; gap: 2rem; align-items: center; flex-wrap: wrap;">
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <div style="width: 20px; height: 20px; background: #10b981; border-radius: 4px;"></div>
+                <span style="color: #e2e8f0; font-size: 0.9rem;"><strong>Green</strong> = High Performance (Good)</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <div style="width: 20px; height: 20px; background: #f59e0b; border-radius: 4px;"></div>
+                <span style="color: #e2e8f0; font-size: 0.9rem;"><strong>Yellow</strong> = Moderate Performance</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <div style="width: 20px; height: 20px; background: #ef4444; border-radius: 4px;"></div>
+                <span style="color: #e2e8f0; font-size: 0.9rem;"><strong>Red</strong> = Low Performance (Needs Attention)</span>
+            </div>
         </div>
     </div>
-</div>
-""", unsafe_allow_html=True)
+    """
+else:
+    legend_html = """
+    <div style="background: rgba(59, 130, 246, 0.05); padding: 12px; border-radius: 8px; margin-top: 1rem; border-left: 3px solid #3b82f6;">
+        <div style="display: flex; justify-content: center; gap: 2rem; align-items: center; flex-wrap: wrap;">
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <div style="width: 20px; height: 20px; background: #10b981; border-radius: 4px;"></div>
+                <span style="color: #e2e8f0; font-size: 0.9rem;"><strong>Green</strong> = Low Inequality (Good)</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <div style="width: 20px; height: 20px; background: #f59e0b; border-radius: 4px;"></div>
+                <span style="color: #e2e8f0; font-size: 0.9rem;"><strong>Yellow</strong> = Moderate Inequality</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <div style="width: 20px; height: 20px; background: #ef4444; border-radius: 4px;"></div>
+                <span style="color: #e2e8f0; font-size: 0.9rem;"><strong>Red</strong> = High Inequality (Needs Attention)</span>
+            </div>
+        </div>
+    </div>
+    """
+
+st.markdown(legend_html, unsafe_allow_html=True)
 
 # HEATMAP 
 
