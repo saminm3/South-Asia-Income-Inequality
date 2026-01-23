@@ -306,7 +306,7 @@ with col_btn[1]:
     if selected_countries:
         if config_changed:
             if st.button(
-                "🎯 Confirm Configuration",
+                "Confirm Configuration",
                 use_container_width=True,
                 type="primary",
                 help="Apply these settings to all analysis pages"
