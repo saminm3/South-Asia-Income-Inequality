@@ -946,15 +946,7 @@ with col_viz1:
     })
 
 with col_viz2:
-    # Title section - no title text, just empty space to match bar chart height
-    st.markdown("""
-    <div style="margin-bottom: 15px;">
-        <h3 style="font-size: 1rem; color: #ffffff; font-weight: 600; margin: 0;">
-           
-    
-    </div>
-    """, unsafe_allow_html=True)
-
+    # Title section - removed spacer to move up
     
     # Prepare data
     country_latest = latest_data[['country', 'value']].copy()
@@ -1030,18 +1022,18 @@ with col_viz2:
         plot_bgcolor='rgba(0,0,0,0)',
         font=dict(color='#e2e8f0'),
         height=380,
-        margin=dict(l=80, r=80, t=60, b=40),  # ✅ FIX: Increased top margin
+        margin=dict(l=80, r=80, t=40, b=40),  # Reduced top margin slightly
         showlegend=False,
         title=dict(
             text=f'Latest Year Snapshot ({latest_year})',
             font=dict(size=14, color='#ffffff'),
             x=0.5,
             xanchor='center',
-            y=0.98  # ✅ FIX: Position title higher
+            y=0.98  # Position title higher
         )
     )
-# Download options
-    col_spacer3, col_downloads3 = st.columns([10, 1])
+    # Download options
+    col_spacer3, col_downloads3 = st.columns([5, 1])
     with col_downloads3:
         with st.popover("⬇️", help="Download in multiple formats"):
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
