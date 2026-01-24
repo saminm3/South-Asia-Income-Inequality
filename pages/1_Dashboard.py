@@ -1738,6 +1738,18 @@ with col_insight3:
     </div>
     """, unsafe_allow_html=True)
 
+# STORYTELLING: Key Insights Context
+st.markdown(f"""
+<div style="background-color: rgba(30, 41, 59, 0.5); padding: 15px; border-radius: 5px; border-left: 3px solid #10b981; margin-top: 20px;">
+    <h5 style="margin: 0 0 8px 0; color: #e0e7ff; font-size: 0.9rem; font-weight: 600;">How to interpret these metrics</h5>
+    <ul style="margin: 0; padding-left: 20px; color: #cbd5e1; font-size: 0.85rem; line-height: 1.5;">
+        <li><b>Regional Trend:</b> Indicates the overall direction. "Improving" means inequality is decreasing (good), "Worsening" means it's increasing.</li>
+        <li><b>Volatility:</b> Measures stability. Lower values mean steady progress; higher values indicate erratic economic shocks or inconsistent data.</li>
+        <li><b>Regional Gap:</b> The distance between the best and worst performing countries. A smaller gap suggests regional cohesion.</li>
+    </ul>
+</div>
+""", unsafe_allow_html=True)
+
 # ═══════════════════════════════════════════════════════════════════
 # REQUIREMENT #7: DATA EXPORT FUNCTIONALITY
 # ═══════════════════════════════════════════════════════════════════
