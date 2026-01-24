@@ -321,13 +321,13 @@ def smart_search(query, dataframe):
     
     # 4. Command Keywords
     command_keywords = {
-        'map': {'name': 'Geographic Map', 'page': 'pages/3_Map_analysis.py', 'description': 'Choropleth map with animation'},
+        'map': {'name': 'Geographic Map', 'page': 'pages/3_Map_Analysis.py', 'description': 'Choropleth map with animation'},
         'correlation': {'name': ' Correlations', 'page': 'pages/4_Correlations.py', 'description': 'Analyze relationships'},
         'dashboard': {'name': ' Dashboard', 'page': 'pages/1_Dashboard.py', 'description': 'Multi-dimensional overview'},
         'Indicator Insights': {'name': 'Indicator Insights', 'page': 'pages/7_Indicator_Insights.py', 'description': 'Hierarchical visualization'},
-        'simulator': {'name': 'Simulator', 'page': 'pages/5_Income_simulator.py', 'description': 'Income inequality modeling'},
-        'quality': {'name': 'Data Quality', 'page': 'pages/6_Data_quality.py', 'description': 'Data completeness monitor'},
-        'temporal': {'name': ' Temporal', 'page': 'pages/8_Temporal_comparison.py', 'description': 'Time comparison analysis'}
+        'simulator': {'name': 'Simulator', 'page': 'pages/5_Income_Simulator.py', 'description': 'Income inequality modeling'},
+        'quality': {'name': 'Data Quality', 'page': 'pages/6_Data_Quality.py', 'description': 'Data completeness monitor'},
+        'temporal': {'name': ' Temporal', 'page': 'pages/8_Temporal_Comparison.py', 'description': 'Time comparison analysis'}
     }
     
     for keyword, info in command_keywords.items():

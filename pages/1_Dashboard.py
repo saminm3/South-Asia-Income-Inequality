@@ -450,7 +450,7 @@ else:
 # Calculate data coverage
 data_coverage = (filtered_df.notna().sum()['value'] / len(filtered_df) * 100)
 
-# Display metric cards
+# ✅ FIX #4: METRIC CARDS WITH STORYTELLING CONTEXT
 col1, col2, col3, col4, col5= st.columns(5)
 
 with col1:
@@ -460,6 +460,22 @@ with col1:
         value=f"{regional_avg:.1f}",
         delta=f"{delta_symbol} {abs(yoy_pct):.1f}%"
     )
+    # Context text
+    if is_positive_indicator:
+        if regional_avg > 70:
+            context = "Strong regional performance"
+        elif regional_avg > 40:
+            context = "Moderate regional performance"
+        else:
+            context = "Low regional performance"
+    else:
+        if regional_avg < 30:
+            context = "Low regional inequality"
+        elif regional_avg < 40:
+            context = "Moderate regional inequality"
+        else:
+            context = "High regional inequality"
+    st.markdown(f'<p style="color: #94a3b8; font-size: 0.75rem; margin-top: -10px;">{context}</p>', unsafe_allow_html=True)
 
 with col2:
     st.metric(
@@ -467,6 +483,12 @@ with col2:
         value=best_country,
         delta=f"{best_value:.1f}"
     )
+    # Context text
+    if is_positive_indicator:
+        context = "Highest value achieved"
+    else:
+        context = "Most equitable distribution"
+    st.markdown(f'<p style="color: #94a3b8; font-size: 0.75rem; margin-top: -10px;">{context}</p>', unsafe_allow_html=True)
 
 with col3:
     st.metric(
@@ -475,6 +497,12 @@ with col3:
         delta=f"{worst_value:.1f}",
         delta_color="inverse"
     )
+    # Context text
+    if is_positive_indicator:
+        context = "Requires improvement focus"
+    else:
+        context = "Highest inequality gap"
+    st.markdown(f'<p style="color: #94a3b8; font-size: 0.75rem; margin-top: -10px;">{context}</p>', unsafe_allow_html=True)
 
 with col4:
     st.metric(
@@ -482,12 +510,24 @@ with col4:
         value=f"{data_coverage:.0f}%",
         delta=f"↑ {int(data_coverage - 50)} points" if data_coverage > 50 else f"↓ {int(50 - data_coverage)} points"
     )
+    # Context text
+    if data_coverage >= 90:
+        context = "Excellent data availability"
+    elif data_coverage >= 70:
+        context = "Good data availability"
+    else:
+        context = "Limited data availability"
+    st.markdown(f'<p style="color: #94a3b8; font-size: 0.75rem; margin-top: -10px;">{context}</p>', unsafe_allow_html=True)
 
 with col5:
     st.metric(
         label="Data Range",
         value=f"{config['year_range'][1] - config['year_range'][0] + 1} Years"
     )
+    # Context text
+    years_span = config['year_range'][1] - config['year_range'][0] + 1
+    context = f"{years_span}-year analysis period"
+    st.markdown(f'<p style="color: #94a3b8; font-size: 0.75rem; margin-top: -10px;">{context}</p>', unsafe_allow_html=True)
     
     
 
@@ -717,7 +757,7 @@ for i, country in enumerate(yearly_data.columns):
         name=country,
         line=dict(width=2.5, color=colors[i % len(colors)]),
         fill='tonexty' if i > 0 else 'tozeroy',
-        fillcolor=f'rgba({int(colors[i % len(colors)][1:3], 16)}, {int(colors[i % len(colors)][3:5], 16)}, {int(colors[i % len(colors)][5:7], 16)}, 0.2)',
+        fillcolor=f'rgba({int(colors[i % len(colors)][1:3], 16)}, {int(colors[i % len(colors)][3:5], 16)}, {int(colors[i % len(colors)][5:7], 16)}, 0.5)',
         stackgroup='one',
         hovertemplate='<b>%{fullData.name}</b><br>Year: %{x}<br>Value: %{y:.2f}<extra></extra>'
     ))
@@ -729,7 +769,7 @@ y_label_short = indicator_name.split('(')[0].strip() if '(' in indicator_name el
 
 # REQUIREMENT #5: PROPER AXIS LABELS (FIXED SPACING)
 fig_area.update_layout(
-    height=400,
+    height=450,
     paper_bgcolor='rgba(0,0,0,0)',
     plot_bgcolor='rgba(0,0,0,0)',
     font=dict(color='#e2e8f0', size=12),
@@ -760,15 +800,17 @@ fig_area.update_layout(
         bgcolor='rgba(0,0,0,0)',
         font=dict(color='#e2e8f0', size=11)
     ),
-    margin=dict(l=80, r=20, t=60, b=50),  # Increased left margin for Y-axis label
+    margin=dict(l=80, r=20, t=130, b=50),  # Increased top margin for tooltip
     hovermode='x unified',
     title=dict(
-        text=f'Stacked {indicator_name} Trends by Country ({config["year_range"][0]}-{config["year_range"][1]})',
+        text=f'Regional Cumulative Trends: {indicator_name} ({config["year_range"][0]}-{config["year_range"][1]})',
         font=dict(size=15, color='#ffffff'),
         x=0,
         y=0.98
     )
 )
+
+
 
 # Download options in top-right corner
 col_spacer, col_downloads = st.columns([10, 1])
@@ -802,6 +844,19 @@ st.plotly_chart(fig_area, use_container_width=True, config={
         'scale': 2
     }
 })
+
+# STORYTELLING: Inequality Trends
+st.markdown(f"""
+<div style="background-color: rgba(30, 41, 59, 0.5); padding: 15px; border-radius: 5px; border-left: 3px solid #3b82f6; margin-top: 10px; margin-bottom: 20px;">
+    <h5 style="margin: 0 0 8px 0; color: #e0e7ff; font-size: 0.9rem; font-weight: 600;">How to read this chart</h5>
+    <p style="margin: 0; color: #cbd5e1; font-size: 0.85rem; line-height: 1.5;">
+        This <b>Stacked Area Chart</b> shows the total regional volume of <b>{indicator_name}</b> while displaying individual country contributions. 
+        <br>• The <b>height of the stack</b> represents the cumulative sum of all countries combined.
+        <br>• The <b>thickness of each colored band</b> shows that specific country's value for that year.
+        <br>• <b>Steeper slopes</b> indicate periods of rapid change in the metric.
+    </p>
+</div>
+""", unsafe_allow_html=True)
 
 # ═══════════════════════════════════════════════════════════════════
 # SECONDARY VISUALIZATIONS ROW
@@ -856,8 +911,9 @@ with col_viz1:
         marker=dict(color=bar_colors, showscale=False, line=dict(width=0)),
         text=text_values,
         textposition='outside',
-        textfont=dict(color='#ffffff', size=11, family='Arial'),
-        hovertemplate='<b>%{y}</b><br>Value: %{x:.2f}<extra></extra>'
+        textfont=dict(color='#ffffff', size=12, family='Arial'),
+        hovertemplate='<b>%{y}</b><br>Value: %{x:.2f}<extra></extra>',
+        cliponaxis=False
     ))
     
     fig_bars.update_layout(
@@ -876,7 +932,7 @@ with col_viz1:
             title=dict(text='<b>Country</b>', font=dict(size=13, color='#94a3b8')),
             color='#e2e8f0'
         ),
-        margin=dict(l=100, r=150, t=40, b=50),
+        margin=dict(l=120, r=180, t=40, b=50),
         title=dict(
             text=f'Average by Country ({config["year_range"][0]}-{config["year_range"][1]})',
             font=dict(size=14, color='#ffffff'),
@@ -903,17 +959,19 @@ with col_viz1:
         'modeBarButtonsToRemove': ['select2d', 'lasso2d', 'autoScale2d'],
         'toImageButtonOptions': {'format': 'png', 'filename': f'average_by_country_{config["indicator"]}', 'height': 1000, 'width': 1400, 'scale': 2}
     })
-
-with col_viz2:
-    # Title section - no title text, just empty space to match bar chart height
-    st.markdown("""
-    <div style="margin-bottom: 15px;">
-        <h3 style="font-size: 1rem; color: #ffffff; font-weight: 600; margin: 0;">
-           
     
+    # STORYTELLING: Bar Chart
+    st.markdown(f"""
+    <div style="background-color: rgba(30, 41, 59, 0.5); padding: 12px; border-radius: 5px; border-left: 3px solid #10b981; margin-top: 15px;">
+        <p style="margin: 0; color: #cbd5e1; font-size: 0.85rem; line-height: 1.4;">
+            <strong style="color: #e0e7ff;">Insight:</strong> This compares the <b>average performance</b> over the entire {years_span}-year period. 
+            It helps identify long-term structural leaders (Green) versus those facing persistent challenges (Red), mostly ignoring short-term fluctuations.
+        </p>
     </div>
     """, unsafe_allow_html=True)
 
+with col_viz2:
+    # Title section - removed spacer to move up
     
     # Prepare data
     country_latest = latest_data[['country', 'value']].copy()
@@ -989,18 +1047,18 @@ with col_viz2:
         plot_bgcolor='rgba(0,0,0,0)',
         font=dict(color='#e2e8f0'),
         height=380,
-        margin=dict(l=80, r=80, t=60, b=40),  # ✅ FIX: Increased top margin
+        margin=dict(l=80, r=80, t=40, b=40),  # Reduced top margin slightly
         showlegend=False,
         title=dict(
             text=f'Latest Year Snapshot ({latest_year})',
             font=dict(size=14, color='#ffffff'),
             x=0.5,
             xanchor='center',
-            y=0.98  # ✅ FIX: Position title higher
+            y=0.98  # Position title higher
         )
     )
-# Download options
-    col_spacer3, col_downloads3 = st.columns([10, 1])
+    # Download options
+    col_spacer3, col_downloads3 = st.columns([5, 1])
     with col_downloads3:
         with st.popover("⬇️", help="Download in multiple formats"):
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -1078,279 +1136,389 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# Calculate correlation matrix
+# ✅ FIX #1 & #5: SMART CORRELATION CALCULATION WITH DATA OVERLAP CHECKING
 country_trends = filtered_df.pivot_table(values='value', index='year', columns='country')
-correlation_matrix = country_trends.corr()
 
-#  CONTROLS - Only color scheme selector
-# ═══════════════════════════════════════════════════════════════════
+# Check data quality for correlation analysis
+total_years = len(country_trends)
+min_required_years = max(10, int(total_years * 0.5))  # At least 10 years or 50% of data
 
-color_scheme = st.selectbox(
-    "Color Scheme",
-    ["RdBu_r", "RdYlGn", "Viridis", "Spectral", "PiYG"],
-    help="Color palette for the heatmap (RdBu_r is recommended for academic papers)"
-)
+# Calculate data availability for each country
+data_availability = {}
+for country in country_trends.columns:
+    non_null_count = country_trends[country].notna().sum()
+    data_availability[country] = non_null_count
 
-# ═══════════════════════════════════════════════════════════════════
-# CREATE HEATMAP - ALWAYS WITH VALUES
-# ═══════════════════════════════════════════════════════════════════
+# Check if we have sufficient overlapping data
+sufficient_data = all(count >= min_required_years for count in data_availability.values())
 
-fig_corr = go.Figure()
+# Calculate pairwise overlaps
+pairwise_overlaps = {}
+for i, country1 in enumerate(country_trends.columns):
+    for j, country2 in enumerate(country_trends.columns):
+        if i < j:
+            # Count years where both countries have data
+            overlap = (country_trends[country1].notna() & country_trends[country2].notna()).sum()
+            pairwise_overlaps[(country1, country2)] = overlap
 
-# Add heatmap trace - ALWAYS showing values
-fig_corr.add_trace(go.Heatmap(
-    z=correlation_matrix.values,
-    x=correlation_matrix.columns,
-    y=correlation_matrix.index,
-    colorscale=color_scheme,
-    zmid=0,  # Center colorscale at 0
-    zmin=-1,
-    zmax=1,
-    text=correlation_matrix.values.round(3),  # Always show values
-    texttemplate='%{text}',  # Always display text
-    textfont=dict(size=11, color='#000000'),
-    hovertemplate='<b>%{y} ↔ %{x}</b><br>Correlation: %{z:.3f}<extra></extra>',
-    colorbar=dict(
-        title='Correlation',
-        tickmode='linear',
-        tick0=-1,
-        dtick=0.25,
-        len=0.7,
-        thickness=15,
-        tickfont=dict(size=10)
+# Calculate average pairwise overlap
+avg_overlap = np.mean(list(pairwise_overlaps.values())) if pairwise_overlaps else 0
+min_overlap = min(pairwise_overlaps.values()) if pairwise_overlaps else 0
+
+# Decide if we can show correlation
+show_correlation = sufficient_data and avg_overlap >= min_required_years
+
+if show_correlation:
+    # Calculate correlation matrix normally
+    correlation_matrix = country_trends.corr()
+    
+    # Replace NaN correlations with 0 for countries with insufficient overlap
+    for (country1, country2), overlap in pairwise_overlaps.items():
+        if overlap < min_required_years:
+            i = list(correlation_matrix.index).index(country1)
+            j = list(correlation_matrix.columns).index(country2)
+            correlation_matrix.iloc[i, j] = np.nan
+            correlation_matrix.iloc[j, i] = np.nan
+else:
+    correlation_matrix = None
+
+# ✅ FIX #3: CONDITIONAL HEATMAP DISPLAY
+if show_correlation and correlation_matrix is not None:
+    # Show data quality information
+    #  CONTROLS - Only color scheme selector
+    # ═══════════════════════════════════════════════════════════════════
+    
+    color_scheme = st.selectbox(
+        "Color Scheme",
+        ["RdBu_r", "RdYlGn", "Viridis", "Spectral", "PiYG"],
+        help="Color palette for the heatmap (RdBu_r is recommended for academic papers)"
     )
-))
-
-# Update layout
-fig_corr.update_layout(
-    height=600,
-    paper_bgcolor='rgba(0,0,0,0)',
-    plot_bgcolor='rgba(0,0,0,0)',
-    font=dict(color='#e2e8f0', size=11),
-    xaxis=dict(
-        side='bottom',
-        tickangle=-45,
-        tickfont=dict(size=11),
-        showgrid=False
-    ),
-    yaxis=dict(
-        tickfont=dict(size=11),
-        showgrid=False,
-        autorange='reversed'  # Match typical correlation matrix layout
-    ),
-    title=dict(
-        text=f'Country Inequality Correlation Matrix ({config["year_range"][0]}-{config["year_range"][1]})',
-        font=dict(size=15, color='#ffffff'),
-        x=0.5,
-        xanchor='center'
-    ),
-    margin=dict(l=120, r=120, t=80, b=120)
-)
-
-# ═══════════════════════════════════════════════════════════════════
-# DOWNLOAD OPTIONS
-# ═══════════════════════════════════════════════════════════════════
-
-col_spacer_corr, col_downloads_corr = st.columns([10, 1])
-with col_downloads_corr:
-    with st.popover("⬇️", help="Download correlation matrix"):
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        
-        # HTML
-        st.download_button(
-            "🌐 HTML", 
-            fig_corr.to_html(include_plotlyjs='cdn'), 
-            f"correlation_matrix_{timestamp}.html", 
-            "text/html", 
-            key="corr_html", 
-            use_container_width=True
+    
+    # ═══════════════════════════════════════════════════════════════════
+    # CREATE HEATMAP - ALWAYS WITH VALUES
+    # ═══════════════════════════════════════════════════════════════════
+    
+    fig_corr = go.Figure()
+    
+    # Add heatmap trace - ALWAYS showing values
+    fig_corr.add_trace(go.Heatmap(
+        z=correlation_matrix.values,
+        x=correlation_matrix.columns,
+        y=correlation_matrix.index,
+        colorscale=color_scheme,
+        zmid=0,  # Center colorscale at 0
+        zmin=-1,
+        zmax=1,
+        text=correlation_matrix.values.round(3),  # Always show values
+        texttemplate='%{text}',  # Always display text
+        textfont=dict(size=11, color='#000000'),
+        hovertemplate='<b>%{y} ↔ %{x}</b><br>Correlation: %{z:.3f}<extra></extra>',
+        colorbar=dict(
+            title='Correlation',
+            tickmode='linear',
+            tick0=-1,
+            dtick=0.25,
+            len=0.7,
+            thickness=15,
+            tickfont=dict(size=10)
         )
-        
-        # CSV export of correlation values
-        csv_buffer = correlation_matrix.to_csv()
-        st.download_button(
-            "📊 CSV (Values)", 
-            csv_buffer,
-            f"correlation_matrix_{timestamp}.csv", 
-            "text/csv",
-            key="corr_csv", 
-            use_container_width=True
-        )
-        
-        # JSON
-        st.download_button(
-            "📄 JSON", 
-            fig_corr.to_json(), 
-            f"correlation_matrix_{timestamp}.json", 
-            "application/json", 
-            key="corr_json", 
-            use_container_width=True
-        )
-        
-        # SVG
-        try:
-            svg_bytes = fig_corr.to_image(format="svg", width=1400, height=1400)
+    ))
+    
+    # Update layout
+    fig_corr.update_layout(
+        height=600,
+        paper_bgcolor='rgba(0,0,0,0)',
+        plot_bgcolor='rgba(0,0,0,0)',
+        font=dict(color='#e2e8f0', size=11),
+        xaxis=dict(
+            side='bottom',
+            tickangle=-45,
+            tickfont=dict(size=11),
+            showgrid=False
+        ),
+        yaxis=dict(
+            tickfont=dict(size=11),
+            showgrid=False,
+            autorange='reversed'  # Match typical correlation matrix layout
+        ),
+        title=dict(
+            text=f'Country Inequality Correlation Matrix ({config["year_range"][0]}-{config["year_range"][1]})',
+            font=dict(size=15, color='#ffffff'),
+            x=0.5,
+            xanchor='center'
+        ),
+        margin=dict(l=120, r=120, t=80, b=120)
+    )
+    
+    # ═══════════════════════════════════════════════════════════════════
+    # DOWNLOAD OPTIONS
+    # ═══════════════════════════════════════════════════════════════════
+    
+    col_spacer_corr, col_downloads_corr = st.columns([10, 1])
+    with col_downloads_corr:
+        with st.popover("⬇️", help="Download correlation matrix"):
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            
+            # HTML
             st.download_button(
-                "🎨 SVG", 
-                svg_bytes, 
-                f"correlation_matrix_{timestamp}.svg", 
-                "image/svg+xml", 
-                key="corr_svg", 
+                "🌐 HTML", 
+                fig_corr.to_html(include_plotlyjs='cdn'), 
+                f"correlation_matrix_{timestamp}.html", 
+                "text/html", 
+                key="corr_html", 
                 use_container_width=True
             )
-        except:
-            st.button("🎨 SVG", disabled=True, key="corr_svg", use_container_width=True)
+            
+            # CSV export of correlation values
+            csv_buffer = correlation_matrix.to_csv()
+            st.download_button(
+                "📊 CSV (Values)", 
+                csv_buffer,
+                f"correlation_matrix_{timestamp}.csv", 
+                "text/csv",
+                key="corr_csv", 
+                use_container_width=True
+            )
+            
+            # JSON
+            st.download_button(
+                "📄 JSON", 
+                fig_corr.to_json(), 
+                f"correlation_matrix_{timestamp}.json", 
+                "application/json", 
+                key="corr_json", 
+                use_container_width=True
+            )
+            
+            # SVG
+            try:
+                svg_bytes = fig_corr.to_image(format="svg", width=1400, height=1400)
+                st.download_button(
+                    "🎨 SVG", 
+                    svg_bytes, 
+                    f"correlation_matrix_{timestamp}.svg", 
+                    "image/svg+xml", 
+                    key="corr_svg", 
+                    use_container_width=True
+                )
+            except:
+                st.button("🎨 SVG", disabled=True, key="corr_svg", use_container_width=True)
 
-# Display the chart
-st.plotly_chart(fig_corr, use_container_width=True, config={
-    'displayModeBar': 'hover',
-    'displaylogo': False,
-    'modeBarButtonsToRemove': ['select2d', 'lasso2d'],
-    'toImageButtonOptions': {
-        'format': 'png',
-        'filename': 'correlation_matrix',
-        'height': 1400,
-        'width': 1400,
-        'scale': 2
-    }
-})
+    # Display the chart
+    st.plotly_chart(fig_corr, use_container_width=True, config={
+        'displayModeBar': 'hover',
+        'displaylogo': False,
+        'modeBarButtonsToRemove': ['select2d', 'lasso2d'],
+        'toImageButtonOptions': {
+            'format': 'png',
+            'filename': 'correlation_matrix',
+            'height': 1400,
+            'width': 1400,
+            'scale': 2
+        }
+    })
 
-# ═══════════════════════════════════════════════════════════════════
-# CORRELATION INSIGHTS - Key Statistics
-# ═══════════════════════════════════════════════════════════════════
-
-st.markdown("### Key Correlation Insights")
-
-col_insight1, col_insight2, col_insight3 = st.columns(3)
-
-# Calculate statistics
-mask = np.ones(correlation_matrix.shape, dtype=bool)
-np.fill_diagonal(mask, False)
-
-corr_values = correlation_matrix.values[mask]
-max_corr_idx = np.unravel_index(
-    np.argmax(np.where(mask, correlation_matrix.values, -np.inf)), 
-    correlation_matrix.shape
-)
-max_corr_countries = (
-    correlation_matrix.index[max_corr_idx[0]], 
-    correlation_matrix.columns[max_corr_idx[1]]
-)
-max_corr_value = correlation_matrix.iloc[max_corr_idx[0], max_corr_idx[1]]
-
-min_corr_idx = np.unravel_index(
-    np.argmin(np.where(mask, correlation_matrix.values, np.inf)), 
-    correlation_matrix.shape
-)
-min_corr_value = correlation_matrix.iloc[min_corr_idx[0], min_corr_idx[1]]
-
-avg_corr = corr_values.mean()
-
-# Display statistics - REPLACE FROM HERE
-with col_insight1:
+else:
+    # Show insufficient data message
     st.markdown(f"""
-    <div class="stat-card" style="min-height: 180px;">
-        <div style="font-size: 0.875rem; color: #94a3b8; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">STRONGEST CORRELATION</div>
-        <div style="font-size: 1.5rem; color: #10b981; font-weight: 600; margin: 12px 0;">
-            {max_corr_value:.3f}
+    <div style="background: rgba(239, 68, 68, 0.1); padding: 30px; border-radius: 12px; margin: 20px 0; border-left: 4px solid #ef4444; text-align: center;">
+        <div style="font-size: 3rem; margin-bottom: 15px;">📊</div>
+        <h3 style="color: #ffffff; margin-bottom: 15px;">Insufficient Data for Correlation Analysis</h3>
+        <p style="color: #94a3b8; font-size: 1rem; line-height: 1.6; margin-bottom: 20px;">
+            Correlation analysis requires overlapping data points between countries.<br>
+            Current data availability is insufficient for reliable correlation calculation.
+        </p>
+        <div style="background: rgba(255, 255, 255, 0.05); padding: 15px; border-radius: 8px; margin-top: 15px;">
+            <div style="color: #e2e8f0; font-size: 0.9rem;">
+                <b>Data Quality Metrics:</b><br>
+                Total years available: <b>{total_years}</b><br>
+                Minimum required: <b>{min_required_years} years</b><br>
+                Average overlap: <b>{avg_overlap:.0f} years</b>
+            </div>
         </div>
-        <div style="font-size: 0.9rem; color: #94a3b8; margin-top: 12px; line-height: 1.4;">
-            {max_corr_countries[0]} ↔ {max_corr_countries[1]}
+        <div style="margin-top: 20px; padding: 15px; background: rgba(59, 130, 246, 0.1); border-radius: 8px;">
+            <p style="color: #60a5fa; font-size: 0.85rem; margin: 0;">
+                💡 <b>Tip:</b> Try selecting a broader year range or different indicator with more complete data coverage.
+            </p>
         </div>
     </div>
     """, unsafe_allow_html=True)
+    
+    # Show data availability matrix
+    st.markdown("### Data Availability by Country")
+    
+    availability_df = pd.DataFrame({
+        'Country': list(data_availability.keys()),
+        'Years with Data': list(data_availability.values()),
+        'Coverage %': [f"{(count/total_years)*100:.1f}%" for count in data_availability.values()]
+    })
+    
+    st.dataframe(availability_df, use_container_width=True, hide_index=True)
 
-with col_insight2:
-    st.markdown(f"""
-    <div class="stat-card" style="min-height: 180px;">
-        <div style="font-size: 0.875rem; color: #94a3b8; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">AVERAGE CORRELATION</div>
-        <div style="font-size: 1.5rem; color: #ffffff; font-weight: 600; margin: 12px 0;">
-            {avg_corr:.3f}
-        </div>
-        <div style="font-size: 0.9rem; color: #94a3b8; margin-top: 12px; line-height: 1.4;">
-            Overall regional similarity
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
+# ═══════════════════════════════════════════════════════════════════
+# CORRELATION INSIGHTS - Key Statistics (Only shown if correlation is available)
+# ═══════════════════════════════════════════════════════════════════
 
-with col_insight3:
-    if min_corr_value < 0:
-        min_corr_countries = (
-            correlation_matrix.index[min_corr_idx[0]], 
-            correlation_matrix.columns[min_corr_idx[1]]
+if show_correlation and correlation_matrix is not None:
+    st.markdown("### Key Correlation Insights")
+    
+    col_insight1, col_insight2, col_insight3 = st.columns(3)
+    
+    # Calculate statistics - safely handle NaN values
+    mask = np.ones(correlation_matrix.shape, dtype=bool)
+    np.fill_diagonal(mask, False)
+    
+    # Get correlation values excluding diagonal and NaN
+    corr_values = correlation_matrix.values[mask]
+    corr_values = corr_values[~np.isnan(corr_values)]  # Remove NaN values
+    
+    if len(corr_values) > 0:
+        # Find max correlation
+        max_corr_idx = np.unravel_index(
+            np.nanargmax(np.where(mask, correlation_matrix.values, -np.inf)), 
+            correlation_matrix.shape
         )
-        label_text = "MOST DIVERGENT"
-        color = "#ef4444"
-        desc = f"{min_corr_countries[0]} ↔ {min_corr_countries[1]}"
+        max_corr_countries = (
+            correlation_matrix.index[max_corr_idx[0]], 
+            correlation_matrix.columns[max_corr_idx[1]]
+        )
+        max_corr_value = correlation_matrix.iloc[max_corr_idx[0], max_corr_idx[1]]
+        
+        # Find min correlation
+        min_corr_idx = np.unravel_index(
+            np.nanargmin(np.where(mask, correlation_matrix.values, np.inf)), 
+            correlation_matrix.shape
+        )
+        min_corr_value = correlation_matrix.iloc[min_corr_idx[0], min_corr_idx[1]]
+        
+        # Calculate average
+        avg_corr = np.nanmean(corr_values)
+        
+        # Display statistics
+        with col_insight1:
+            st.markdown(f"""
+            <div class="stat-card" style="min-height: 180px;">
+                <div style="font-size: 0.875rem; color: #94a3b8; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">STRONGEST CORRELATION</div>
+                <div style="font-size: 1.5rem; color: #10b981; font-weight: 600; margin: 12px 0;">
+                    {max_corr_value:.3f}
+                </div>
+                <div style="font-size: 0.9rem; color: #94a3b8; margin-top: 12px; line-height: 1.4;">
+                    {max_corr_countries[0]} ↔ {max_corr_countries[1]}
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+
+        with col_insight2:
+            st.markdown(f"""
+            <div class="stat-card" style="min-height: 180px;">
+                <div style="font-size: 0.875rem; color: #94a3b8; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">AVERAGE CORRELATION</div>
+                <div style="font-size: 1.5rem; color: #ffffff; font-weight: 600; margin: 12px 0;">
+                    {avg_corr:.3f}
+                </div>
+                <div style="font-size: 0.9rem; color: #94a3b8; margin-top: 12px; line-height: 1.4;">
+                    Overall regional similarity
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+
+        with col_insight3:
+            if not np.isnan(min_corr_value):
+                if min_corr_value < 0:
+                    min_corr_countries = (
+                        correlation_matrix.index[min_corr_idx[0]], 
+                        correlation_matrix.columns[min_corr_idx[1]]
+                    )
+                    label_text = "MOST DIVERGENT"
+                    color = "#ef4444"
+                    desc = f"{min_corr_countries[0]} ↔ {min_corr_countries[1]}"
+                else:
+                    label_text = "WEAKEST CORRELATION"
+                    color = "#f59e0b"
+                    min_corr_countries = (
+                        correlation_matrix.index[min_corr_idx[0]], 
+                        correlation_matrix.columns[min_corr_idx[1]]
+                    )
+                    desc = f"{min_corr_countries[0]} ↔ {min_corr_countries[1]}"
+                
+                st.markdown(f"""
+                <div class="stat-card" style="min-height: 180px;">
+                    <div style="font-size: 0.875rem; color: #94a3b8; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">{label_text}</div>
+                    <div style="font-size: 1.5rem; color: {color}; font-weight: 600; margin: 12px 0;">
+                        {min_corr_value:.3f}
+                    </div>
+                    <div style="font-size: 0.9rem; color: #94a3b8; margin-top: 12px; line-height: 1.4;">
+                        {desc}
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
     else:
-        label_text = "WEAKEST CORRELATION"
-        color = "#f59e0b"
-        min_corr_countries = (
-            correlation_matrix.index[min_corr_idx[0]], 
-            correlation_matrix.columns[min_corr_idx[1]]
-        )
-        desc = f"{min_corr_countries[0]} ↔ {min_corr_countries[1]}"
+        # No valid correlation values
+        st.warning("⚠️ Insufficient overlapping data to calculate meaningful correlations.")
     
+# STORYTELLING: Correlation Context
+if show_correlation and correlation_matrix is not None:
     st.markdown(f"""
-    <div class="stat-card" style="min-height: 180px;">
-        <div style="font-size: 0.875rem; color: #94a3b8; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px;">{label_text}</div>
-        <div style="font-size: 1.5rem; color: {color}; font-weight: 600; margin: 12px 0;">
-            {min_corr_value:.3f}
-        </div>
-        <div style="font-size: 0.9rem; color: #94a3b8; margin-top: 12px; line-height: 1.4;">
-            {desc}
-        </div>
+    <div style="background-color: rgba(30, 41, 59, 0.5); padding: 15px; border-radius: 5px; border-left: 3px solid #8b5cf6; margin-top: 20px;">
+        <p style="margin: 0; color: #cbd5e1; font-size: 0.85rem; line-height: 1.4;">
+            <strong style="color: #e0e7ff;">Efficiency Note:</strong> A high average correlation ({avg_corr:.2f}) suggests that economic policies affecting one country likely mirror trends in neighbors, implying a highly integrated regional economic cycle for {indicator_name}.
+        </p>
     </div>
     """, unsafe_allow_html=True)
 # ═══════════════════════════════════════════════════════════════════
-# INTERPRETATION GUIDE
+# INTERPRETATION GUIDE (Only shown if correlation is available)
 # ═══════════════════════════════════════════════════════════════════
 
-st.markdown("""
-<div style="background: rgba(59, 130, 246, 0.1); padding: 1rem; border-radius: 8px; margin-top: 1rem; border-left: 3px solid #3b82f6;">
-    <div style="color: #e2e8f0; font-size: 0.9rem;">
-        <strong style="color: #60a5fa;">💡 How to Interpret This Matrix:</strong><br>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 0.5rem;">
-            <div>
-                • <strong>+1.0</strong> = Perfect positive correlation (countries move together)<br>
-                • <strong>0.8 to 1.0</strong> = Very strong correlation<br>
-                • <strong>0.6 to 0.8</strong> = Strong correlation<br>
-                • <strong>0.4 to 0.6</strong> = Moderate correlation
-            </div>
-            <div>
-                • <strong>0.2 to 0.4</strong> = Weak correlation<br>
-                • <strong>0.0</strong> = No correlation (independent patterns)<br>
-                • <strong>Negative values</strong> = Opposite trends<br>
-                • <strong>Diagonal</strong> = Always 1.0 (country vs itself)
+if show_correlation and correlation_matrix is not None:
+    st.markdown("""
+    <div style="background: rgba(59, 130, 246, 0.1); padding: 1rem; border-radius: 8px; margin-top: 1rem; border-left: 3px solid #3b82f6;">
+        <div style="color: #e2e8f0; font-size: 0.9rem;">
+            <strong style="color: #60a5fa;">💡 How to Interpret This Matrix:</strong><br>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 0.5rem;">
+                <div>
+                    • <strong>+1.0</strong> = Perfect positive correlation (countries move together)<br>
+                    • <strong>0.8 to 1.0</strong> = Very strong correlation<br>
+                    • <strong>0.6 to 0.8</strong> = Strong correlation<br>
+                    • <strong>0.4 to 0.6</strong> = Moderate correlation
+                </div>
+                <div>
+                    • <strong>0.2 to 0.4</strong> = Weak correlation<br>
+                    • <strong>0.0</strong> = No correlation (independent patterns)<br>
+                    • <strong>Negative values</strong> = Opposite trends<br>
+                    • <strong>Diagonal</strong> = Always 1.0 (country vs itself)
+                </div>
             </div>
         </div>
     </div>
-</div>
-""", unsafe_allow_html=True)
-
-# Optional: Show top correlations table
-with st.expander("📊 View Top Correlation Pairs"):
-    # Get all pairwise correlations (excluding diagonal)
-    pairs = []
-    for i in range(len(correlation_matrix)):
-        for j in range(i+1, len(correlation_matrix)):
-            pairs.append({
-                'Country 1': correlation_matrix.index[i],
-                'Country 2': correlation_matrix.columns[j],
-                'Correlation': correlation_matrix.iloc[i, j]
-            })
+    """, unsafe_allow_html=True)
     
-    # Sort by absolute correlation
-    pairs_df = pd.DataFrame(pairs)
-    pairs_df['Abs Correlation'] = pairs_df['Correlation'].abs()
-    pairs_df = pairs_df.sort_values('Abs Correlation', ascending=False)
-    
-    # Display top 10
-    st.dataframe(
-        pairs_df[['Country 1', 'Country 2', 'Correlation']].head(10),
-        use_container_width=True,
-        hide_index=True
-    )
+    # Optional: Show top correlations table
+    with st.expander("📊 View Top Correlation Pairs"):
+        # Get all pairwise correlations (excluding diagonal)
+        pairs = []
+        for i in range(len(correlation_matrix)):
+            for j in range(i+1, len(correlation_matrix)):
+                corr_val = correlation_matrix.iloc[i, j]
+                if not np.isnan(corr_val):  # Only include valid correlations
+                    pairs.append({
+                        'Country 1': correlation_matrix.index[i],
+                        'Country 2': correlation_matrix.columns[j],
+                        'Correlation': corr_val
+                    })
+        
+        if pairs:
+            # Sort by absolute correlation
+            pairs_df = pd.DataFrame(pairs)
+            pairs_df['Abs Correlation'] = pairs_df['Correlation'].abs()
+            pairs_df = pairs_df.sort_values('Abs Correlation', ascending=False)
+            
+            # Display top 10
+            st.dataframe(
+                pairs_df[['Country 1', 'Country 2', 'Correlation']].head(10),
+                use_container_width=True,
+                hide_index=True
+            )
+        else:
+            st.info("No valid correlation pairs available with current data.")
 # ═══════════════════════════════════════════════════════════════════
 # BOTTOM SECTION: Rankings & Timeline
 # ═══════════════════════════════════════════════════════════════════
@@ -1412,7 +1580,7 @@ with col_bottom2:
     st.markdown("""
     <div style="margin-bottom: 15px;">
         <h3 style="font-size: 1rem; color: #ffffff; font-weight: 600; margin: 0;">
-            Individual Country Trends
+            Comparative Trends (Non-Stacked)
         </h3>
     </div>
     """, unsafe_allow_html=True)
@@ -1431,6 +1599,16 @@ with col_bottom2:
             marker=dict(size=6, color=colors[i % len(colors)]),
             hovertemplate='<b>%{fullData.name}</b><br>Year: %{x}<br>Value: %{y:.2f}<extra></extra>'
         ))
+    
+    # STORYTELLING: Detailed Trends
+    st.markdown(f"""
+    <div style="background-color: rgba(30, 41, 59, 0.5); padding: 15px; border-radius: 5px; border-left: 3px solid #f59e0b; margin-top: 20px;">
+        <p style="margin: 0; color: #cbd5e1; font-size: 0.85rem; line-height: 1.4;">
+            <strong style="color: #e0e7ff;">Trend Analysis:</strong> Use this detailed line chart to spot divergent paths. 
+            Countries with lines crossing others or moving against the general "cluster" are outliers worth investigating.
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
     
     # REQUIREMENT #5: PROPER AXIS LABELS (FIXED SPACING)
     fig_lines.update_layout(
@@ -1471,7 +1649,7 @@ with col_bottom2:
         margin=dict(l=80, r=150, t=40, b=50),  # Increased left margin
         hovermode='x unified',
         title=dict(
-            text=f'Individual Country Trends Over Time',
+            text=f'Comparative Trends (Non-Stacked)',
             font=dict(size=14, color='#ffffff'),
             x=0
         )
@@ -1559,6 +1737,18 @@ with col_insight3:
         </div>
     </div>
     """, unsafe_allow_html=True)
+
+# STORYTELLING: Key Insights Context
+st.markdown(f"""
+<div style="background-color: rgba(30, 41, 59, 0.5); padding: 15px; border-radius: 5px; border-left: 3px solid #10b981; margin-top: 20px;">
+    <h5 style="margin: 0 0 8px 0; color: #e0e7ff; font-size: 0.9rem; font-weight: 600;">How to interpret these metrics</h5>
+    <ul style="margin: 0; padding-left: 20px; color: #cbd5e1; font-size: 0.85rem; line-height: 1.5;">
+        <li><b>Regional Trend:</b> Indicates the overall direction. "Improving" means inequality is decreasing (good), "Worsening" means it's increasing.</li>
+        <li><b>Volatility:</b> Measures stability. Lower values mean steady progress; higher values indicate erratic economic shocks or inconsistent data.</li>
+        <li><b>Regional Gap:</b> The distance between the best and worst performing countries. A smaller gap suggests regional cohesion.</li>
+    </ul>
+</div>
+""", unsafe_allow_html=True)
 
 # ═══════════════════════════════════════════════════════════════════
 # REQUIREMENT #7: DATA EXPORT FUNCTIONALITY
