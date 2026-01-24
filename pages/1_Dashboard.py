@@ -757,7 +757,7 @@ for i, country in enumerate(yearly_data.columns):
         name=country,
         line=dict(width=2.5, color=colors[i % len(colors)]),
         fill='tonexty' if i > 0 else 'tozeroy',
-        fillcolor=f'rgba({int(colors[i % len(colors)][1:3], 16)}, {int(colors[i % len(colors)][3:5], 16)}, {int(colors[i % len(colors)][5:7], 16)}, 0.2)',
+        fillcolor=f'rgba({int(colors[i % len(colors)][1:3], 16)}, {int(colors[i % len(colors)][3:5], 16)}, {int(colors[i % len(colors)][5:7], 16)}, 0.5)',
         stackgroup='one',
         hovertemplate='<b>%{fullData.name}</b><br>Year: %{x}<br>Value: %{y:.2f}<extra></extra>'
     ))
@@ -769,7 +769,7 @@ y_label_short = indicator_name.split('(')[0].strip() if '(' in indicator_name el
 
 # REQUIREMENT #5: PROPER AXIS LABELS (FIXED SPACING)
 fig_area.update_layout(
-    height=400,
+    height=450,
     paper_bgcolor='rgba(0,0,0,0)',
     plot_bgcolor='rgba(0,0,0,0)',
     font=dict(color='#e2e8f0', size=12),
@@ -800,15 +800,17 @@ fig_area.update_layout(
         bgcolor='rgba(0,0,0,0)',
         font=dict(color='#e2e8f0', size=11)
     ),
-    margin=dict(l=80, r=20, t=60, b=50),  # Increased left margin for Y-axis label
+    margin=dict(l=80, r=20, t=130, b=50),  # Increased top margin for tooltip
     hovermode='x unified',
     title=dict(
-        text=f'Stacked {indicator_name} Trends by Country ({config["year_range"][0]}-{config["year_range"][1]})',
+        text=f'Regional Cumulative Trends: {indicator_name} ({config["year_range"][0]}-{config["year_range"][1]})',
         font=dict(size=15, color='#ffffff'),
         x=0,
         y=0.98
     )
 )
+
+
 
 # Download options in top-right corner
 col_spacer, col_downloads = st.columns([10, 1])
@@ -842,6 +844,19 @@ st.plotly_chart(fig_area, use_container_width=True, config={
         'scale': 2
     }
 })
+
+# STORYTELLING: Inequality Trends
+st.markdown(f"""
+<div style="background-color: rgba(30, 41, 59, 0.5); padding: 15px; border-radius: 5px; border-left: 3px solid #3b82f6; margin-top: 10px; margin-bottom: 20px;">
+    <h5 style="margin: 0 0 8px 0; color: #e0e7ff; font-size: 0.9rem; font-weight: 600;">How to read this chart</h5>
+    <p style="margin: 0; color: #cbd5e1; font-size: 0.85rem; line-height: 1.5;">
+        This <b>Stacked Area Chart</b> shows the total regional volume of <b>{indicator_name}</b> while displaying individual country contributions. 
+        <br>• The <b>height of the stack</b> represents the cumulative sum of all countries combined.
+        <br>• The <b>thickness of each colored band</b> shows that specific country's value for that year.
+        <br>• <b>Steeper slopes</b> indicate periods of rapid change in the metric.
+    </p>
+</div>
+""", unsafe_allow_html=True)
 
 # ═══════════════════════════════════════════════════════════════════
 # SECONDARY VISUALIZATIONS ROW
@@ -944,6 +959,16 @@ with col_viz1:
         'modeBarButtonsToRemove': ['select2d', 'lasso2d', 'autoScale2d'],
         'toImageButtonOptions': {'format': 'png', 'filename': f'average_by_country_{config["indicator"]}', 'height': 1000, 'width': 1400, 'scale': 2}
     })
+    
+    # STORYTELLING: Bar Chart
+    st.markdown(f"""
+    <div style="background-color: rgba(30, 41, 59, 0.5); padding: 12px; border-radius: 5px; border-left: 3px solid #10b981; margin-top: 15px;">
+        <p style="margin: 0; color: #cbd5e1; font-size: 0.85rem; line-height: 1.4;">
+            <strong style="color: #e0e7ff;">Insight:</strong> This compares the <b>average performance</b> over the entire {years_span}-year period. 
+            It helps identify long-term structural leaders (Green) versus those facing persistent challenges (Red), mostly ignoring short-term fluctuations.
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
 
 with col_viz2:
     # Title section - removed spacer to move up
@@ -1160,15 +1185,6 @@ else:
 # ✅ FIX #3: CONDITIONAL HEATMAP DISPLAY
 if show_correlation and correlation_matrix is not None:
     # Show data quality information
-    st.markdown(f"""
-    <div style="background: rgba(16, 185, 129, 0.1); padding: 12px; border-radius: 8px; margin-bottom: 15px; border-left: 3px solid #10b981;">
-        <p style="color: #e2e8f0; font-size: 0.85rem; margin: 0;">
-             <b>Correlation Analysis Available</b><br>
-            Average data overlap: <b>{avg_overlap:.0f} years</b> | Minimum overlap: <b>{min_overlap:.0f} years</b>
-        </p>
-    </div>
-    """, unsafe_allow_html=True)
-    
     #  CONTROLS - Only color scheme selector
     # ═══════════════════════════════════════════════════════════════════
     
@@ -1438,6 +1454,16 @@ if show_correlation and correlation_matrix is not None:
     else:
         # No valid correlation values
         st.warning("⚠️ Insufficient overlapping data to calculate meaningful correlations.")
+    
+# STORYTELLING: Correlation Context
+if show_correlation and correlation_matrix is not None:
+    st.markdown(f"""
+    <div style="background-color: rgba(30, 41, 59, 0.5); padding: 15px; border-radius: 5px; border-left: 3px solid #8b5cf6; margin-top: 20px;">
+        <p style="margin: 0; color: #cbd5e1; font-size: 0.85rem; line-height: 1.4;">
+            <strong style="color: #e0e7ff;">Efficiency Note:</strong> A high average correlation ({avg_corr:.2f}) suggests that economic policies affecting one country likely mirror trends in neighbors, implying a highly integrated regional economic cycle for {indicator_name}.
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
 # ═══════════════════════════════════════════════════════════════════
 # INTERPRETATION GUIDE (Only shown if correlation is available)
 # ═══════════════════════════════════════════════════════════════════
@@ -1554,7 +1580,7 @@ with col_bottom2:
     st.markdown("""
     <div style="margin-bottom: 15px;">
         <h3 style="font-size: 1rem; color: #ffffff; font-weight: 600; margin: 0;">
-            Individual Country Trends
+            Comparative Trends (Non-Stacked)
         </h3>
     </div>
     """, unsafe_allow_html=True)
@@ -1573,6 +1599,16 @@ with col_bottom2:
             marker=dict(size=6, color=colors[i % len(colors)]),
             hovertemplate='<b>%{fullData.name}</b><br>Year: %{x}<br>Value: %{y:.2f}<extra></extra>'
         ))
+    
+    # STORYTELLING: Detailed Trends
+    st.markdown(f"""
+    <div style="background-color: rgba(30, 41, 59, 0.5); padding: 15px; border-radius: 5px; border-left: 3px solid #f59e0b; margin-top: 20px;">
+        <p style="margin: 0; color: #cbd5e1; font-size: 0.85rem; line-height: 1.4;">
+            <strong style="color: #e0e7ff;">Trend Analysis:</strong> Use this detailed line chart to spot divergent paths. 
+            Countries with lines crossing others or moving against the general "cluster" are outliers worth investigating.
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
     
     # REQUIREMENT #5: PROPER AXIS LABELS (FIXED SPACING)
     fig_lines.update_layout(
@@ -1613,7 +1649,7 @@ with col_bottom2:
         margin=dict(l=80, r=150, t=40, b=50),  # Increased left margin
         hovermode='x unified',
         title=dict(
-            text=f'Individual Country Trends Over Time',
+            text=f'Comparative Trends (Non-Stacked)',
             font=dict(size=14, color='#ffffff'),
             x=0
         )
