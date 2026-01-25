@@ -736,13 +736,13 @@ if use_economic_apis:
 
 st.markdown('<div class="section-header">Inequality Trends Over Time</div>', unsafe_allow_html=True)
 
-# Main area chart - 
+# Main area chart -
 yearly_data = filtered_df.pivot_table(
     values='value',
     index='year',
     columns='country',
     aggfunc='mean'
-).fillna(method='ffill')
+).ffill()
 
 fig_area = go.Figure()
 
@@ -975,14 +975,18 @@ with col_viz2:
     
     # Prepare data
     country_latest = latest_data[['country', 'value']].copy()
-    country_latest = country_latest.sort_values('value', ascending=False)
+    # Sort based on indicator type: best performers first
+    if is_positive_indicator:
+        country_latest = country_latest.sort_values('value', ascending=False)
+    else:
+        country_latest = country_latest.sort_values('value', ascending=True)
     country_latest = country_latest.set_index('country')['value']
     country_latest = country_latest.fillna(country_latest.mean())
 
     
     # Normalize to 0-100
     max_val = country_latest.max()
-    min_val = country_latest.max()
+    min_val = country_latest.min()
     if max_val != min_val:
         normalized = ((country_latest - min_val) / (max_val - min_val) * 100).values
     else:
@@ -1019,7 +1023,7 @@ with col_viz2:
         theta=country_latest.index,
         marker=dict(color=bar_colors_radial, line=dict(color='#0a0e27', width=2)),
         hovertemplate='<b>%{theta}</b><br>Actual: %{customdata:.2f}<br>Score: %{r:.0f}/100<extra></extra>',
-        customdata=country_latest.index,
+        customdata=country_latest.values,
         opacity=0.9
     ))
     
@@ -1538,7 +1542,11 @@ with col_bottom1:
     """, unsafe_allow_html=True)
     
     rankings = latest_data.groupby('country')['value'].mean().reset_index()
-    rankings = rankings.sort_values('value').reset_index(drop=True)
+    # Sort based on indicator type: for positive indicators, highest is best (rank #1)
+    if is_positive_indicator:
+        rankings = rankings.sort_values('value', ascending=False).reset_index(drop=True)
+    else:
+        rankings = rankings.sort_values('value', ascending=True).reset_index(drop=True)
     
     for idx, row in rankings.iterrows():
         rank = idx + 1
@@ -1694,13 +1702,20 @@ st.markdown('<div class="section-header">Key Insights & Raw Data</div>', unsafe_
 col_insight1, col_insight2, col_insight3 = st.columns(3)
 
 with col_insight1:
-    trend_direction = "improving" if yoy_pct < 0 else "worsening"
-    
+    # Trend direction based on indicator type
+    if is_negative_indicator:
+        trend_direction = "improving" if yoy_pct < 0 else "worsening"
+    else:
+        trend_direction = "improving" if yoy_pct > 0 else "worsening"
+
+    # Dynamic label based on indicator
+    metric_label = indicator_name.split('(')[0].strip() if '(' in indicator_name else indicator_name
+
     st.markdown(f"""
     <div class="stat-card">
         <div style="font-size: 0.875rem; color: #94a3b8; margin-bottom: 8px;">REGIONAL TREND</div>
         <div style="font-size: 1.1rem; color: #ffffff; font-weight: 600;">
-            Inequality is {trend_direction}
+            {metric_label} is {trend_direction}
         </div>
         <div style="font-size: 0.85rem; color: #94a3b8; margin-top: 8px;">
             {abs(yoy_pct):.1f}% change year-over-year
@@ -1739,11 +1754,17 @@ with col_insight3:
     """, unsafe_allow_html=True)
 
 # STORYTELLING: Key Insights Context
+# Dynamic explanation based on indicator type
+if is_negative_indicator:
+    trend_explanation = '"Improving" means the metric is decreasing (good), "Worsening" means it\'s increasing.'
+else:
+    trend_explanation = '"Improving" means the metric is increasing (good), "Worsening" means it\'s decreasing.'
+
 st.markdown(f"""
 <div style="background-color: rgba(30, 41, 59, 0.5); padding: 15px; border-radius: 5px; border-left: 3px solid #10b981; margin-top: 20px;">
     <h5 style="margin: 0 0 8px 0; color: #e0e7ff; font-size: 0.9rem; font-weight: 600;">How to interpret these metrics</h5>
     <ul style="margin: 0; padding-left: 20px; color: #cbd5e1; font-size: 0.85rem; line-height: 1.5;">
-        <li><b>Regional Trend:</b> Indicates the overall direction. "Improving" means inequality is decreasing (good), "Worsening" means it's increasing.</li>
+        <li><b>Regional Trend:</b> Indicates the overall direction. {trend_explanation}</li>
         <li><b>Volatility:</b> Measures stability. Lower values mean steady progress; higher values indicate erratic economic shocks or inconsistent data.</li>
         <li><b>Regional Gap:</b> The distance between the best and worst performing countries. A smaller gap suggests regional cohesion.</li>
     </ul>
