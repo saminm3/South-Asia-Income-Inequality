@@ -171,7 +171,7 @@ class WorldBankAPILoader:
         except:
             return {"INR": 83.0, "BDT": 110.0, "PKR": 280.0, "LKR": 320.0, "NPR": 133.0}
 
-    @st.cache_data(ttl=300)
+    @st.cache_data(ttl=86400)
     def get_api_summary_v2(_self):
         """
         Calculates total records available across all expanded indicators.
@@ -182,7 +182,7 @@ class WorldBankAPILoader:
         import concurrent.futures
         
         # Parallel Fetching using raw method
-        with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
             # Map futures to indicators
             future_to_ind = {executor.submit(_self._fetch_raw, _self.INDICATORS[k]): k for k in _self.INDICATORS.keys()}
             

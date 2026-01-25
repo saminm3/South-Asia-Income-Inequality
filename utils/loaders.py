@@ -8,7 +8,7 @@ DATA_DIR = Path(__file__).parent.parent / 'data'
 PROCESSED_DIR = DATA_DIR / 'processed'
 GEO_DIR = DATA_DIR / 'geo'
 
-# Removed cache to force data reload
+@st.cache_data(ttl=3600)  # Cache for 1 hour to prevent excessive file reads
 def load_inequality_data():
     """Load the curated inequality dataset (12 focused indicators)"""
     try:
@@ -50,7 +50,7 @@ def load_inequality_data():
         return pd.DataFrame()
 
 
-# Removed cache for data sync
+@st.cache_data(ttl=3600)  # Cache for 1 hour to prevent excessive file reads
 def load_all_indicators():
     """Load all indicators (redirected to curated set for consistency)"""
     return load_inequality_data()
@@ -121,7 +121,3 @@ def merge_geo_data(df, geojson):
     except Exception as e:
         st.warning(f"Error merging geographic data: {str(e)}")
         return df
-    
-    
-    
-    
