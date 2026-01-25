@@ -89,7 +89,7 @@ def apply_page_styles():
         /* Hide Streamlit branding */
         #MainMenu {visibility: hidden;}
         footer {visibility: hidden;}
-        header {visibility: hidden;}
+        /* header {visibility: hidden;} - Commented out to keep sidebar toggle visible */
         
         /* Headers */
         h1, h2, h3 {
