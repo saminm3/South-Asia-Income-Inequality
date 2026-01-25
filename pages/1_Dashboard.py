@@ -434,7 +434,19 @@ negative_terms = ['gini', 'inequality', 'poverty', 'disparity', 'gap', 'unemploy
 is_negative_indicator = any(term in indicator_name for term in negative_terms)
 is_positive_indicator = not is_negative_indicator
 
-if is_positive_indicator:
+# Detect single-country scenario
+num_countries = latest_data['country'].nunique()
+is_single_country = num_countries == 1
+
+if is_single_country:
+    # Single country view - show the country but no best/worst comparison
+    single_country_name = latest_data['country'].iloc[0] if not latest_data.empty else "N/A"
+    single_country_value = latest_data['value'].iloc[0] if not latest_data.empty else 0
+    best_country = single_country_name
+    worst_country = "N/A"  # No comparison possible
+    best_value = single_country_value
+    worst_value = 0
+elif is_positive_indicator:
     # For INCOME: HIGHER = BETTER
     best_country = latest_data.loc[latest_data['value'].idxmax(), 'country'] if not latest_data.empty else "N/A"
     worst_country = latest_data.loc[latest_data['value'].idxmin(), 'country'] if not latest_data.empty else "N/A"
@@ -455,13 +467,16 @@ col1, col2, col3, col4, col5= st.columns(5)
 
 with col1:
     delta_symbol = "↓" if yoy_pct < 0 else "↑"
+    metric_label = "Current Value" if is_single_country else "Regional Average"
     st.metric(
-        label="Regional Average",
+        label=metric_label,
         value=f"{regional_avg:.1f}",
         delta=f"{delta_symbol} {abs(yoy_pct):.1f}%"
     )
     # Context text
-    if is_positive_indicator:
+    if is_single_country:
+        context = f"{best_country} latest data"
+    elif is_positive_indicator:
         if regional_avg > 70:
             context = "Strong regional performance"
         elif regional_avg > 40:
@@ -478,30 +493,46 @@ with col1:
     st.markdown(f'<p style="color: #94a3b8; font-size: 0.75rem; margin-top: -10px;">{context}</p>', unsafe_allow_html=True)
 
 with col2:
-    st.metric(
-        label="Best Performer",
-        value=best_country,
-        delta=f"{best_value:.1f}"
-    )
-    # Context text
-    if is_positive_indicator:
-        context = "Highest value achieved"
+    if is_single_country:
+        st.metric(
+            label="Selected Country",
+            value=best_country,
+            delta=f"{best_value:.1f}"
+        )
+        context = "Single country analysis"
     else:
-        context = "Most equitable distribution"
+        st.metric(
+            label="Best Performer",
+            value=best_country,
+            delta=f"{best_value:.1f}"
+        )
+        # Context text
+        if is_positive_indicator:
+            context = "Highest value achieved"
+        else:
+            context = "Most equitable distribution"
     st.markdown(f'<p style="color: #94a3b8; font-size: 0.75rem; margin-top: -10px;">{context}</p>', unsafe_allow_html=True)
 
 with col3:
-    st.metric(
-        label="Needs Attention",
-        value=worst_country,
-        delta=f"{worst_value:.1f}",
-        delta_color="inverse"
-    )
-    # Context text
-    if is_positive_indicator:
-        context = "Requires improvement focus"
+    if is_single_country:
+        st.metric(
+            label="Comparison",
+            value="N/A",
+            delta="Single country view"
+        )
+        context = "Add more countries to compare"
     else:
-        context = "Highest inequality gap"
+        st.metric(
+            label="Needs Attention",
+            value=worst_country,
+            delta=f"{worst_value:.1f}",
+            delta_color="inverse"
+        )
+        # Context text
+        if is_positive_indicator:
+            context = "Requires improvement focus"
+        else:
+            context = "Highest inequality gap"
     st.markdown(f'<p style="color: #94a3b8; font-size: 0.75rem; margin-top: -10px;">{context}</p>', unsafe_allow_html=True)
 
 with col4:
@@ -1753,12 +1784,13 @@ with col_insight1:
     else:
         trend_direction = "improving" if yoy_pct > 0 else "worsening"
 
-    # Dynamic label based on indicator
+    # Dynamic label based on indicator and country count
     metric_label = indicator_name.split('(')[0].strip() if '(' in indicator_name else indicator_name
+    trend_label = "COUNTRY TREND" if is_single_country else "REGIONAL TREND"
 
     st.markdown(f"""
     <div class="stat-card">
-        <div style="font-size: 0.875rem; color: #94a3b8; margin-bottom: 8px;">REGIONAL TREND</div>
+        <div style="font-size: 0.875rem; color: #94a3b8; margin-bottom: 8px;">{trend_label}</div>
         <div style="font-size: 1.1rem; color: #ffffff; font-weight: 600;">
             {metric_label} is {trend_direction}
         </div>
@@ -1785,33 +1817,49 @@ with col_insight2:
 
 with col_insight3:
     gap = latest_data['value'].max() - latest_data['value'].min()
-    
+
+    if is_single_country:
+        gap_label = "DATA POINTS"
+        gap_value = f"{len(filtered_df)}"
+        gap_desc = "Total records analyzed"
+    else:
+        gap_label = "REGIONAL GAP"
+        gap_value = f"{gap:.2f} points"
+        gap_desc = "Between best and worst"
+
     st.markdown(f"""
     <div class="stat-card">
-        <div style="font-size: 0.875rem; color: #94a3b8; margin-bottom: 8px;">REGIONAL GAP</div>
+        <div style="font-size: 0.875rem; color: #94a3b8; margin-bottom: 8px;">{gap_label}</div>
         <div style="font-size: 1.1rem; color: #ffffff; font-weight: 600;">
-            {gap:.2f} points
+            {gap_value}
         </div>
         <div style="font-size: 0.85rem; color: #94a3b8; margin-top: 8px;">
-            Between best and worst
+            {gap_desc}
         </div>
     </div>
     """, unsafe_allow_html=True)
 
 # STORYTELLING: Key Insights Context
-# Dynamic explanation based on indicator type
+# Dynamic explanation based on indicator type and country count
 if is_negative_indicator:
     trend_explanation = '"Improving" means the metric is decreasing (good), "Worsening" means it\'s increasing.'
 else:
     trend_explanation = '"Improving" means the metric is increasing (good), "Worsening" means it\'s decreasing.'
 
+if is_single_country:
+    trend_label_text = "Country Trend"
+    gap_explanation = f"<b>Data Points:</b> Total number of records available for {best_country} in the selected time range."
+else:
+    trend_label_text = "Regional Trend"
+    gap_explanation = "<b>Regional Gap:</b> The distance between the best and worst performing countries. A smaller gap suggests regional cohesion."
+
 st.markdown(f"""
 <div style="background-color: rgba(30, 41, 59, 0.5); padding: 15px; border-radius: 5px; border-left: 3px solid #10b981; margin-top: 20px;">
     <h5 style="margin: 0 0 8px 0; color: #e0e7ff; font-size: 0.9rem; font-weight: 600;">How to interpret these metrics</h5>
     <ul style="margin: 0; padding-left: 20px; color: #cbd5e1; font-size: 0.85rem; line-height: 1.5;">
-        <li><b>Regional Trend:</b> Indicates the overall direction. {trend_explanation}</li>
+        <li><b>{trend_label_text}:</b> Indicates the overall direction. {trend_explanation}</li>
         <li><b>Volatility:</b> Measures stability. Lower values mean steady progress; higher values indicate erratic economic shocks or inconsistent data.</li>
-        <li><b>Regional Gap:</b> The distance between the best and worst performing countries. A smaller gap suggests regional cohesion.</li>
+        <li>{gap_explanation}</li>
     </ul>
 </div>
 """, unsafe_allow_html=True)
