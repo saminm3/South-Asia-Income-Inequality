@@ -314,9 +314,9 @@ with col_btn[1]:
                 st.session_state.show_save_options = True
                 
         else:
+            if st.button("View Dashboard", use_container_width=True, type="primary"):
+                st.switch_page("pages/1_Dashboard.py")
             st.info("✓ Configuration is up to date")
-            time.sleep(1)
-            st.switch_page("pages/1_Dashboard.py")
             st.session_state.show_save_options = False
     else:
         st.warning("Please select at least one country")
