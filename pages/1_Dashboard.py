@@ -1302,7 +1302,7 @@ if show_correlation and correlation_matrix is not None:
                     use_container_width=True
                 )
             except:
-                st.button("🎨 SVG", disabled=True, key="corr_svg", use_container_width=True)
+                st.button("🎨 SVG", disabled=True, key="corr_svg_fallback", use_container_width=True)
 
     # Display the chart
     st.plotly_chart(fig_corr, use_container_width=True, config={
