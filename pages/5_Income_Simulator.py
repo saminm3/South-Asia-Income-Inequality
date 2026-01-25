@@ -180,14 +180,14 @@ Personalized Economic Modeling & Comparative Analytics
 
 # Country data
 COUNTRY_DATA = {
-    'Afghanistan': {'base': 18, 'education_weight': 0.28, 'urban_bonus': 8},
     'Bangladesh': {'base': 25, 'education_weight': 0.32, 'urban_bonus': 8},
     'Bhutan': {'base': 23, 'education_weight': 0.30, 'urban_bonus': 7},
     'India': {'base': 22, 'education_weight': 0.35, 'urban_bonus': 12},
     'Maldives': {'base': 28, 'education_weight': 0.33, 'urban_bonus': 14},
     'Nepal': {'base': 22, 'education_weight': 0.32, 'urban_bonus': 7},
     'Pakistan': {'base': 20, 'education_weight': 0.30, 'urban_bonus': 10},
-    'Sri Lanka': {'base': 25, 'education_weight': 0.32, 'urban_bonus': 11}
+    'Sri Lanka': {'base': 25, 'education_weight': 0.32, 'urban_bonus': 11},
+    'Afghanistan': {'base': 18, 'education_weight': 0.28, 'urban_bonus': 8}
 }
 
 @st.cache_data(ttl=3600)
@@ -658,10 +658,14 @@ def render_percentile_distribution(p, title="Your Relative Standing"):
             gridcolor='rgba(0, 243, 255, 0.1)',
             showticklabels=False, 
             zeroline=False,
-            range=[0, 1.3] # More headroom for the text label
+            range=[0, 1.5] # Increased headroom for the marker (was 1.3)
         ),
         showlegend=False
     )
+    
+    # Allow marker to render outside plot area if needed
+    fig.update_traces(cliponaxis=False)
+
     
     return fig
 
@@ -1197,30 +1201,36 @@ if st.session_state.simulator_mode == "individual":
     group, color = get_tercile(sp_p)
 
     result_col1, result_col2 = st.columns([1, 1], gap="large")
+    # Updated Layout: Side-by-Side Cards, then Chart below
+    stats_c1, stats_c2 = st.columns(2, gap="medium")
 
-    with result_col1:
+    with stats_c1:
         # Create flat HTML string to avoid markdown indentation issues
-        res_html = f"""<div class="result-container">
+        res_html = f"""<div class="result-container" style="min-height: 250px; display: flex; flex-direction: column; justify-content: center;">
 <p class="metric-label">Your Economic Percentile</p>
 <div class="metric-value-large">{sp_p:.1f}<span style="font-size: 2rem;">th</span></div>
 <div class="metric-group" style="color: {color};">{group.upper()}</div>
-<p style="color: #94a3b8; margin-top: 20px; font-size: 1rem; line-height: 1.6; max-width: 550px; margin-left: auto; margin-right: auto;">
-This means you rank <b>higher than {sp_p:.1f}%</b> of people in {sp_country}. Out of every 100 people, your profile indicates a better economic position than about <b>{int(sp_p)}</b> of them.
+<p style="color: #94a3b8; margin-top: 15px; font-size: 0.9rem; line-height: 1.5;">
+Rank higher than <b>{sp_p:.1f}%</b> of {sp_country}. Out of 100 people, you surpass <b>{int(sp_p)}</b> of them.
 </p>
 </div>"""
-        if sp_poverty:
-            res_html += f"""
-<div style="background: rgba(239, 68, 68, 0.1); padding: 20px; border-radius: 16px; border: 1px solid rgba(239, 68, 68, 0.3); margin-top: 20px; text-align: center;">
-<p style="color: #fca5a5; font-size: 0.9rem; margin: 0; text-transform: uppercase; font-weight: 700; letter-spacing: 1.5px;">Live Poverty Benchmark</p>
-<h2 style="color: #ffffff; margin: 10px 0; font-weight: 800;">{sp_poverty['status']}</h2>
-<p style="color: #e2e8f0; font-size: 1.05rem;">Positioned <b>{abs(sp_poverty['distance']):.1f}%</b> {'above' if sp_poverty['distance'] > 0 else 'below'} the national poverty line.</p>
-</div>"""
         st.markdown(res_html, unsafe_allow_html=True)
-        
 
+    with stats_c2:
+        if sp_poverty:
+            pov_html = f"""
+<div class="result-container" style="min-height: 250px; background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.2); display: flex; flex-direction: column; justify-content: center;">
+<p style="color: #fca5a5; font-size: 1rem; margin: 0; text-transform: uppercase; font-weight: 700; letter-spacing: 1.5px;">Live Poverty Benchmark</p>
+<h2 style="color: #ffffff; font-size: 2.5rem; margin: 15px 0; font-weight: 800;">{sp_poverty['status']}</h2>
+<p style="color: #e2e8f0; font-size: 1.1rem;">Positioned <b>{abs(sp_poverty['distance']):.1f}%</b> {'above' if sp_poverty['distance'] > 0 else 'below'} the line.</p>
+</div>"""
+            st.markdown(pov_html, unsafe_allow_html=True)
+        else:
+             st.info("Poverty data not available for this selection.")
 
-    with result_col2:
-        st.plotly_chart(render_percentile_distribution(sp_p, "Your Economic Standing"), use_container_width=True)
+    # Chart takes full width below
+    st.markdown("<br>", unsafe_allow_html=True)
+    st.plotly_chart(render_percentile_distribution(sp_p, "Your Economic Standing"), use_container_width=True)
 
     # ============= STEP 3: INSIGHTS =============
 

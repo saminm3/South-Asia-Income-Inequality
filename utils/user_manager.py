@@ -5,17 +5,12 @@ import pandas as pd
 import json
 from datetime import datetime
 
+from .database import db
+
 class UserManager:
     def __init__(self):
-        try:
-            self.url = st.secrets["supabase"]["url"]
-            self.key = st.secrets["supabase"]["key"]
-            self.client: Client = create_client(self.url, self.key)
-            self.is_connected = True
-        except Exception as e:
-            # Silently fail if secrets are missing (app should still work locally without persistence)
-            print(f"Supabase connection failed: {e}")
-            self.is_connected = False
+        self.client = db.get_client()
+        self.is_connected = self.client is not None
 
     def _sanitize_config(self, config):
         """

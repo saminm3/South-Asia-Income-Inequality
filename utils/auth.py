@@ -15,39 +15,46 @@ def verify_password(password: str, hashed: str) -> bool:
     return bcrypt.checkpw(password.encode('utf-8'), hashed.encode('utf-8'))
 
 def register_user(email: str, password: str, name: str = "", organization: str = "", country: str = ""):
-    """Register new user"""
-    import sqlite3
-    conn = db.get_connection()
-    cursor = conn.cursor()
+    """Register new user using Supabase"""
+    client = db.get_client()
+    if not client:
+        return False, "Database connection not available"
     
     try:
         password_hash = hash_password(password)
-        cursor.execute(
-            "INSERT INTO users (email, password_hash, name, organization, country) VALUES (?, ?, ?, ?, ?)",
-            (email, password_hash, name, organization, country)
-        )
-        conn.commit()
+        data = {
+            "email": email,
+            "password_hash": password_hash,
+            "name": name,
+            "organization": organization,
+            "country": country
+        }
+        client.table("users").insert(data).execute()
         return True, "Registration successful!"
-    except sqlite3.IntegrityError:
-        return False, "Email already exists"
-    finally:
-        conn.close()
+    except Exception as e:
+        if "unique_violation" in str(e).lower() or "already exists" in str(e).lower():
+            return False, "Email already exists"
+        return False, f"Registration failed: {str(e)}"
 
 def login_user(email: str, password: str):
-    """Authenticate user"""
-    conn = db.get_connection()
-    cursor = conn.cursor()
+    """Authenticate user using Supabase"""
+    client = db.get_client()
+    if not client:
+        return False, None
     
-    cursor.execute("SELECT user_id, email, password_hash, name FROM users WHERE email = ?", (email,))
-    user = cursor.fetchone()
-    conn.close()
-    
-    if user and verify_password(password, user[2]):
-        return True, {
-            'user_id': user[0],
-            'email': user[1],
-            'name': user[3]
-        }
+    try:
+        response = client.table("users").select("user_id, email, password_hash, name").eq("email", email).execute()
+        user = response.data[0] if response.data else None
+        
+        if user and verify_password(password, user['password_hash']):
+            return True, {
+                'user_id': user['user_id'],
+                'email': user['email'],
+                'name': user['name']
+            }
+    except Exception as e:
+        print(f"Login failed: {e}")
+        
     return False, None
 
 def is_logged_in():
