@@ -374,24 +374,21 @@ direction = "Positive" if r > 0 else "Negative"
 # ----------------------------
 left, right = st.columns([2.2, 1])
 
+# Around line 375-390 in your code
+
 with left:
     st.subheader("Scatter view (year-wise observations)")
-
-    if home_year_range:
-        st.caption(
-            f"Analysis window: {home_year_range[0]}–{home_year_range[1]}. "
-            "Only years with overlapping data for the selected X and Y indicators are included."
-        )
-        full_years = set(range(home_year_range[0], home_year_range[1] + 1))
-        used_years = set(plot_df["year"].unique())
-        excluded_years = sorted(list(full_years - used_years))
-
-        with st.expander("View excluded years (due to missing data)"):
-            if excluded_years:
-                st.write("The following years are excluded because one or both indicators are missing:")
-                st.write(", ".join(map(str, excluded_years)))
-            else:
-                st.write("No years are excluded within the selected range.")
+    
+    
+    st.markdown(
+        """
+        <div class="correlation-alert" style="margin-top: 10px;">
+             <strong>Tip:</strong> Use the sidebar to select different inequality indicators (Y-axis) and driver factors (X-axis) to explore various relationships.
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+    
 
     fig = px.scatter(
         plot_df,
@@ -426,6 +423,22 @@ with left:
             }
         }
     )
+    
+    if home_year_range:
+        st.caption(
+            f"Analysis window: {home_year_range[0]}–{home_year_range[1]}. "
+            "Only years with overlapping data for the selected X and Y indicators are included."
+        )
+        full_years = set(range(home_year_range[0], home_year_range[1] + 1))
+        used_years = set(plot_df["year"].unique())
+        excluded_years = sorted(list(full_years - used_years))
+
+        with st.expander("View excluded years (due to missing data)"):
+            if excluded_years:
+                st.write("The following years are excluded because one or both indicators are missing:")
+                st.write(", ".join(map(str, excluded_years)))
+            else:
+                st.write("No years are excluded within the selected range.")
 
 with right:
     st.subheader("Key statistics")
@@ -469,7 +482,16 @@ st.markdown(
 # ----------------------------
 st.markdown("---")
 st.subheader("Inequality level snapshot (country ranking)")
-
+st.markdown(
+    """
+    <div class="correlation-alert">
+        <strong>What this shows:</strong> Average inequality levels across all available years for each country.
+        Countries at the top experience higher inequality, while those at the bottom have lower inequality.
+        Use this to identify which countries face the most severe inequality challenges.
+    </div>
+    """,
+    unsafe_allow_html=True
+)
 ranked = (
     plot_df.groupby("country")[y_indicator]
     .mean()
@@ -481,17 +503,76 @@ ranked.columns = ["Country", "Average value"]
 ranked["Average value"] = ranked["Average value"].round(3)
 
 st.dataframe(ranked, use_container_width=True, hide_index=True)
+st.caption("Higher values indicate greater inequality. This ranking uses the average across all available years.")
 
+# ----------------------------
+# Inequality trend and dispersion
+# ----------------------------
 # ----------------------------
 # Inequality trend and dispersion
 # ----------------------------
 st.markdown("---")
 st.subheader("Inequality trend and dispersion (2000–2023)")
 
+# VISUAL EXPLANATION - NO EMOJIS
+col1, col2, col3 = st.columns(3)
+
+with col1:
+    st.markdown(
+        """
+        <div style="text-align: center; padding: 12px; background: rgba(34, 197, 94, 0.15); border-radius: 12px; border: 1px solid rgba(34, 197, 94, 0.3);">
+            <div style="font-weight: 600; color: #22c55e; font-size: 1.1rem; margin-bottom: 4px;">▼</div>
+            <div style="font-weight: 600; color: #fff; font-size: 0.9rem;">Decreasing</div>
+            <div style="color: #cbd5e1; font-size: 0.85rem;">Inequality improving</div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+with col2:
+    st.markdown(
+        """
+        <div style="text-align: center; padding: 12px; background: rgba(251, 191, 36, 0.15); border-radius: 12px; border: 1px solid rgba(251, 191, 36, 0.3);">
+            <div style="font-weight: 600; color: #fbbf24; font-size: 1.1rem; margin-bottom: 4px;">━</div>
+            <div style="font-weight: 600; color: #fff; font-size: 0.9rem;">Stable</div>
+            <div style="color: #cbd5e1; font-size: 0.85rem;">No significant change</div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+with col3:
+    st.markdown(
+        """
+        <div style="text-align: center; padding: 12px; background: rgba(239, 68, 68, 0.15); border-radius: 12px; border: 1px solid rgba(239, 68, 68, 0.3);">
+            <div style="font-weight: 600; color: #ef4444; font-size: 1.1rem; margin-bottom: 4px;">▲</div>
+            <div style="font-weight: 600; color: #fff; font-size: 0.9rem;">Increasing</div>
+            <div style="color: #cbd5e1; font-size: 0.85rem;">Inequality worsening</div>
+        </div>
+        """,
+        unsafe_allow_html=True
+    )
+
+st.markdown("<div style='height: 12px;'></div>", unsafe_allow_html=True)
+
+# Data reliability legend - FIXED TO MATCH YOUR DATA
+st.markdown(
+    """
+    <div class="correlation-alert" style="margin-bottom: 16px;">
+        <strong>Data Reliability Guide:</strong> 
+        <strong>High</strong> = 10 or more years of data | 
+        <strong>Medium</strong> = 5-9 years of data | 
+        <strong>Low</strong> = Less than 5 years of data
+        <br>
+        <span style="font-size: 0.88rem; color: #cbd5e1;">
+        More years of data = More trustworthy trend patterns. Countries with "High" reliability have enough data to confidently assess their inequality trends.
+        </span>
+    </div>
+    """,
+    unsafe_allow_html=True
+)
+
 trend_rows = []
-total_years = None
-if home_year_range:
-    total_years = (home_year_range[1] - home_year_range[0] + 1)
 
 for c in sorted(countries_present):
     sub = plot_df[plot_df["country"] == c].sort_values("year")
@@ -514,14 +595,10 @@ for c in sorted(countries_present):
 
     data_points = int(len(sub))
 
-    if total_years:
-        coverage_pct = (data_points / total_years) * 100.0
-    else:
-        coverage_pct = np.nan
-
-    if data_points >= 18:
+    # FIXED RELIABILITY THRESHOLDS
+    if data_points >= 10:
         reliability = "High"
-    elif data_points >= 10:
+    elif data_points >= 5:
         reliability = "Medium"
     else:
         reliability = "Low"
@@ -532,76 +609,38 @@ for c in sorted(countries_present):
         "Minimum": round(min_val, 3),
         "Maximum": round(max_val, 3),
         "Range": round(rng, 3),
-        "Trend slope (per year)": round(slope, 4) if not np.isnan(slope) else np.nan,
         "Data points": data_points,
         "Trend": trend_label,
-        "Coverage (%)": round(coverage_pct, 1) if not np.isnan(coverage_pct) else np.nan,
         "Data reliability": reliability
     })
 
 trend_df = pd.DataFrame(trend_rows)
 st.dataframe(trend_df, use_container_width=True, hide_index=True)
+st.caption("Countries with more data points provide more reliable trend assessments. The trend shows the overall direction of inequality change over time.")
 
 # ----------------------------
-# Missing countries explanation
+# Quick summary metrics
 # ----------------------------
 st.markdown("---")
-with st.expander("Why some countries are not shown"):
-    st.write(
-        "Countries appear only when both selected indicators (X and Y) are available in the same years. "
-        "If a country has missing values for either indicator, it is excluded from the correlation plot to avoid "
-        "misleading results."
-    )
 
-    total_years_label = ""
-    if home_year_range:
-        total_years_label = f"Total years in selected range: {home_year_range[0]}–{home_year_range[1]}"
+col1, col2, col3, col4 = st.columns(4)
 
-    if total_years_label:
-        st.caption(total_years_label)
+improving = len(trend_df[trend_df["Trend"] == "Decreasing"])
+worsening = len(trend_df[trend_df["Trend"] == "Increasing"])
+stable = len(trend_df[trend_df["Trend"] == "Stable"])
+high_reliability = len(trend_df[trend_df["Data reliability"] == "High"])
 
-    availability_rows = []
-    if home_year_range:
-        total_years = (home_year_range[1] - home_year_range[0] + 1)
-    else:
-        total_years = None
+with col1:
+    st.metric("Countries Improving", improving, delta="Decreasing inequality", delta_color="normal")
 
-    all_country_list = sorted(df["country"].unique())
-    if home_countries:
-        all_country_list = sorted(home_countries)
+with col2:
+    st.metric("Countries Worsening", worsening, delta="Increasing inequality", delta_color="inverse")
 
-    for c in all_country_list:
-        sub_all = wide[wide["country"] == c][["year", x_indicator, y_indicator]].copy()
-        sub_all = sub_all.dropna(subset=[x_indicator, y_indicator])
+with col3:
+    st.metric("Stable Countries", stable, delta="No significant change", delta_color="off")
 
-        dp = int(len(sub_all))
-        cov = (dp / total_years * 100.0) if total_years else np.nan
-
-        if dp >= 18:
-            reliability = "High"
-        elif dp >= 10:
-            reliability = "Medium"
-        else:
-            reliability = "Low"
-
-        availability_rows.append({
-            "Country": c,
-            "Data points": dp,
-            "Coverage (%)": round(cov, 1) if not np.isnan(cov) else np.nan,
-            "Data reliability": reliability
-        })
-
-    availability_df = pd.DataFrame(availability_rows)
-    st.write("Data availability by country (based on the selected X and Y indicators)")
-    st.dataframe(availability_df, use_container_width=True, hide_index=True)
-
-    st.markdown("Interpretation guidance")
-    st.markdown(
-        """
-        - Coverage indicates the share of years with usable values for both indicators.
-        - Low coverage means correlations may be unstable and should be interpreted with caution.
-        """
-    )
+with col4:
+    st.metric("High Reliability Data", high_reliability, delta=f"{len(trend_df)} total countries", delta_color="off")
 
 st.caption(" Correlation Explorer | South Asia Inequality Analysis Platform")
 
