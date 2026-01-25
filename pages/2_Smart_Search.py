@@ -579,7 +579,7 @@ st.divider()
 # --------------------------------------------------
 # SECTION 3: Bookmarked Views (SAFE VERSION WITH ERROR HANDLING!)
 # --------------------------------------------------
-st.subheader("⭐ Quick Access Bookmarks")
+st.subheader(" Quick Access Bookmarks")
 st.caption("Pre-configured views for common analysis needs")
 
 # Helper function to find the actual GINI indicator name in data
@@ -660,36 +660,36 @@ detected_gini_indicator = get_gini_indicator()
 
 # SAFE BOOKMARKS with automatic error handling
 bookmarks = {
-    "🔴 High Inequality Countries": {
+    " High Inequality Countries": {
         "description": "Countries with GINI > 40 (severe inequality)",
         "countries": get_high_inequality_countries(40),
         "indicator": detected_gini_indicator,
         "page": "pages/1_Dashboard.py"
     },
-    "🟢 Low Inequality Countries": {
+    " Low Inequality Countries": {
         "description": "Countries with GINI < 30 (more equitable)",
         "countries": get_low_inequality_countries(30),
         "indicator": detected_gini_indicator,
         "page": "pages/1_Dashboard.py"
     },
-    "📈 Recent Decade Analysis": {
+    " Recent Decade Analysis": {
         "description": "Focus on 2015-2024 data",
         "countries": df['country'].unique().tolist(),
         "indicator": detected_gini_indicator,
         "year_range": (max(2015, int(df['year'].min())), int(df['year'].max())),
         "page": "pages/1_Dashboard.py"
     },
-    "💰 GDP vs Inequality": {
+    " GDP vs Inequality": {
         "description": "Explore economic growth and inequality relationship",
         "page": "pages/4_Correlations.py"
     },
-    "🌍 Regional Comparison": {
+    " Regional Comparison": {
         "description": "Compare all countries side-by-side",
         "countries": df['country'].unique().tolist(),
         "indicator": detected_gini_indicator,
         "page": "pages/7_Indicator_Insights.py"
     },
-    "🗺️ Latest Year Geographic View": {
+    " Latest Year Geographic View": {
         "description": "Map visualization of most recent data",
         "countries": df['country'].unique().tolist(),
         "indicator": detected_gini_indicator,
