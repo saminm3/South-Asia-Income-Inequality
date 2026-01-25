@@ -64,7 +64,7 @@ st.markdown("""
     /* Hide Streamlit branding */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
-    header {visibility: hidden;}
+    /* header {visibility: hidden;} */
     
     /* METRIC CARDS: Much more purple glow theme */
     div[data-testid="metric-container"] {

@@ -347,9 +347,7 @@ fig.update_layout(
     height=850
 )
 
-st.plotly_chart(fig, use_container_width=True)
-
-# ✅ Put the “simple + important” explanation UNDER the chart (combined)
+st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': True, 'displaylogo': False, 'modeBarButtonsToRemove': ['pan2d', 'select2d', 'lasso2d', 'autoScale2d'], 'toImageButtonOptions': {'format': 'png', 'filename': f'sunburst_{selected_year}'}})
 st.markdown(
     """
 <div class="purple-card">
@@ -540,7 +538,7 @@ fig_bubble = px.scatter(
     title="🫧 Indicator Bubble View (size = normalized dominance)"
 )
 fig_bubble.update_layout(height=540, xaxis_title="Normalized dominance (0–100)", yaxis_title="")
-st.plotly_chart(fig_bubble, use_container_width=True)
+st.plotly_chart(fig_bubble, use_container_width=True, config={'displayModeBar': True, 'displaylogo': False, 'modeBarButtonsToRemove': ['pan2d', 'select2d', 'lasso2d', 'autoScale2d'], 'toImageButtonOptions': {'format': 'png', 'filename': f'bubble_{spot_country}_{selected_year}'}})
 
 st.info(
     "How to read the bubble chart: **a larger bubble indicates a more dominant indicator** for this country (after normalization). "
