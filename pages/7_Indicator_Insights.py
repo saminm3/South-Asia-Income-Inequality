@@ -4,6 +4,8 @@ import plotly.express as px
 import numpy as np
 import sys
 from pathlib import Path
+from datetime import datetime
+import io
 
 # Add utils to path
 sys.path.append(str(Path(__file__).parent.parent))
@@ -347,7 +349,28 @@ fig.update_layout(
     height=850
 )
 
-st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': True, 'displaylogo': False, 'modeBarButtonsToRemove': ['pan2d', 'select2d', 'lasso2d', 'autoScale2d'], 'toImageButtonOptions': {'format': 'png', 'filename': f'sunburst_{selected_year}'}})
+# Right-aligned Download icon with tooltip
+col_spacer_sun, col_dl_sun = st.columns([10, 1])
+with col_dl_sun:
+    try:
+        png_bytes_sun = fig.to_image(format="png", width=1400, height=1000)
+        st.download_button(
+            label="⬇️",
+            data=png_bytes_sun,
+            file_name=f"sunburst_dominance_{selected_year}.png",
+            mime="image/png",
+            key="sunburst_dl_btn",
+            help="Download Sunburst Chart as PNG"
+        )
+    except:
+        st.button("⬇️", disabled=True, key="sunburst_dl_btn_dis", help="Download Unavailable")
+
+st.plotly_chart(fig, use_container_width=True, config={
+    'displayModeBar': True, 
+    'displaylogo': False, 
+    'modeBarButtons': [['zoomIn2d', 'zoomOut2d', 'resetScale2d', 'toImage']],
+    'toImageButtonOptions': {'format': 'png', 'filename': f'sunburst_{selected_year}'}
+})
 st.markdown(
     """
 <div class="purple-card">
@@ -538,7 +561,29 @@ fig_bubble = px.scatter(
     title="🫧 Indicator Bubble View (size = normalized dominance)"
 )
 fig_bubble.update_layout(height=540, xaxis_title="Normalized dominance (0–100)", yaxis_title="")
-st.plotly_chart(fig_bubble, use_container_width=True, config={'displayModeBar': True, 'displaylogo': False, 'modeBarButtonsToRemove': ['pan2d', 'select2d', 'lasso2d', 'autoScale2d'], 'toImageButtonOptions': {'format': 'png', 'filename': f'bubble_{spot_country}_{selected_year}'}})
+# Right-aligned Download icon with tooltip for Bubble Chart
+col_spacer_bub, col_dl_bub = st.columns([10, 1])
+with col_dl_bub:
+    try:
+        png_bytes_bub = fig_bubble.to_image(format="png", width=1400, height=1000)
+        st.download_button(
+            label="⬇️",
+            data=png_bytes_bub,
+            file_name=f"bubble_dominance_{spot_country}_{selected_year}.png",
+            mime="image/png",
+            key="bubble_dl_btn",
+            help="Download Bubble Chart as PNG"
+        )
+    except:
+        st.button("⬇️", disabled=True, key="bubble_dl_btn_dis", help="Download Unavailable")
+
+st.plotly_chart(fig_bubble, use_container_width=True, config={
+    'displayModeBar': True, 
+    'displaylogo': False, 
+    'scrollZoom': True,
+    'modeBarButtons': [['zoomIn2d', 'zoomOut2d', 'resetScale2d', 'toImage']],
+    'toImageButtonOptions': {'format': 'png', 'filename': f'bubble_{spot_country}_{selected_year}'}
+})
 
 st.info(
     "How to read the bubble chart: **a larger bubble indicates a more dominant indicator** for this country (after normalization). "
