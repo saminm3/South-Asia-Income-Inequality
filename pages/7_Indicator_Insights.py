@@ -14,8 +14,8 @@ from utils.help_system import render_help_button
 from utils.sidebar import apply_all_styles
 
 st.set_page_config(
-    page_title="Sunburst Explorer",
-    page_icon="🌟",
+    page_title="Indicator Insights",
+    page_icon="🎯",
     layout="wide"
 )
 render_help_button("Indicator Insights")
