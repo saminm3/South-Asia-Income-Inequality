@@ -1705,16 +1705,6 @@ with col_bottom2:
             hovertemplate='<b>%{fullData.name}</b><br>Year: %{x}<br>Value: %{y:.2f}<extra></extra>'
         ))
     
-    # STORYTELLING: Detailed Trends
-    st.markdown(f"""
-    <div style="background-color: rgba(30, 41, 59, 0.5); padding: 15px; border-radius: 5px; border-left: 3px solid #f59e0b; margin-top: 20px;">
-        <p style="margin: 0; color: #cbd5e1; font-size: 0.85rem; line-height: 1.4;">
-            <strong style="color: #e0e7ff;">Trend Analysis:</strong> Use this detailed line chart to spot divergent paths. 
-            Countries with lines crossing others or moving against the general "cluster" are outliers worth investigating.
-        </p>
-    </div>
-    """, unsafe_allow_html=True)
-    
     # REQUIREMENT #5: PROPER AXIS LABELS (FIXED SPACING)
     fig_lines.update_layout(
         height=350,
@@ -1752,12 +1742,7 @@ with col_bottom2:
             title=dict(text='<b>Countries</b>', font=dict(size=11, color='#e2e8f0'))
         ),
         margin=dict(l=80, r=150, t=40, b=50),  # Increased left margin
-        hovermode='x unified',
-        title=dict(
-            text=f'Comparative Trends (Non-Stacked)',
-            font=dict(size=14, color='#ffffff'),
-            x=0
-        )
+        hovermode='x unified'
     )
     
     # Download options
@@ -1799,6 +1784,16 @@ with col_bottom2:
             'scale': 2
         }
     })
+
+    # STORYTELLING: Detailed Trends (MOVED BELOW CHART)
+    st.markdown(f"""
+    <div style="background-color: rgba(30, 41, 59, 0.5); padding: 15px; border-radius: 5px; border-left: 3px solid #f59e0b; margin-top: 20px;">
+        <p style="margin: 0; color: #cbd5e1; font-size: 0.85rem; line-height: 1.4;">
+            <strong style="color: #e0e7ff;">Trend Analysis:</strong> Use this detailed line chart to spot divergent paths. 
+            Countries with lines crossing others or moving against the general "cluster" are outliers worth investigating.
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
 
 
 # ═══════════════════════════════════════════════════════════════════
