@@ -430,7 +430,26 @@ else:
 
 #  SMART INDICATOR TYPE DETECTION
 indicator_name = config['indicator'].lower()
-negative_terms = ['gini', 'inequality', 'poverty', 'disparity', 'gap', 'unemployment', 'mortality', 'malnutrition', 'deficit']
+negative_terms = [
+    # Current - Core inequality & poverty
+    'gini', 'inequality', 'poverty', 'disparity', 'gap', 
+    'unemployment', 'mortality', 'malnutrition', 'deficit',
+    
+    # Economic/Financial (negative)
+    'debt', 'inflation', 
+    
+    # Labor (negative)
+    'vulnerable', 'child labor', 'contributing family',
+    
+    # Health/Environment (negative)
+    'underweight', 'hiv', 'pollution', 'pm2.5',
+    
+    # Social/Governance (negative)
+    'dependency', 'informal payment', 'out-of-school',
+    
+    # Time-based bureaucracy (negative - longer = worse)
+    'time required', 'time to'
+]
 is_negative_indicator = any(term in indicator_name for term in negative_terms)
 is_positive_indicator = not is_negative_indicator
 
@@ -1616,7 +1635,21 @@ with col_bottom1:
         rank = idx + 1
         country = row['country']
         value = row['value']
-        pct_of_max = (value / rankings['value'].max()) * 100
+        
+        # Calculate bar width based on indicator type
+        # For positive indicators: higher value = fuller bar
+        # For negative indicators: lower value = fuller bar (inverted)
+        if is_positive_indicator:
+            pct_of_max = (value / rankings['value'].max()) * 100
+        else:
+            # Invert for negative indicators so rank #1 (lowest) has fullest bar
+            max_val = rankings['value'].max()
+            min_val = rankings['value'].min()
+            if max_val != min_val:
+                # Normalize inversely: best (min) = 100%, worst (max) = smallest %
+                pct_of_max = ((max_val - value) / (max_val - min_val)) * 100
+            else:
+                pct_of_max = 100  # All equal
         
         # Color based on rank (NO EMOJIS)
         if rank == 1:

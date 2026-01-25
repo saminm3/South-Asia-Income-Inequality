@@ -516,7 +516,7 @@ if search_query:
                                     if filter_info.get('countries'):
                                         config = {
                                             'countries': filter_info['countries'],
-                                            'indicator': 'gini_index',
+                                            'indicator': detected_gini_indicator,  # Use auto-detected GINI
                                             'year_range': (int(df['year'].min()), int(df['year'].max())),
                                             'color_scale': 'Viridis'
                                         }
