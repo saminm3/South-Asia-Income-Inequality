@@ -817,19 +817,27 @@ col_spacer, col_downloads = st.columns([10, 1])
 with col_downloads:
     with st.popover("⬇️", help="Download in multiple formats"):
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        
-        # HTML
-        st.download_button("🌐 HTML", fig_area.to_html(include_plotlyjs='cdn'), f"temporal_trends_{timestamp}.html", "text/html", key="area_html", use_container_width=True)
-        
-        # JSON
-        st.download_button("📊 JSON", fig_area.to_json(), f"temporal_trends_{timestamp}.json", "application/json", key="area_json", use_container_width=True)
-        
-        # SVG
+
+        # PNG
         try:
-            svg_bytes = fig_area.to_image(format="svg", width=1400, height=1000)
-            st.download_button("🎨 SVG", svg_bytes, f"temporal_trends_{timestamp}.svg", "image/svg+xml", key="area_svg", use_container_width=True)
+            png_bytes = fig_area.to_image(format="png", width=1400, height=1000)
+            st.download_button("PNG", png_bytes, f"temporal_trends_{timestamp}.png", "image/png", key="area_png", use_container_width=True)
         except:
-            st.button("🎨 SVG", disabled=True, key="area_svg", use_container_width=True)
+            st.button("PNG", disabled=True, key="area_png", use_container_width=True)
+
+        # JPG
+        try:
+            jpg_bytes = fig_area.to_image(format="jpeg", width=1400, height=1000)
+            st.download_button("JPG", jpg_bytes, f"temporal_trends_{timestamp}.jpg", "image/jpeg", key="area_jpg", use_container_width=True)
+        except:
+            st.button("JPG", disabled=True, key="area_jpg", use_container_width=True)
+
+        # JPEG
+        try:
+            jpeg_bytes = fig_area.to_image(format="jpeg", width=1400, height=1000)
+            st.download_button("JPEG", jpeg_bytes, f"temporal_trends_{timestamp}.jpeg", "image/jpeg", key="area_jpeg", use_container_width=True)
+        except:
+            st.button("JPEG", disabled=True, key="area_jpeg", use_container_width=True)
 
 
 st.plotly_chart(fig_area, use_container_width=True, config={
@@ -945,13 +953,27 @@ with col_viz1:
     with col_downloads2:
         with st.popover("⬇️", help="Download in multiple formats"):
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            st.download_button("🌐 HTML", fig_bars.to_html(include_plotlyjs='cdn'), f"country_avg_{timestamp}.html", "text/html", key="bar_html", use_container_width=True)
-            st.download_button("📊 JSON", fig_bars.to_json(), f"country_avg_{timestamp}.json", "application/json", key="bar_json", use_container_width=True)
+
+            # PNG
             try:
-                svg_bytes = fig_bars.to_image(format="svg", width=1400, height=1000)
-                st.download_button("🎨 SVG", svg_bytes, f"country_avg_{timestamp}.svg", "image/svg+xml", key="bar_svg", use_container_width=True)
+                png_bytes = fig_bars.to_image(format="png", width=1400, height=1000)
+                st.download_button("PNG", png_bytes, f"country_avg_{timestamp}.png", "image/png", key="bar_png", use_container_width=True)
             except:
-                st.button("🎨 SVG", disabled=True, key="bar_svg", use_container_width=True)
+                st.button("PNG", disabled=True, key="bar_png", use_container_width=True)
+
+            # JPG
+            try:
+                jpg_bytes = fig_bars.to_image(format="jpeg", width=1400, height=1000)
+                st.download_button("JPG", jpg_bytes, f"country_avg_{timestamp}.jpg", "image/jpeg", key="bar_jpg", use_container_width=True)
+            except:
+                st.button("JPG", disabled=True, key="bar_jpg", use_container_width=True)
+
+            # JPEG
+            try:
+                jpeg_bytes = fig_bars.to_image(format="jpeg", width=1400, height=1000)
+                st.download_button("JPEG", jpeg_bytes, f"country_avg_{timestamp}.jpeg", "image/jpeg", key="bar_jpeg", use_container_width=True)
+            except:
+                st.button("JPEG", disabled=True, key="bar_jpeg", use_container_width=True)
     
     st.plotly_chart(fig_bars, use_container_width=True, config={
         'displayModeBar': 'hover',
@@ -1066,13 +1088,27 @@ with col_viz2:
     with col_downloads3:
         with st.popover("⬇️", help="Download in multiple formats"):
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            st.download_button("🌐 HTML", fig_radial.to_html(include_plotlyjs='cdn'), f"radial_{timestamp}.html", "text/html", key="radial_html", use_container_width=True)
-            st.download_button("📊 JSON", fig_radial.to_json(), f"radial_{timestamp}.json", "application/json", key="radial_json", use_container_width=True)
+
+            # PNG
             try:
-                svg_bytes = fig_radial.to_image(format="svg", width=1400, height=1400)
-                st.download_button("🎨 SVG", svg_bytes, f"radial_{timestamp}.svg", "image/svg+xml", key="radial_svg", use_container_width=True)
+                png_bytes = fig_radial.to_image(format="png", width=1400, height=1400)
+                st.download_button("PNG", png_bytes, f"radial_{timestamp}.png", "image/png", key="radial_png", use_container_width=True)
             except:
-                st.button("🎨 SVG", disabled=True, key="radial_svg", use_container_width=True)
+                st.button("PNG", disabled=True, key="radial_png", use_container_width=True)
+
+            # JPG
+            try:
+                jpg_bytes = fig_radial.to_image(format="jpeg", width=1400, height=1400)
+                st.download_button("JPG", jpg_bytes, f"radial_{timestamp}.jpg", "image/jpeg", key="radial_jpg", use_container_width=True)
+            except:
+                st.button("JPG", disabled=True, key="radial_jpg", use_container_width=True)
+
+            # JPEG
+            try:
+                jpeg_bytes = fig_radial.to_image(format="jpeg", width=1400, height=1400)
+                st.download_button("JPEG", jpeg_bytes, f"radial_{timestamp}.jpeg", "image/jpeg", key="radial_jpeg", use_container_width=True)
+            except:
+                st.button("JPEG", disabled=True, key="radial_jpeg", use_container_width=True)
     
     st.plotly_chart(fig_radial, use_container_width=True, config={
         'displayModeBar': 'hover',
@@ -1262,51 +1298,48 @@ if show_correlation and correlation_matrix is not None:
     with col_downloads_corr:
         with st.popover("⬇️", help="Download correlation matrix"):
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            
-            # HTML
-            st.download_button(
-                "🌐 HTML", 
-                fig_corr.to_html(include_plotlyjs='cdn'), 
-                f"correlation_matrix_{timestamp}.html", 
-                "text/html", 
-                key="corr_html", 
-                use_container_width=True
-            )
-            
-            # CSV export of correlation values
-            csv_buffer = correlation_matrix.to_csv()
-            st.download_button(
-                "📊 CSV (Values)", 
-                csv_buffer,
-                f"correlation_matrix_{timestamp}.csv", 
-                "text/csv",
-                key="corr_csv", 
-                use_container_width=True
-            )
-            
-            # JSON
-            st.download_button(
-                "📄 JSON", 
-                fig_corr.to_json(), 
-                f"correlation_matrix_{timestamp}.json", 
-                "application/json", 
-                key="corr_json", 
-                use_container_width=True
-            )
-            
-            # SVG
+
+            # PNG
             try:
-                svg_bytes = fig_corr.to_image(format="svg", width=1400, height=1400)
+                png_bytes = fig_corr.to_image(format="png", width=1400, height=1400)
                 st.download_button(
-                    "🎨 SVG", 
-                    svg_bytes, 
-                    f"correlation_matrix_{timestamp}.svg", 
-                    "image/svg+xml", 
-                    key="corr_svg", 
+                    "PNG",
+                    png_bytes,
+                    f"correlation_matrix_{timestamp}.png",
+                    "image/png",
+                    key="corr_png",
                     use_container_width=True
                 )
             except:
-                st.button("🎨 SVG", disabled=True, key="corr_svg_fallback", use_container_width=True)
+                st.button("PNG", disabled=True, key="corr_png", use_container_width=True)
+
+            # JPG
+            try:
+                jpg_bytes = fig_corr.to_image(format="jpeg", width=1400, height=1400)
+                st.download_button(
+                    "JPG",
+                    jpg_bytes,
+                    f"correlation_matrix_{timestamp}.jpg",
+                    "image/jpeg",
+                    key="corr_jpg",
+                    use_container_width=True
+                )
+            except:
+                st.button("JPG", disabled=True, key="corr_jpg", use_container_width=True)
+
+            # JPEG
+            try:
+                jpeg_bytes = fig_corr.to_image(format="jpeg", width=1400, height=1400)
+                st.download_button(
+                    "JPEG",
+                    jpeg_bytes,
+                    f"correlation_matrix_{timestamp}.jpeg",
+                    "image/jpeg",
+                    key="corr_jpeg",
+                    use_container_width=True
+                )
+            except:
+                st.button("JPEG", disabled=True, key="corr_jpeg", use_container_width=True)
 
     # Display the chart
     st.plotly_chart(fig_corr, use_container_width=True, config={
@@ -1668,15 +1701,27 @@ with col_bottom2:
     with col_downloads4:
         with st.popover("⬇️", help="Download in multiple formats"):
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            
-            st.download_button("🌐 HTML", fig_lines.to_html(include_plotlyjs='cdn'), f"individual_trends_{timestamp}.html", "text/html", key="line_html", use_container_width=True)
-            st.download_button("📊 JSON", fig_lines.to_json(), f"individual_trends_{timestamp}.json", "application/json", key="line_json", use_container_width=True)
-            
+
+            # PNG
             try:
-                svg_bytes = fig_lines.to_image(format="svg", width=1400, height=1000)
-                st.download_button("🎨 SVG", svg_bytes, f"individual_trends_{timestamp}.svg", "image/svg+xml", key="line_svg", use_container_width=True)
+                png_bytes = fig_lines.to_image(format="png", width=1400, height=1000)
+                st.download_button("PNG", png_bytes, f"individual_trends_{timestamp}.png", "image/png", key="line_png", use_container_width=True)
             except:
-                st.button("🎨 SVG", disabled=True, key="line_svg", use_container_width=True)
+                st.button("PNG", disabled=True, key="line_png", use_container_width=True)
+
+            # JPG
+            try:
+                jpg_bytes = fig_lines.to_image(format="jpeg", width=1400, height=1000)
+                st.download_button("JPG", jpg_bytes, f"individual_trends_{timestamp}.jpg", "image/jpeg", key="line_jpg", use_container_width=True)
+            except:
+                st.button("JPG", disabled=True, key="line_jpg", use_container_width=True)
+
+            # JPEG
+            try:
+                jpeg_bytes = fig_lines.to_image(format="jpeg", width=1400, height=1000)
+                st.download_button("JPEG", jpeg_bytes, f"individual_trends_{timestamp}.jpeg", "image/jpeg", key="line_jpeg", use_container_width=True)
+            except:
+                st.button("JPEG", disabled=True, key="line_jpeg", use_container_width=True)
     
     st.plotly_chart(fig_lines, use_container_width=True, config={
         'displayModeBar': 'hover',
