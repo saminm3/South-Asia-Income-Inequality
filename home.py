@@ -470,9 +470,6 @@ st.markdown("""
     <p style="color: #64748b; font-size: 0.85rem; margin: 0;">
         <strong style="color: #8b5cf6;">South Asia Inequality Analytics Platform</strong>
     </p>
-    <p style="color: #475569; font-size: 0.75rem; margin-top: 0.5rem;">
-        Powered by Streamlit & Plotly • Data: World Bank, UNDP, ADB
-    </p>
     <p style="color: #475569; font-size: 0.7rem; margin-top: 0.5rem;">
         Built with  for data-driven policy making
     </p>
