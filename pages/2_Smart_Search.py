@@ -176,7 +176,7 @@ col1, col2, col3, col4 = st.columns(4)
 with col1:
     st.metric("Countries", df['country'].nunique())
 with col2:
-    st.metric(" Indicators", df['indicator'].nunique())
+    st.metric("Indicators", df['indicator'].nunique())
 with col3:
     st.metric("Years", f"{int(df['year'].min())}–{int(df['year'].max())}")
 with col4:
@@ -335,12 +335,32 @@ def smart_search(query, dataframe):
             results['commands'].append(info)
     
     # 5. Smart Filters
+    # Safely detect GINI indicator
+    gini_variations = ['gini_index', 'GINI Index', 'SI.POV.GINI', 'gini', 'GINI']
+    detected_gini = None
+    for variation in gini_variations:
+        if variation in dataframe['indicator'].values:
+            detected_gini = variation
+            break
+
+    # Calculate filter countries safely
+    high_inequality_countries = []
+    low_inequality_countries = []
+
+    if detected_gini:
+        try:
+            gini_data = dataframe[dataframe['indicator'] == detected_gini]
+            if not gini_data.empty:
+                avg_by_country = gini_data.groupby('country')['value'].mean()
+                high_inequality_countries = avg_by_country[avg_by_country > 40].index.tolist()
+                low_inequality_countries = avg_by_country[avg_by_country < 30].index.tolist()
+        except:
+            pass  # Leave lists empty if calculation fails
+
     filter_keywords = {
-        'high inequality': {'countries': [c for c in dataframe['country'].unique() 
-                            if dataframe[(dataframe['country']==c) & (dataframe['indicator']=='gini_index')]['value'].mean() > 40],
+        'high inequality': {'countries': high_inequality_countries,
                            'description': 'Countries with GINI > 40'},
-        'low inequality': {'countries': [c for c in dataframe['country'].unique() 
-                          if dataframe[(dataframe['country']==c) & (dataframe['indicator']=='gini_index')]['value'].mean() < 30],
+        'low inequality': {'countries': low_inequality_countries,
                           'description': 'Countries with GINI < 30'},
         'improving': {'description': 'Countries with decreasing inequality trend'},
         'declining': {'description': 'Countries with increasing inequality'}
