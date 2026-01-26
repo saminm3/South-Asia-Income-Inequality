@@ -485,7 +485,6 @@ data_coverage = (filtered_df.notna().sum()['value'] / len(filtered_df) * 100)
 col1, col2, col3, col4, col5= st.columns(5)
 
 with col1:
-    st.markdown('<div class="custom-metric-card">', unsafe_allow_html=True)
     delta_symbol = "↓" if yoy_pct < 0 else "↑"
     metric_label = "Current Value" if is_single_country else "Regional Average"
     st.metric(
@@ -510,11 +509,9 @@ with col1:
             context = "Moderate regional inequality"
         else:
             context = "High regional inequality"
-    st.markdown(f'<p style="color: #94a3b8; font-size: 0.75rem; margin-top: -10px;">{context}</p>', unsafe_allow_html=True)
-    st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown(f'<p class="metric-context">{context}</p>', unsafe_allow_html=True)
 
 with col2:
-    st.markdown('<div class="custom-metric-card">', unsafe_allow_html=True)
     if is_single_country:
         st.metric(
             label="Selected Country",
@@ -533,11 +530,9 @@ with col2:
             context = "Highest value achieved"
         else:
             context = "Most equitable distribution"
-    st.markdown(f'<p style="color: #94a3b8; font-size: 0.75rem; margin-top: -10px;">{context}</p>', unsafe_allow_html=True)
-    st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown(f'<p class="metric-context">{context}</p>', unsafe_allow_html=True)
 
 with col3:
-    st.markdown('<div class="custom-metric-card">', unsafe_allow_html=True)
     if is_single_country:
         st.metric(
             label="Comparison",
@@ -557,11 +552,9 @@ with col3:
             context = "Requires improvement focus"
         else:
             context = "Highest inequality gap"
-    st.markdown(f'<p style="color: #94a3b8; font-size: 0.75rem; margin-top: -10px;">{context}</p>', unsafe_allow_html=True)
-    st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown(f'<p class="metric-context">{context}</p>', unsafe_allow_html=True)
 
 with col4:
-    st.markdown('<div class="custom-metric-card">', unsafe_allow_html=True)
     st.metric(
         label="Data Coverage",
         value=f"{data_coverage:.0f}%",
@@ -574,11 +567,9 @@ with col4:
         context = "Good data availability"
     else:
         context = "Limited data availability"
-    st.markdown(f'<p style="color: #94a3b8; font-size: 0.75rem; margin-top: -10px;">{context}</p>', unsafe_allow_html=True)
-    st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown(f'<p class="metric-context">{context}</p>', unsafe_allow_html=True)
 
 with col5:
-    st.markdown('<div class="custom-metric-card">', unsafe_allow_html=True)
     st.metric(
         label="Data Range",
         value=f"{config['year_range'][1] - config['year_range'][0] + 1} Years",
@@ -588,8 +579,7 @@ with col5:
     # Context text
     years_span = config['year_range'][1] - config['year_range'][0] + 1
     context = f"{years_span}-year analysis period"
-    st.markdown(f'<p style="color: #94a3b8; font-size: 0.75rem; margin-top: -10px;">{context}</p>', unsafe_allow_html=True)
-    st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown(f'<p class="metric-context">{context}</p>', unsafe_allow_html=True)
     
     
 
