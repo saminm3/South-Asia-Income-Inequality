@@ -1115,7 +1115,7 @@ with col_viz2:
                 gridcolor='rgba(100, 116, 139, 0.3)',
                 linecolor='rgba(100, 116, 139, 0.5)',
                 showticklabels=True,
-                tickfont=dict(size=10, color='#ffffff', weight='bold')
+                tickfont=dict(size=10, color='#ffffff', family='Arial Black')
             ),
             bgcolor='rgba(0,0,0,0)'
         ),
