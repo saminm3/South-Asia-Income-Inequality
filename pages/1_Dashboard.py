@@ -790,6 +790,23 @@ if use_economic_apis:
 
 st.markdown('<div class="section-header">Inequality Trends Over Time</div>', unsafe_allow_html=True)
 
+# Calculate actual data range
+actual_min_year = int(filtered_df['year'].min())
+actual_max_year = int(filtered_df['year'].max())
+selected_min_year = config['year_range'][0]
+selected_max_year = config['year_range'][1]
+
+# Show data availability info if there's a mismatch
+if actual_min_year != selected_min_year or actual_max_year != selected_max_year:
+    st.markdown(f"""
+    <div style="background: rgba(245, 158, 11, 0.1); border-left: 3px solid #f59e0b; padding: 10px 15px; border-radius: 6px; margin-bottom: 15px;">
+        <span style="color: #fbbf24; font-size: 0.875rem;">
+            ⚠️ <b>Data Availability:</b> Actual data spans <b>{actual_min_year}–{actual_max_year}</b> (Selected range: {selected_min_year}–{selected_max_year})
+        </span>
+    </div>
+    """, unsafe_allow_html=True)
+
+
 # Main area chart -
 yearly_data = filtered_df.pivot_table(
     values='value',
@@ -912,10 +929,10 @@ st.markdown(f"""
 <div style="background-color: rgba(30, 41, 59, 0.5); padding: 15px; border-radius: 5px; border-left: 3px solid #3b82f6; margin-top: 10px; margin-bottom: 20px;">
     <h5 style="margin: 0 0 8px 0; color: #e0e7ff; font-size: 0.9rem; font-weight: 600;">How to read this chart</h5>
     <p style="margin: 0; color: #cbd5e1; font-size: 0.85rem; line-height: 1.5;">
-        This <b>Stacked Area Chart</b> shows the total regional volume of <b>{indicator_name}</b> while displaying individual country contributions. 
-        <br>• The <b>height of the stack</b> represents the cumulative sum of all countries combined.
-        <br>• The <b>thickness of each colored band</b> shows that specific country's value for that year.
-        <br>• <b>Steeper slopes</b> indicate periods of rapid change in the metric.
+        This Stacked Area Chart visualizes the cumulative regional volume of {indicator_name} over time.
+        <br>• <b>Why Stacked?</b> It highlights the total magnitude of the issue across the region, showing how much each country contributes to the regional whole.
+        <br>• <b>Interpretation:</b> A rising total height means the regional aggregate is increasing. The thickness of each band represents that country's share of the total.
+        <br>• <b>Note:</b> For comparing individual country performance side-by-side, refer to the Bar Chart below.
     </p>
 </div>
 """, unsafe_allow_html=True)
@@ -1040,8 +1057,9 @@ with col_viz1:
     st.markdown(f"""
     <div style="background-color: rgba(30, 41, 59, 0.5); padding: 12px; border-radius: 5px; border-left: 3px solid #10b981; margin-top: 15px;">
         <p style="margin: 0; color: #cbd5e1; font-size: 0.85rem; line-height: 1.4;">
-            <strong style="color: #e0e7ff;">Insight:</strong> This compares the <b>average performance</b> over the entire {years_span}-year period. 
-            It helps identify long-term structural leaders (Green) versus those facing persistent challenges (Red), mostly ignoring short-term fluctuations.
+            <strong style="color: #e0e7ff;">Historical Analysis:</strong> This chart ranks countries based on their <b>average performance over the full {years_span}-year period</b>.
+            <br>• <b>Purpose:</b> It distinguishes long-term structural trends from short-term fluctuations. A country might be "Red" here (historically poor) but "Improving" in recent years (Current Snapshot).
+            <br>• <b>Usage:</b> Use this to identify persistent regional challenges versus temporary setbacks.
         </p>
     </div>
     """, unsafe_allow_html=True)
@@ -1224,8 +1242,9 @@ st.markdown('<div class="section-header" style="font-size: 1.5rem;">Country Corr
 st.markdown("""
 <div style="background: rgba(59, 130, 246, 0.05); padding: 15px; border-radius: 8px; border-left: 3px solid #3b82f6; margin-bottom: 20px;">
     <p style="color: #8b98a5; font-size: 0.9rem; margin: 0;">
-        <b style="color: #e2e8f0;">Correlation Matrix:</b> Shows how strongly inequality patterns are related between countries. 
-        Values range from -1 (opposite trends) to +1 (similar trends). Warmer colors indicate stronger positive correlations.
+        <b style="color: #e2e8f0;">Correlation Analysis:</b> This matrix reveals how countries move together.
+        <br>• <b>High Positive Correlation (+1):</b> Countries improve or worsen in sync (suggesting shared regional economic drivers).
+        <br>• <b>Negative Correlation (-1):</b> One country improves while another worsens (suggesting divergent economic paths or policies).
     </p>
 </div>
 """, unsafe_allow_html=True)
@@ -1889,8 +1908,8 @@ st.markdown(f"""
 <div style="background-color: rgba(30, 41, 59, 0.5); padding: 15px; border-radius: 5px; border-left: 3px solid #10b981; margin-top: 20px;">
     <h5 style="margin: 0 0 8px 0; color: #e0e7ff; font-size: 0.9rem; font-weight: 600;">How to interpret these metrics</h5>
     <ul style="margin: 0; padding-left: 20px; color: #cbd5e1; font-size: 0.85rem; line-height: 1.5;">
-        <li><b>{trend_label_text}:</b> Indicates the overall direction. {trend_explanation}</li>
-        <li><b>Volatility:</b> Measures stability. Lower values mean steady progress; higher values indicate erratic economic shocks or inconsistent data.</li>
+        <li><b>{trend_label_text}:</b> Summarizes the movement from the previous year to the current year (Year-over-Year). {trend_explanation}</li>
+        <li><b>Volatility:</b> A statistical measure of variation. Low volatility indicates consistent, predictable progress; high volatility suggests instability, economic shocks, or data quality issues.</li>
         <li>{gap_explanation}</li>
     </ul>
 </div>
