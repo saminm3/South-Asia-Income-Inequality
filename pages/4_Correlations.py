@@ -65,31 +65,40 @@ st.markdown("""
     font-size: 0.95rem;
 }
 
-/* Key statistics metric cards */
-div[data-testid="stMetric"] {
-    border-radius: 16px;
-    border: 1px solid rgba(139, 92, 246, 0.35);
-    background: linear-gradient(
-        180deg,
-        rgba(88, 28, 135, 0.28),
-        rgba(17, 24, 39, 0.28)
-    );
-    padding: 14px 14px;
-}
-
-div[data-testid="stMetricLabel"] {
-    color: #cbd5e1 !important;
-    font-size: 0.90rem;
-}
-
-div[data-testid="stMetricValue"] {
-    color: #ffffff !important;
-    font-weight: 700;
-}
-
-div[data-testid="stMetricDelta"] {
-    color: #a78bfa !important;
-}
+/* METRIC CARDS: Much more purple glow theme */
+    div[data-testid="stMetric"], div[data-testid="metric-container"] {
+        background: linear-gradient(135deg, rgba(139, 92, 246, 0.25) 0%, rgba(99, 102, 241, 0.2) 100%) !important;
+        border: 1px solid rgba(139, 92, 246, 0.5) !important;
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 4px 20px rgba(139, 92, 246, 0.25), 0 0 40px rgba(139, 92, 246, 0.1) !important;
+        backdrop-filter: blur(10px);
+        transition: all 0.3s ease;
+    }
+    
+    div[data-testid="stMetric"]:hover, div[data-testid="metric-container"]:hover {
+        border-color: rgba(139, 92, 246, 0.8) !important;
+        box-shadow: 0 4px 30px rgba(139, 92, 246, 0.45), 0 0 50px rgba(139, 92, 246, 0.25) !important;
+        transform: translateY(-2px);
+    }
+    
+    div[data-testid="stMetricLabel"] {
+        color: #a78bfa !important;
+        font-size: 0.875rem !important;
+        font-weight: 500 !important;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    div[data-testid="stMetricValue"] {
+        color: #ffffff !important;
+        font-size: 2rem !important;
+        font-weight: 700 !important;
+    }
+    
+    div[data-testid="stMetricDelta"] {
+        font-size: 0.875rem !important;
+    }
 
 /* Dataframe styling (correlation page only) */
 div[data-testid="stDataFrame"] {
