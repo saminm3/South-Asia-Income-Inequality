@@ -67,23 +67,24 @@ st.markdown("""
     /* header {visibility: hidden;} */
     
     /* METRIC CARDS: Much more purple glow theme */
-    div[data-testid="metric-container"] {
-        background: linear-gradient(135deg, rgba(139, 92, 246, 0.15) 0%, rgba(99, 102, 241, 0.1) 100%);
-        border: 1px solid rgba(139, 92, 246, 0.4);
+    /* METRIC CARDS: Much more purple glow theme */
+    div[data-testid="stMetric"], div[data-testid="metric-container"] {
+        background: linear-gradient(135deg, rgba(139, 92, 246, 0.25) 0%, rgba(99, 102, 241, 0.2) 100%) !important;
+        border: 1px solid rgba(139, 92, 246, 0.5) !important;
         border-radius: 12px;
         padding: 20px;
-        box-shadow: 0 4px 20px rgba(139, 92, 246, 0.25), 0 0 40px rgba(139, 92, 246, 0.1);
+        box-shadow: 0 4px 20px rgba(139, 92, 246, 0.25), 0 0 40px rgba(139, 92, 246, 0.1) !important;
         backdrop-filter: blur(10px);
         transition: all 0.3s ease;
     }
     
-    div[data-testid="metric-container"]:hover {
-        border-color: rgba(139, 92, 246, 0.6);
-        box-shadow: 0 4px 30px rgba(139, 92, 246, 0.35), 0 0 50px rgba(139, 92, 246, 0.15);
+    div[data-testid="stMetric"]:hover, div[data-testid="metric-container"]:hover {
+        border-color: rgba(139, 92, 246, 0.8) !important;
+        box-shadow: 0 4px 30px rgba(139, 92, 246, 0.45), 0 0 50px rgba(139, 92, 246, 0.25) !important;
         transform: translateY(-2px);
     }
     
-    div[data-testid="metric-container"] > label {
+    div[data-testid="stMetricLabel"] {
         color: #a78bfa !important;
         font-size: 0.875rem !important;
         font-weight: 500 !important;
@@ -91,13 +92,13 @@ st.markdown("""
         letter-spacing: 0.5px;
     }
     
-    div[data-testid="metric-container"] > div {
+    div[data-testid="stMetricValue"] {
         color: #ffffff !important;
         font-size: 2rem !important;
         font-weight: 700 !important;
     }
     
-    div[data-testid="metric-container"] [data-testid="stMetricDelta"] {
+    div[data-testid="stMetricDelta"] {
         font-size: 0.875rem !important;
     }
     

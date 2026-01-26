@@ -69,19 +69,44 @@ st.markdown("""
         color: #e2e8f0;
     }
     
-    /* Metric cards styling */
-    [data-testid="stMetricValue"] {
-        color: #ffffff;
-        font-size: 2rem;
+    /* METRIC CARDS: Much more purple glow theme */
+    div[data-testid="stMetric"], div[data-testid="metric-container"] {
+        background: linear-gradient(135deg, rgba(139, 92, 246, 0.25) 0%, rgba(99, 102, 241, 0.2) 100%) !important;
+        border: 1px solid rgba(139, 92, 246, 0.5) !important;
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 4px 20px rgba(139, 92, 246, 0.25), 0 0 40px rgba(139, 92, 246, 0.1) !important;
+        backdrop-filter: blur(10px);
+        transition: all 0.3s ease;
     }
     
-    [data-testid="stMetricLabel"] {
-        color: #a78bfa;
+    div[data-testid="stMetric"]:hover, div[data-testid="metric-container"]:hover {
+        border-color: rgba(139, 92, 246, 0.8) !important;
+        box-shadow: 0 4px 30px rgba(139, 92, 246, 0.45), 0 0 50px rgba(139, 92, 246, 0.25) !important;
+        transform: translateY(-2px);
     }
     
-    /* Button styling to match sidebar */
+    div[data-testid="stMetricLabel"] {
+        color: #a78bfa !important;
+        font-size: 0.875rem !important;
+        font-weight: 500 !important;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    div[data-testid="stMetricValue"] {
+        color: #ffffff !important;
+        font-size: 2rem !important;
+        font-weight: 700 !important;
+    }
+    
+    div[data-testid="stMetricDelta"] {
+        font-size: 0.875rem !important;
+    }
+    
+    /* Button styling to match sidebar - Reduced intensity but visible */
     .stButton > button {
-        background: rgba(139, 92, 246, 0.2);
+        background: rgba(139, 92, 246, 0.15);
         border: 1px solid rgba(139, 92, 246, 0.3);
         border-radius: 8px;
         color: #ffffff;
@@ -89,7 +114,7 @@ st.markdown("""
     }
     
     .stButton > button:hover {
-        background: rgba(139, 92, 246, 0.35);
+        background: rgba(139, 92, 246, 0.3);
         border-color: #8b5cf6;
         box-shadow: 0 0 15px rgba(139, 92, 246, 0.3);
     }
@@ -240,7 +265,7 @@ def apply_year_filter(year):
 # --------------------------------------------------
 # SECTION 1: Smart Search Command Palette
 # --------------------------------------------------
-st.subheader("⌨ Quick Search Command Palette")
+st.subheader("Quick Search Command Palette")
 
 # Keyboard shortcut hint
 st.markdown("""
@@ -527,7 +552,7 @@ st.divider()
 # --------------------------------------------------
 # SECTION 2: Quick Action Shortcuts (ALL PAGES!)
 # --------------------------------------------------
-st.subheader("⚡ Quick Action Shortcuts")
+st.subheader("Quick Action Shortcuts")
 st.caption("One-click navigation to all analysis pages")
 
 # Row 1: Main pages
@@ -571,7 +596,7 @@ with col8:
 # Row 3: Help (centered)
 col_spacer, col_help, col_spacer2 = st.columns([3, 2, 3])
 with col_help:
-    if st.button("❓ Help", use_container_width=True, type="secondary", key="nav_help"):
+    if st.button("Help", use_container_width=True, type="secondary", key="nav_help"):
         st.switch_page("pages/9_Help.py")
 
 st.divider()
