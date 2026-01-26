@@ -54,6 +54,10 @@ HELP_CONTENT = {
         "title": "Dashboard - Multi-Dimensional Overview",
         "overview": "Comprehensive statistical overview with temporal trends, country comparisons, distribution analysis, and correlation patterns. Perfect for getting a complete picture of inequality dynamics.",
         "features": [
+        {
+                "name": "Summary Metric Cards",
+                "description": "Five key metrics at the top of the page showing: (1) Regional Average - the mean value across all selected countries with year-over-year % change, (2) Best Performer - the country with the best value in the latest year, with its actual value shown below, (3) Needs Attention - the country requiring improvement in the latest year, with its actual value shown below, (4) Data Coverage - percentage of expected data points that actually exist (shows how complete the data is), with comparison to 50% baseline, (5) Data Range - the time span of your analysis"
+            },
             {
                 "name": "Temporal Trends",
                 "description": "Line charts showing how indicators change over time"

@@ -199,10 +199,16 @@ with tab1:
         Navigate through pages using the sidebar:
         <ul>
             <li><strong>Dashboard:</strong> Overall trends and statistics</li>
+            <li><strong>Smart Search:</strong> Quickly find indicators and insights</li>
             <li><strong>Map Analysis:</strong> Geographic patterns and animations</li>
             <li><strong>Correlations:</strong> Relationships between indicators</li>
-            <li><strong>Other pages:</strong> Specialized analysis tools</li>
-        </ul>
+            <li><strong>Income Simulator:</strong> Model policy impacts on inequality</li>
+            <li><strong><Data Quality:</strong> Assess data completeness for your selections</li>
+            <li><strong>Indicator Insights:</strong> Deep dives into specific measures</li>
+            <li><strong>Temporal Compare:</strong> Side-by-side year comparisons</li>
+            <li><strong>Data Quality:</strong> Check completeness and reliability of your selections</li>
+            
+    </ul>
     </div>
     """, unsafe_allow_html=True)
     
