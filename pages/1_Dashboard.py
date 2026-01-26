@@ -260,10 +260,8 @@ filtered_df = filtered_df.groupby(['country', 'year', 'indicator']).agg({
     'value': 'mean'
 }).reset_index()
 
-# Auto-scale if values are too large (should be 0-100 for GINI)
-if filtered_df['value'].max() > 100:
-    filtered_df['value'] = filtered_df['value'] / 1000
-    
+# Auto-scaling logic removed to preserve data integrity
+
 
 # ═══════════════════════════════════════════════════════════════════
 # API ENRICHMENT SECTION
@@ -449,7 +447,10 @@ negative_terms = [
     'dependency', 'informal payment', 'out-of-school',
     
     # Time-based bureaucracy (negative - longer = worse)
-    'time required', 'time to'
+    'time required', 'time to',
+
+    # Concentration metrics (negative - higher = worse)
+    'share held by top', 'concentration', 'top 1% income', 'top 10% income'
 ]
 is_negative_indicator = any(term in indicator_name for term in negative_terms)
 is_positive_indicator = not is_negative_indicator
@@ -1823,7 +1824,7 @@ with col_insight1:
     <div class="stat-card">
         <div style="font-size: 0.875rem; color: #94a3b8; margin-bottom: 8px;">{trend_label}</div>
         <div style="font-size: 1.1rem; color: #ffffff; font-weight: 600;">
-            {metric_label} is {trend_direction}
+            {trend_direction.capitalize()}
         </div>
         <div style="font-size: 0.85rem; color: #94a3b8; margin-top: 8px;">
             {abs(yoy_pct):.1f}% change year-over-year
