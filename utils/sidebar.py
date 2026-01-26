@@ -1,10 +1,12 @@
 """
-Sidebar Styles - Extracted from home.py
+Sidebar Styles - Centralized styling logic
 Beautiful modern sidebar design with purple/pink gradients
 Apply this to all pages for consistent styling
 """
 
 import streamlit as st
+import os
+from pathlib import Path
 
 def apply_sidebar_styles():
     """
@@ -158,11 +160,23 @@ def apply_page_styles():
     </style>
     """, unsafe_allow_html=True)
 
+def apply_custom_css():
+    """
+    Load and apply the dashboard.css file if it exists
+    """
+    css_path = Path(__file__).parent.parent / "assets" / "dashboard.css"
+    if css_path.exists():
+        try:
+            with open(css_path, "r") as f:
+                st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
+        except Exception:
+            pass
 
 def apply_all_styles():
     """
     Apply both sidebar and page styles in one call
     Use this at the top of each page for complete styling
     """
+    apply_custom_css()
     apply_sidebar_styles()
     apply_page_styles()

@@ -23,6 +23,16 @@ st.set_page_config(
 render_help_button("Indicator Insights")
 apply_all_styles()
 
+# -----------------
+# Navigation Helper
+# -----------------
+from utils.navigation_ui import bottom_nav_layout
+
+def safe_stop():
+    """Render navigation before stopping the script"""
+    bottom_nav_layout(__file__)
+    st.stop()
+
 # Load custom CSS
 try:
     with open('assets/dashboard.css') as f:
@@ -146,7 +156,7 @@ with st.spinner("Loading data..."):
 
 if df.empty:
     st.error("No data available")
-    st.stop()
+    safe_stop()
 
 # Clean basic
 df = df.dropna(subset=["country", "year", "indicator", "value"]).copy()
@@ -181,7 +191,7 @@ df = df[df["indicator"].isin(SUNBURST_ALLOWED_LABELS)].copy()
 
 if df.empty:
     st.error("No data available after applying Sunburst indicator filter.")
-    st.stop()
+    safe_stop()
 
 # Sidebar: Year + Color only (NO country selection)
 with st.sidebar:
@@ -196,7 +206,7 @@ with st.sidebar:
     available_years = sorted(df["year"].unique(), reverse=True)
     if not available_years:
         st.error("No valid years found.")
-        st.stop()
+        safe_stop()
 
     # choose best year (most coverage)
     year_coverage = df.groupby("year").agg(value_count=("value", "count"), ind_count=("indicator", "nunique"))
@@ -222,7 +232,7 @@ with st.sidebar:
 year_df = df[df["year"] == selected_year].copy()
 if year_df.empty:
     st.warning(f"No data for year {selected_year}")
-    st.stop()
+    safe_stop()
 
 # Filter to home countries if set (NO new selection)
 if home_countries:
@@ -230,7 +240,7 @@ if home_countries:
 
 if year_df.empty:
     st.warning("No data after applying Home selected countries.")
-    st.stop()
+    safe_stop()
 
 # ============================================================
 # ✅ ADDED: Coverage / data availability for the selected year
@@ -313,7 +323,7 @@ sunburst_df = sunburst_df[sunburst_df["normalized_value"] > 0]
 
 if sunburst_df.empty or sunburst_df["normalized_value"].sum() == 0:
     st.error("Sunburst cannot render because normalized values sum to 0. Try a different year.")
-    st.stop()
+    safe_stop()
 
 # Add region
 sunburst_df["Region"] = "South Asia"
@@ -503,7 +513,7 @@ st.header("Country Spotlight (Story Mode)")
 
 if not countries_in_view:
     st.warning("No countries available for Spotlight.")
-    st.stop()
+    safe_stop()
 
 if "spotlight_idx" not in st.session_state:
     st.session_state.spotlight_idx = 0
@@ -528,7 +538,7 @@ with colB:
 c_df = sunburst_df[sunburst_df["country"] == spot_country].copy()
 if c_df.empty:
     st.warning("No data for spotlight country.")
-    st.stop()
+    safe_stop()
 
 bubble_df = c_df.sort_values("normalized_value", ascending=False).copy()
 bubble_df["indicator_short"] = bubble_df["indicator"].astype(str).str.slice(0, 60)  # Increased from 45 to 60
@@ -608,3 +618,8 @@ with st.expander("View underlying data (for this country)"):
 st.divider()
 st.caption("Indicator Insights | South Asia Inequality Analysis Platform")
 
+# -----------------
+# Navigation
+# -----------------
+from utils.navigation_ui import bottom_nav_layout
+bottom_nav_layout(__file__)

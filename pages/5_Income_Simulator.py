@@ -15,7 +15,6 @@ from utils.imf_api_loader import get_imf_loader
 
 st.set_page_config(
     page_title="Income Simulator",
-    page_icon="💸",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -862,9 +861,9 @@ else:
 
 
 # ============= MODE SELECTION =============
-st.markdown('<p class="section-header">🎯 Step 1: Choose Your Simulator Mode</p>', unsafe_allow_html=True)
+st.markdown('<p class="section-header">Step 1: Choose Your Simulator Mode</p>', unsafe_allow_html=True)
 
-mode_options = ["📊 Individual Profile Simulator", "🔄 Profile Comparison Simulator", "🗓️ Historical Snapshot Comparison"]
+mode_options = ["Individual Profile Simulator", "Profile Comparison Simulator", "Historical Snapshot Comparison"]
 current_mode_idx = 0
 if st.session_state.simulator_mode == "comparison": current_mode_idx = 1
 elif st.session_state.simulator_mode == "historical": current_mode_idx = 2
@@ -905,7 +904,7 @@ st.markdown("---")
 if st.session_state.simulator_mode == "individual":
     # ============= INDIVIDUAL MODE - STEP 1: PROFILE =============
     
-    st.markdown('<p class="section-header">📝 Step 2: Build Your Profile</p>', unsafe_allow_html=True)
+    st.markdown('<p class="section-header">Step 2: Build Your Profile</p>', unsafe_allow_html=True)
 
     col_input, col_preview = st.columns([2, 1], gap="large")
 
@@ -1196,7 +1195,7 @@ if st.session_state.simulator_mode == "individual":
 
     # ============= STEP 2: RESULTS =============
 
-    st.markdown('<p class="section-header">📊 Step 3: Your Simulation Results</p>', unsafe_allow_html=True)
+    st.markdown('<p class="section-header">Step 3: Your Simulation Results</p>', unsafe_allow_html=True)
 
     group, color = get_tercile(sp_p)
 
@@ -1234,7 +1233,7 @@ Rank higher than <b>{sp_p:.1f}%</b> of {sp_country}. Out of 100 people, you surp
 
     # ============= STEP 3: INSIGHTS =============
 
-    st.markdown('<p class="section-header">💡 Step 4: What This Means for You - Plain Language Insights</p>', unsafe_allow_html=True)
+    st.markdown('<p class="section-header">Step 4: What This Means for You - Plain Language Insights</p>', unsafe_allow_html=True)
 
     insights, recommendations = generate_insights(sp_p, breakdown_components, sp_country, sp_gender, sp_location, sp_occ, sp_credit, sp_edu, sp_digital, sp_poverty=sp_poverty)
 
@@ -1250,7 +1249,7 @@ Rank higher than <b>{sp_p:.1f}%</b> of {sp_country}. Out of 100 people, you surp
 
     # Recommendations
     if recommendations:
-        st.markdown('<p class="section-header" style="margin-top: 50px;">🎯 Personalized Recommendations</p>', unsafe_allow_html=True)
+        st.markdown('<p class="section-header" style="margin-top: 50px;">Personalized Recommendations</p>', unsafe_allow_html=True)
         st.markdown('<p style="color: #94a3b8; font-size: 1.1rem; margin-bottom: 25px;">Based on your profile, here are the most impactful actions to improve your economic position:</p>', unsafe_allow_html=True)
         
         for i, rec in enumerate(recommendations, 1):
@@ -1271,7 +1270,7 @@ Rank higher than <b>{sp_p:.1f}%</b> of {sp_country}. Out of 100 people, you surp
 
 # ============= COMPARISON MODE =============
 elif st.session_state.simulator_mode == "comparison":
-    st.markdown('<p class="section-header">📝 Step 2: Build Both Profiles</p>', unsafe_allow_html=True)
+    st.markdown('<p class="section-header">Step 2: Build Both Profiles</p>', unsafe_allow_html=True)
     
     st.markdown("""
     <div class="comparison-card">
@@ -1369,7 +1368,7 @@ elif st.session_state.simulator_mode == "comparison":
     )
     
     #  ============= COMPARISON RESULTS =============
-    st.markdown('<p class="section-header">📊 Step 3: Comparison Results</p>', unsafe_allow_html=True)
+    st.markdown('<p class="section-header">Step 3: Comparison Results</p>', unsafe_allow_html=True)
     
     # Display both profile summaries with scores
     summary_col1, summary_col2 = st.columns([1, 1], gap="large")
@@ -1418,78 +1417,197 @@ elif st.session_state.simulator_mode == "comparison":
     
     # Visual Comparison Dashboard
     st.markdown("---")
-    st.markdown("### 🎯 Visual Comparison Dashboard")
+    st.markdown("### Visual Comparison Dashboard")
     
     viz_comp_col1, viz_comp_col2, viz_comp_col3 = st.columns([1, 2, 1], gap="large")
     
     with viz_comp_col1:
-        # Profile A Donut
-        fig_donut_a = go.Figure(data=[go.Pie(
-            values=[profile_a_p, 100-profile_a_p],
-            hole=0.7,
-            marker=dict(colors=['#3b82f6', 'rgba(59, 130, 246, 0.1)'], line=dict(color='#0f1419', width=2)),
-            textinfo='none',
-            hoverinfo='skip',
-            showlegend=False
-        )])
-        fig_donut_a.update_layout(
+        # Profile A Gauge
+        fig_gauge_a = go.Figure(go.Indicator(
+            mode = "gauge+number",
+            value = profile_a_p,
+            domain = {'x': [0, 1], 'y': [0, 1]},
+            title = {'text': "Profile A Percentile", 'font': {'size': 16, 'color': '#8b98a5'}},
+            gauge = {
+                'axis': {'range': [None, 100], 'tickwidth': 1, 'tickcolor': "#8b98a5"},
+                'bar': {'color': "#3b82f6"},
+                'bgcolor': "rgba(0,0,0,0)",
+                'borderwidth': 2,
+                'bordercolor': "#2f3336",
+                'steps': [
+                    {'range': [0, 33], 'color': 'rgba(239, 68, 68, 0.1)'},
+                    {'range': [33, 66], 'color': 'rgba(245, 158, 11, 0.1)'},
+                    {'range': [66, 100], 'color': 'rgba(16, 185, 129, 0.1)'}
+                ],
+                'threshold': {
+                    'line': {'color': "white", 'width': 4},
+                    'thickness': 0.75,
+                    'value': profile_a_p
+                }
+            }
+        ))
+        fig_gauge_a.update_layout(
             paper_bgcolor='rgba(0,0,0,0)',
+            font={'color': "#60a5fa", 'family': "Inter"},
             height=250,
-            margin=dict(t=10, b=10, l=10, r=10),
-            annotations=[
-                dict(text=f"<b>{profile_a_p:.0f}%</b>", x=0.5, y=0.55, font=dict(size=36, color='#60a5fa'), showarrow=False),
-                dict(text="Profile A", x=0.5, y=0.35, font=dict(size=14, color='#8b98a5'), showarrow=False)
-            ]
+            margin=dict(t=50, b=20, l=30, r=30)
         )
-        st.plotly_chart(fig_donut_a, use_container_width=True)
+        st.plotly_chart(fig_gauge_a, use_container_width=True)
     
     with viz_comp_col2:
         # Difference indicator
         diff = profile_b_p - profile_a_p
         diff_color = "#10b981" if diff > 0 else "#ef4444" if diff < 0 else "#8b98a5"
-        diff_icon = "📈" if diff > 0 else "📉" if diff < 0 else "➡️"
         diff_text = "Better" if diff > 0 else "Worse" if diff < 0 else "Same"
         
+        # Calculate main driver
+        # We'll compare the component differences
+        comp_diffs = {}
+        for k in profile_a_components.keys():
+            comp_diffs[k] = profile_b_components.get(k, 0) - profile_a_components.get(k, 0)
+        
+        # Identify the driver with the largest absolute impact
+        if abs(diff) > 0.1:
+            main_driver_key = max(comp_diffs, key=lambda k: abs(comp_diffs[k]))
+            impact_val = comp_diffs[main_driver_key]
+            
+            if impact_val > 0:
+                driver_explanation = f"Profile B's {main_driver_key} is a major positive factor."
+            elif impact_val < 0:
+                driver_explanation = f"Profile A's {main_driver_key} gives it an advantage."
+            else:
+                driver_explanation = "The profiles are economically differentiated across multiple factors."
+        else:
+            driver_explanation = "Both profiles have nearly identical economic standings."
+
         st.markdown(f"""
         <div style="text-align: center; padding: 40px; background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(16, 185, 129, 0.1)); border-radius: 16px; border: 2px solid {diff_color};">
-            <div style="font-size: 4rem; margin-bottom: 15px;">{diff_icon}</div>
             <div style="font-size: 3rem; font-weight: 900; color: {diff_color}; margin: 15px 0;">
                 {'+' if diff > 0 else ''}{diff:.1f}
             </div>
             <div style="color: #8b98a5; font-size: 1rem; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 10px;">Percentile Points</div>
             <div style="color: #e2e8f0; font-size: 1.3rem; font-weight: 600;">Profile B is {diff_text}</div>
-            <div style="color: #8b98a5; font-size: 0.9rem; margin-top: 15px;">
-                {f"Profile B ranks {abs(diff):.1f} points higher" if diff > 0 else f"Profile A ranks {abs(diff):.1f} points higher" if diff < 0 else "Both profiles are equal"}
+            <div style="color: #8b98a5; font-size: 0.95rem; margin-top: 20px; font-style: italic;">
+                {driver_explanation}
             </div>
         </div>
         """, unsafe_allow_html=True)
     
     with viz_comp_col3:
-        # Profile B Donut
-        fig_donut_b = go.Figure(data=[go.Pie(
-            values=[profile_b_p, 100-profile_b_p],
-            hole=0.7,
-            marker=dict(colors=['#10b981', 'rgba(16, 185, 129, 0.1)'], line=dict(color='#0f1419', width=2)),
-            textinfo='none',
-            hoverinfo='skip',
-            showlegend=False
-        )])
-        fig_donut_b.update_layout(
+        # Profile B Gauge
+        fig_gauge_b = go.Figure(go.Indicator(
+            mode = "gauge+number",
+            value = profile_b_p,
+            domain = {'x': [0, 1], 'y': [0, 1]},
+            title = {'text': "Profile B Percentile", 'font': {'size': 16, 'color': '#8b98a5'}},
+            gauge = {
+                'axis': {'range': [None, 100], 'tickwidth': 1, 'tickcolor': "#8b98a5"},
+                'bar': {'color': "#10b981"},
+                'bgcolor': "rgba(0,0,0,0)",
+                'borderwidth': 2,
+                'bordercolor': "#2f3336",
+                'steps': [
+                    {'range': [0, 33], 'color': 'rgba(239, 68, 68, 0.1)'},
+                    {'range': [33, 66], 'color': 'rgba(245, 158, 11, 0.1)'},
+                    {'range': [66, 100], 'color': 'rgba(16, 185, 129, 0.1)'}
+                ],
+                'threshold': {
+                    'line': {'color': "white", 'width': 4},
+                    'thickness': 0.75,
+                    'value': profile_b_p
+                }
+            }
+        ))
+        fig_gauge_b.update_layout(
             paper_bgcolor='rgba(0,0,0,0)',
+            font={'color': "#34d399", 'family': "Inter"},
             height=250,
-            margin=dict(t=10, b=10, l=10, r=10),
-            annotations=[
-                dict(text=f"<b>{profile_b_p:.0f}%</b>", x=0.5, y=0.55, font=dict(size=36, color='#34d399'), showarrow=False),
-                dict(text="Profile B", x=0.5, y=0.35, font=dict(size=14, color='#8b98a5'), showarrow=False)
-            ]
+            margin=dict(t=50, b=20, l=30, r=30)
         )
-        st.plotly_chart(fig_donut_b, use_container_width=True)
+        st.plotly_chart(fig_gauge_b, use_container_width=True)
+
+    # Side-by-Side Profile Storytelling Comparison
+    st.markdown("#### The Economic Journey: A Tale of Two Profiles")
+    
+    # Narrative Logic
+    better_profile = "Profile B" if diff > 0 else "Profile A" if diff < 0 else "both profiles"
+    gap_desc = f"a significant lead of {abs(diff):.1f} percentile points" if abs(diff) > 10 else f"a slight edge of {abs(diff):.1f} percentile points" if abs(diff) > 0 else "identical standing"
+    
+    story_col1, story_col2 = st.columns(2, gap="large")
+    
+    with story_col1:
+        # Profile A Story
+        a_narrative = f"Living in <b>{profile_a_country}</b>, Profile A navigates an economy where "
+        if profile_a_edu > 12:
+            a_narrative += "their advanced education serves as a powerful shield against economic volatility. "
+        elif profile_a_edu > 6:
+            a_narrative += "their secondary schooling provides a solid foundation for stability. "
+        else:
+            a_narrative += "limited formal schooling presents a steep climb for upward mobility. "
+            
+        if profile_a_digital > 70:
+            a_narrative += "Armed with elite digital skills, they are well-positioned for the modern labor market. "
+        elif profile_a_digital > 30:
+            a_narrative += "They possess the basic digital tools needed to participate in the growing tech economy. "
+            
+        if profile_a_location == "Urban":
+            a_narrative += f"The urban environment of {profile_a_country} offers them a 'density' of opportunities, especially in the <b>{profile_a_occ}</b> sector. "
+        else:
+            a_narrative += f"As a rural resident, they face different constraints, but their role in <b>{profile_a_occ}</b> defines their daily economic reality. "
+            
+        if profile_a_credit:
+            a_narrative += "Access to formal credit acts as a critical multiplier for their potential investments."
+            
+        st.markdown(f"""
+        <div class="insight-panel" style="border-left-color: #3b82f6; min-height: 280px;">
+            <div class="insight-title" style="color: #60a5fa;">Profile A's Context</div>
+            <p style="color: #e2e8f0; font-size: 1rem; line-height: 1.7; padding: 5px;">{a_narrative}</p>
+        </div>
+        """, unsafe_allow_html=True)
+        
+    with story_col2:
+        # Profile B Story
+        b_narrative = f"Meanwhile, in <b>{profile_b_country}</b>, Profile B's journey follows a different path. "
+        if profile_b_edu > profile_a_edu:
+            b_narrative += f"With <b>{profile_b_edu - profile_a_edu} more years of education</b> than Profile A, they've unlocked access to higher-tiered social circles. "
+        elif profile_b_edu < profile_a_edu:
+            b_narrative += f"Having {profile_a_edu - profile_b_edu} fewer years of schooling than Profile A, they must rely more on practical experience and networking. "
+            
+        if profile_b_digital > profile_a_digital:
+            b_narrative += f"Their superior digital proficiency ({profile_b_digital}% vs {profile_a_digital}%) acts as a modern-day 'literacy' that gives them an edge. "
+            
+        if profile_b_location != profile_a_location:
+            b_narrative += f"The shift from {profile_a_location} to <b>{profile_b_location}</b> living drastically alters their access to infrastructure and high-paying jobs. "
+            
+        if profile_b_credit and not profile_a_credit:
+            b_narrative += "Unlike Profile A, their access to formal banking provides a safety net and a bridge to future growth. "
+        elif not profile_b_credit and profile_a_credit:
+            b_narrative += "Lacking the formal credit access that Profile A enjoys, they face more barriers to scaling their economic activities. "
+
+        st.markdown(f"""
+        <div class="insight-panel-success" style="border-left-color: #10b981; min-height: 280px;">
+            <div class="insight-title" style="color: #34d399;">Profile B's Context</div>
+            <p style="color: #e2e8f0; font-size: 1rem; line-height: 1.7; padding: 5px;">{b_narrative}</p>
+        </div>
+        """, unsafe_allow_html=True)
+
+    # The "Why" - Final Narrative Synthesis
+    st.markdown(f"""
+    <div style="background: linear-gradient(90deg, rgba(59, 130, 246, 0.1), rgba(16, 185, 129, 0.1)); padding: 25px; border-radius: 16px; border: 1px solid rgba(139, 92, 246, 0.2); margin-top: 20px;">
+        <h5 style="color: #ffffff; margin-top: 0;">Why is {better_profile} ahead?</h5>
+        <p style="color: #e2e8f0; font-size: 1.05rem; line-height: 1.6;">
+            The data reveals that {better_profile} holds {gap_desc}. This isn't just about single attributes, but how they interact with the national environment. 
+            For instance, <b>{max(comp_diffs, key=lambda k: abs(comp_diffs[k]))}</b> emerges as the pivotal differentiator in this comparison. 
+            In the context of {profile_a_country if diff < 0 else profile_b_country}, this attribute provides disproportionate leverage, shifting {better_profile} into a more exclusive economic tier.
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
     
 
     
     # Multi-dimensional radar chart comparison
-    st.markdown('<p class="section-header" style="margin-top: 50px;">🕸️ Multi-Dimensional Score Comparison</p>', unsafe_allow_html=True)
-    st.markdown('<p style="color: #94a3b8; font-size: 1.1rem; margin-bottom: 25px;">Visualizing the relative strengths and trade-offs of both profiles across five key dimensions.</p>', unsafe_allow_html=True)
+    st.markdown('<p class="section-header" style="margin-top: 50px;">Multi-Dimensional Score Comparison</p>', unsafe_allow_html=True)
+    st.markdown('<p style="color: #94a3b8; font-size: 1.1rem; margin-bottom: 25px;">Relative strengths and trade-offs of both profiles across five key dimensions.</p>', unsafe_allow_html=True)
     
     categories = ['Education\n(Years)', 'Digital Skills\n(%)', 'Occupation\n(Points)', 'Urban\n(Points)', 'Credit\n(Points)']
     
@@ -1575,22 +1693,22 @@ elif st.session_state.simulator_mode == "comparison":
     
 # ============= HISTORICAL SNAPSHOT MODE =============
 else:
-    st.markdown('<p class="section-header">⏳ Step 2: Configure Historical Comparison</p>', unsafe_allow_html=True)
+    st.markdown('<p class="section-header">Step 2: Configure Historical Comparison</p>', unsafe_allow_html=True)
     
     st.markdown("""<div class="historical-card">
-<h3 style="text-align: center; color: #f59e0b; margin-bottom: 10px;">🗓️ Historical Evolution Tool</h3>
+<h3 style="text-align: center; color: #f59e0b; margin-bottom: 10px;">Historical Evolution Tool</h3>
 <p style="text-align: center; color: #8b98a5; margin-bottom: 20px;">Observe how the <b>same profile attributes</b> would result in different social standings across two distinct time periods.</p>
 </div>""", unsafe_allow_html=True)
 
     # SHARED ATTRIBUTES FOR BOTH YEARS
-    st.markdown("#### 🛠️ Fixed Profile Attributes")
+    st.markdown("#### Fixed Profile Attributes")
     col_attr1, col_attr2 = st.columns([2, 1], gap="large")
     
     with col_attr1:
-        st.markdown('<div class="input-group-label">🌍 Country Selection</div>', unsafe_allow_html=True)
+        st.markdown('<div class="input-group-label">Country Selection</div>', unsafe_allow_html=True)
         h_country = st.selectbox("Compare data for:", list(COUNTRY_DATA.keys()), key="h_country", label_visibility="collapsed")
         
-        st.markdown('<div class="input-group-label" style="margin-top: 25px;">🛠️ Profile Attributes</div>', unsafe_allow_html=True)
+        st.markdown('<div class="input-group-label" style="margin-top: 25px;">Profile Attributes</div>', unsafe_allow_html=True)
         c1, c2 = st.columns(2)
         with c1:
             h_edu = st.slider("Education (yrs)", 0, 20, 12, key="h_edu")
@@ -1633,7 +1751,7 @@ else:
     p2, comp2 = calculate_historical_percentile(h_country, year_2, h_edu, h_digital, h_g_val, h_u_val, h_occ, False, "Adult")
     
     # RESULTS
-    st.markdown('<p class="section-header">📊 Step 3: Social Standing Evolution</p>', unsafe_allow_html=True)
+    st.markdown('<p class="section-header">Step 3: Social Standing Evolution</p>', unsafe_allow_html=True)
     
     res_col1, res_col2 = st.columns(2, gap="large")
     
@@ -1755,7 +1873,7 @@ else:
     st.info(f"💡 **Analysis:** Between {year_1} and {year_2}, {h_country}'s economic landscape transformed significantly. In {year_1}, with lower internet penetration and schooling rates, your profile attributes were far more 'exclusive', granting a higher relative bonus. By {year_2}, as these resources became more common, the 'scarcity premium' for basic education and digital access declined, but the overall economic floor (Base Strength) rose due to GDP growth.")
     
     # ERA COMPARISON TABLE
-    st.markdown('<p class="section-header" style="margin-top: 50px;">🏛️ Deep Era Analysis</p>', unsafe_allow_html=True)
+    st.markdown('<p class="section-header" style="margin-top: 50px;">Deep Era Analysis</p>', unsafe_allow_html=True)
     st.markdown('<p style="color: #94a3b8; font-size: 1.1rem; margin-bottom: 25px;">Comparing the socio-economic reality of the selected profile across two distinct points in time.</p>', unsafe_allow_html=True)
     era_col1, era_col2 = st.columns(2)
     

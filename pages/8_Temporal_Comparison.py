@@ -118,6 +118,16 @@ st.set_page_config(
 )
 render_help_button("temporal")
 apply_all_styles()
+
+# -----------------
+# Navigation Helper
+# -----------------
+from utils.navigation_ui import bottom_nav_layout
+
+def safe_stop():
+    """Render navigation before stopping the script"""
+    bottom_nav_layout(__file__)
+    st.stop()
 st.title("Temporal Comparison")
 st.caption("Temporal, spatial, and statistical comparison of inequality indicators")
 
@@ -470,7 +480,7 @@ try:
     geojson = load_geojson()
 except Exception as e:
     st.error(f"❌ Error loading data: {str(e)}")
-    st.stop()
+    safe_stop()
 
 ok, msg = validate_dataframe(
     df,
@@ -479,11 +489,11 @@ ok, msg = validate_dataframe(
 
 if not ok:
     st.error(f"❌ Data validation error: {msg}")
-    st.stop()
+    safe_stop()
 
 if geojson is None:
     st.error("❌ GeoJSON data could not be loaded.")
-    st.stop()
+    safe_stop()
 
 # --------------------------------------------------
 # Indicator configuration (FIXED: More comprehensive mapping)
@@ -540,7 +550,7 @@ if 'analysis_config' not in st.session_state or st.session_state.analysis_config
     st.warning("⚠️ No configuration found. Please configure your analysis on the Home page first.")
     if st.button("Go to Home Page"):
         st.switch_page("home.py")
-    st.stop()
+    safe_stop()
 
 # Use indicator from home page configuration
 indicator = st.session_state.analysis_config.get('indicator')
@@ -549,7 +559,7 @@ if not indicator:
     st.error("❌ No indicator configured. Please select an indicator on the Home page.")
     if st.button("Go to Home Page"):
         st.switch_page("home.py")
-    st.stop()
+    safe_stop()
 
 # Verify indicator exists in dataset
 available_indicators = sorted(df["indicator"].unique())
@@ -558,7 +568,7 @@ if indicator not in available_indicators:
     st.info(f"Available indicators: {', '.join(available_indicators)}")
     if st.button("Go to Home Page to Reconfigure"):
         st.switch_page("home.py")
-    st.stop()
+    safe_stop()
 
 # Get indicator configuration
 indicator_config = get_indicator_config(indicator)
@@ -573,13 +583,13 @@ idf = idf.dropna(subset=["value"])
 
 if idf.empty:
     st.error(f"❌ No valid data available for {human_indicator(indicator)}")
-    st.stop()
+    safe_stop()
 
 years = sorted(idf["year"].unique())
 
 if len(years) < 2:
     st.warning(f"Not enough years for temporal comparison. Only {len(years)} year(s) available.")
-    st.stop()
+    safe_stop()
 
 # Show data availability info
 with st.expander("Data Availability"):
@@ -633,7 +643,7 @@ try:
         )
         if then_year >= now_year:
             st.error("❌ THEN year must be earlier than NOW year.")
-            st.stop()
+            safe_stop()
 
         df_then = idf[idf["year"] == then_year].copy()
         df_now = idf[idf["year"] == now_year].copy()
@@ -671,7 +681,7 @@ try:
 
 except Exception as e:
     st.error(f"❌ Error in period selection: {str(e)}")
-    st.stop()
+    safe_stop()
 
 # --------------------------------------------------
 # Keep common countries and validate
@@ -680,7 +690,7 @@ common = set(df_then["country_code"]) & set(df_now["country_code"])
 
 if len(common) == 0:
     st.error("❌ No overlapping countries between the two periods.")
-    st.stop()
+    safe_stop()
 
 df_then = df_then[df_then["country_code"].isin(common)].copy()
 df_now = df_now[df_now["country_code"].isin(common)].copy()
@@ -691,7 +701,7 @@ df_now = df_now.dropna(subset=["value"])
 
 if df_then.empty or df_now.empty:
     st.error("❌ No valid data available for comparison after filtering.")
-    st.stop()
+    safe_stop()
 # --------------------------------------------------
 # Ranking
 # --------------------------------------------------
@@ -700,7 +710,7 @@ try:
     df_now["rank_now"] = df_now["value"].rank(ascending=ascending, method='min')
 except Exception as e:
     st.error(f"❌ Error calculating rankings: {str(e)}")
-    st.stop()
+    safe_stop()
 
 # --------------------------------------------------
 # Merge & compute changes (FIXED: Better null handling)
@@ -715,7 +725,7 @@ try:
 
     if cmp.empty:
         st.error("❌ No data available after merging periods.")
-        st.stop()
+        safe_stop()
 
     # Calculate absolute change
     cmp["abs_change"] = cmp["value_now"] - cmp["value_then"]
@@ -739,7 +749,7 @@ try:
 
 except Exception as e:
     st.error(f"❌ Error computing changes: {str(e)}")
-    st.stop()
+    safe_stop()
 
 # --------------------------------------------------
 # Statistical test (FIXED: Better error handling)
