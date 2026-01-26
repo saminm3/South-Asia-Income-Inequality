@@ -346,65 +346,39 @@ fig.update_traces(
 fig.update_layout(
     title=f"Indicator Dominance Breakdown ({selected_year})",
     title_x=0.5,
-    height=850
+    height=700
 )
 
 # Right-aligned Download icon with tooltip
-col_spacer_sun, col_dl_sun = st.columns([10, 1])
-with col_dl_sun:
-    try:
-        png_bytes_sun = fig.to_image(format="png", width=1400, height=1000)
-        st.download_button(
-            label="⬇️",
-            data=png_bytes_sun,
-            file_name=f"sunburst_dominance_{selected_year}.png",
-            mime="image/png",
-            key="sunburst_dl_btn",
-            help="Download Sunburst Chart as PNG"
-        )
-    except:
-        st.button("⬇️", disabled=True, key="sunburst_dl_btn_dis", help="Download Unavailable")
+st.caption(" Click and drag to rotate • Click segments to zoom in/out")
 
 st.plotly_chart(fig, use_container_width=True, config={
     'displayModeBar': True, 
     'displaylogo': False, 
-    'modeBarButtons': [['zoomIn2d', 'zoomOut2d', 'resetScale2d', 'toImage']],
+    'modeBarButtons': [['toImage']],
     'toImageButtonOptions': {'format': 'png', 'filename': f'sunburst_{selected_year}'}
 })
+
 st.markdown(
     """
 <div class="purple-card">
-  <h4>How to read this chart</h4>
+  <h4>How to Read This Chart</h4>
   <ul>
-    <li><b>Country circle size</b> = how much data is available/visible for that country in this year <i>(not inequality)</i>.</li>
-    <li><b>Slices inside a country</b> = which indicators stand out after <b>normalization (0–100)</b>.</li>
-    <li><b>Color intensity</b> = higher/lower normalized dominance</i>.</li>
-    <li><b>Important</b>: this is a <i>dominance</i> view, not a direct measure of inequality and not causation.</li>
-    <li>The <b>inequality signal</b> below uses only: <b>Gini, income shares, poverty, unemployment</b>.</li>
+    <li><b>Country circle size</b> represents the volume of available data for that country in the selected year <i>(not a measure of inequality)</i>.</li>
+    <li><b>Inner segments</b> show which indicators dominate after <b>normalization (0–100 scale)</b> within each country's profile.</li>
+    <li><b>Color intensity</b> indicates the relative strength of normalized dominance across indicators.</li>
+    <li><b>Important:</b> This visualization displays <i>dominance patterns</i>, not direct inequality measurements or causal relationships.</li>
+    <li><b>Inequality signal:</b> Derived exclusively from <b>Gini index, income shares, poverty rates, and unemployment metrics</b>.</li>
   </ul>
+  <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(139, 92, 246, 0.25); font-size: 0.88rem; color: #cbd5e1;">
+    <b>Note:</b> Countries with similar circle sizes may still differ significantly due to varying indicator compositions.
+  </div>
 </div>
 """,
     unsafe_allow_html=True
 )
 
-st.caption("Tip: Countries can look similar in size but still differ because the indicator mix is different.")
 
-
-# ============================================================
-# ✅ Top dominant indicators (South Asia overall)
-# ============================================================
-top_indicators = (
-    sunburst_df.groupby("indicator")["normalized_value"]
-    .sum()
-    .sort_values(ascending=False)
-    .head(5)
-    .reset_index()
-)
-top_indicators.columns = ["Indicator", "Total dominance (sum of normalized)"]
-top_indicators["Total dominance (sum of normalized)"] = top_indicators["Total dominance (sum of normalized)"].round(1)
-
-with st.expander("Top dominant indicators (South Asia overall)"):
-    st.dataframe(top_indicators, use_container_width=True, hide_index=True)
 
 # ============================================================
 # ✅ Visualization Story (Country-wise)
@@ -487,30 +461,39 @@ for c in countries_in_view:
     top_drivers = drivers_map.get(c, [])
     driver_text = ", ".join(top_drivers) if top_drivers else "available indicators"
 
-    if lvl == "High":
-        one_line = f"**{c} shows a HIGH inequality signal** because inequality-related indicators dominate the visualization ({driver_text}) despite other indicators being present."
-    elif lvl == "Moderate":
-        one_line = f"**{c} shows a MODERATE inequality signal** mainly due to visible inequality-related drivers ({driver_text}), while other indicators also contribute."
-    else:
-        one_line = f"**{c} shows a LOWER inequality signal (relative)** because inequality-related dominance is weaker; the visualization is driven more by non-inequality indicators ({driver_text})."
+    
 
     with st.expander(f"{emoji} {c} — {lvl.upper()} inequality signal (click to view explanation)"):
-        st.markdown("**Inequality emphasis inside this country's chart (share of visible dominance):**")
+        st.markdown("**Inequality emphasis (share of visible dominance):**")
         st.progress(min(ineq_share_map.get(c, 0.0) / 100, 1.0))
-        st.caption(f"≈ **{ineq_share_map.get(c, 0.0):.0f}%** of this country’s visible dominance comes from inequality-related indicators (Gini / income shares / poverty / unemployment).")
+        st.caption(f"**{ineq_share_map.get(c, 0.0):.0f}%** of this country's visible dominance comes from inequality-related indicators.")
+        
         st.divider()
-
-        st.markdown("**Top inequality-related drivers (if available):**")
-        if top_drivers:
-            for d in top_drivers:
-                st.write(f"- **{d}**")
+        
+        st.markdown("**Interpretation:**")
+        
+        if lvl == "High":
+            explanation = f"""
+            **{c}** displays a **HIGH inequality signal** because inequality-related indicators (such as {driver_text}) 
+            dominate its socioeconomic profile, while economic growth and development factors show relatively weaker presence. 
+            This suggests inequality challenges are prominent and may require targeted policy intervention.
+            """
+        elif lvl == "Moderate":
+            explanation = f"""
+            **{c}** shows a **MODERATE inequality signal** with a balanced socioeconomic mix. Inequality-related drivers 
+            ({driver_text}) are visible but counterbalanced by economic growth and development indicators. 
+            This suggests neither inequality nor growth factors overwhelmingly dominate the country's profile.
+            """
         else:
-            st.write("- No clear inequality-related indicators available for this country-year in the dataset.")
-
-        st.markdown("**One-line insight:**")
-        st.write(one_line)
-
-        st.caption("Note: dominance = what stands out after normalization; it helps explain patterns but does not prove inequality or causation by itself.")
+            explanation = f"""
+            **{c}** exhibits a **LOWER inequality signal** (relative to regional peers) because economic growth, development, 
+            and infrastructure indicators ({driver_text}) are more prominent than inequality-specific metrics. 
+            This indicates a comparatively better-balanced socioeconomic landscape, though inequality may still exist at lower visibility.
+            """
+        
+        st.markdown(explanation)
+        
+        st.caption("Note: Dominance reflects what stands out after normalization. It reveals patterns but does not establish causation.")
 
 # ============================================================
 # ⭐ COUNTRY SPOTLIGHT (Story Mode)
@@ -548,7 +531,7 @@ if c_df.empty:
     st.stop()
 
 bubble_df = c_df.sort_values("normalized_value", ascending=False).copy()
-bubble_df["indicator_short"] = bubble_df["indicator"].astype(str).str.slice(0, 45)
+bubble_df["indicator_short"] = bubble_df["indicator"].astype(str).str.slice(0, 60)  # Increased from 45 to 60
 
 fig_bubble = px.scatter(
     bubble_df,
@@ -558,24 +541,26 @@ fig_bubble = px.scatter(
     color="normalized_value",
     color_continuous_scale=color_scheme,
     hover_data=["formatted_value"],
-    title="🫧 Indicator Bubble View (size = normalized dominance)"
+    title=f"Indicator Dominance Profile: {spot_country} ({selected_year})",  # More professional title
+    labels={
+        "normalized_value": "Dominance Score (0-100)",
+        "indicator_short": ""  # Remove y-axis label since indicators are self-explanatory
+    }
 )
-fig_bubble.update_layout(height=540, xaxis_title="Normalized dominance (0–100)", yaxis_title="")
-# Right-aligned Download icon with tooltip for Bubble Chart
-col_spacer_bub, col_dl_bub = st.columns([10, 1])
-with col_dl_bub:
-    try:
-        png_bytes_bub = fig_bubble.to_image(format="png", width=1400, height=1000)
-        st.download_button(
-            label="⬇️",
-            data=png_bytes_bub,
-            file_name=f"bubble_dominance_{spot_country}_{selected_year}.png",
-            mime="image/png",
-            key="bubble_dl_btn",
-            help="Download Bubble Chart as PNG"
-        )
-    except:
-        st.button("⬇️", disabled=True, key="bubble_dl_btn_dis", help="Download Unavailable")
+
+fig_bubble.update_layout(
+    height=540, 
+    xaxis_title="Dominance Score (0-100)",
+    yaxis_title="",
+    showlegend=True
+)
+
+fig_bubble.update_traces(
+    marker=dict(
+        line=dict(width=1, color='white'),  # Add white border to bubbles
+        opacity=0.8
+    )
+)
 
 st.plotly_chart(fig_bubble, use_container_width=True, config={
     'displayModeBar': True, 
@@ -585,16 +570,40 @@ st.plotly_chart(fig_bubble, use_container_width=True, config={
     'toImageButtonOptions': {'format': 'png', 'filename': f'bubble_{spot_country}_{selected_year}'}
 })
 
-st.info(
-    "How to read the bubble chart: **a larger bubble indicates a more dominant indicator** for this country (after normalization). "
-    "It highlights which indicators stand out most and are used to derive a simple, descriptive inequality signal."
+st.caption(
+    "**Chart interpretation:** Bubble size and color represent dominance scores (0-100). "
+    "Larger, brighter bubbles indicate indicators that stand out most prominently in this country's profile "
+    "relative to regional peers. Hover over bubbles to see actual values."
 )
 
+
 with st.expander("View underlying data (for this country)"):
+    st.markdown("**Data transparency: Raw values and normalized dominance scores**")
+    st.caption("This table shows the actual indicator values alongside their normalized dominance (0-100 scale). Higher dominance = more prominent in this country's profile relative to others.")
+    
     view = c_df[["indicator", "formatted_value", "normalized_value"]].copy()
-    view.columns = ["Indicator", "Actual Value", "How strongly it stands out (0–100)"]
-    view["How strongly it stands out (0–100)"] = view["How strongly it stands out (0–100)"].round(1)
+    view.columns = ["Indicator", "Actual Value", "Dominance Score (0-100)"]
+    view["Dominance Score (0-100)"] = view["Dominance Score (0-100)"].round(1)
+    
+    # Add indicator type column
+    view["Type"] = view["Indicator"].apply(
+        lambda x: " Inequality" if is_ineq_indicator(x) else " Economic/Development"
+    )
+    
+    # Reorder columns
+    view = view[["Type", "Indicator", "Actual Value", "Dominance Score (0-100)"]]
+    
+    # Sort by dominance score (highest first)
+    view = view.sort_values("Dominance Score (0-100)", ascending=False)
+    
     st.dataframe(view, use_container_width=True, hide_index=True)
+    
+    st.caption("""
+    **How to read:** 
+    - **Dominance Score** = How much this indicator stands out after normalization (100 = maximum dominance for this country)
+    - **Type** = Whether indicator measures inequality  or economic/development factors 
+    - Scores are relative to other countries, not absolute measurements
+    """)
 
 st.divider()
 st.caption("Indicator Insights | South Asia Inequality Analysis Platform")
