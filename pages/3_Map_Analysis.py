@@ -5,6 +5,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 import json
 import sys
+import math
 from pathlib import Path
 
 # Add utils to path
@@ -187,41 +188,41 @@ def get_trend_with_percentage(change):
         return "➡️ Stable", change
 
 # Helper function for achievement badges
-def get_achievement_badge(country, year_data):
-    badges = []
-    lower_is_better = config.get('lower_is_better', True)
+# def get_achievement_badge(country, year_data):
+#     badges = []
+#     lower_is_better = config.get('lower_is_better', True)
 
-    # Determine best and worst indices based on lower_is_better
-    if lower_is_better:
-        best_idx = year_data['value'].idxmin()
-        worst_idx = year_data['value'].idxmax()
-    else:
-        best_idx = year_data['value'].idxmax()
-        worst_idx = year_data['value'].idxmin()
+#     # Determine best and worst indices based on lower_is_better
+#     if lower_is_better:
+#         best_idx = year_data['value'].idxmin()
+#         worst_idx = year_data['value'].idxmax()
+#     else:
+#         best_idx = year_data['value'].idxmax()
+#         worst_idx = year_data['value'].idxmin()
 
-    # Assign best/worst badges
-    if country == year_data.loc[best_idx, 'country']:
-        badges.append("Best Performer")
-    if country == year_data.loc[worst_idx, 'country']:
-        badges.append("⚠️ Needs Attention")
+#     # Assign best/worst badges
+#     if country == year_data.loc[best_idx, 'country']:
+#         badges.append("Best Performer")
+#     if country == year_data.loc[worst_idx, 'country']:
+#         badges.append("⚠️ Needs Attention")
 
-    # Most improved / most declined
-    year_data_with_change = year_data[year_data['change_from_prev'].notna()]
-    if not year_data_with_change.empty:
-        # For improvement, smaller change is better if lower_is_better
-        if lower_is_better:
-            improved_idx = year_data_with_change['change_from_prev'].idxmin()
-            declined_idx = year_data_with_change['change_from_prev'].idxmax()
-        else:
-            improved_idx = year_data_with_change['change_from_prev'].idxmax()
-            declined_idx = year_data_with_change['change_from_prev'].idxmin()
+#     # Most improved / most declined
+#     year_data_with_change = year_data[year_data['change_from_prev'].notna()]
+#     if not year_data_with_change.empty:
+#         # For improvement, smaller change is better if lower_is_better
+#         if lower_is_better:
+#             improved_idx = year_data_with_change['change_from_prev'].idxmin()
+#             declined_idx = year_data_with_change['change_from_prev'].idxmax()
+#         else:
+#             improved_idx = year_data_with_change['change_from_prev'].idxmax()
+#             declined_idx = year_data_with_change['change_from_prev'].idxmin()
 
-        if country == year_data_with_change.loc[improved_idx, 'country']:
-            badges.append("Most Improved")
-        if country == year_data_with_change.loc[declined_idx, 'country']:
-            badges.append("Most Declined")
+#         if country == year_data_with_change.loc[improved_idx, 'country']:
+#             badges.append("Most Improved")
+#         if country == year_data_with_change.loc[declined_idx, 'country']:
+#             badges.append("Most Declined")
 
-    return badges
+#     return badges
 
 
 
@@ -296,27 +297,74 @@ fig = px.choropleth(
     #title=f"{human_indicator(config['indicator'])} Across South Asia"
 )
 
+
 # --------------------------------------------------
 # Enhanced colorbar styling with better readability
 # --------------------------------------------------
-# Calculate tick values dynamically based on data range
+
 value_min = filtered_df['value'].min()
 value_max = filtered_df['value'].max()
 value_range = value_max - value_min
 
 if value_range == 0:
-    # All values are the same → single tick mark
     tick_values = [value_min]
+elif value_range < 0.01:
+    tick_values = [value_min, value_max]
 else:
-    # Create 7 tick marks across the range
-    tick_values = [value_min + (i * value_range / 6) for i in range(7)]
+    rough_tick_count = 6
+    rough_interval = value_range / rough_tick_count
+    
+    magnitude = 10 ** math.floor(math.log10(rough_interval))
+    normalized = rough_interval / magnitude
+    
+    if normalized < 1.5:
+        nice_interval = 1 * magnitude
+    elif normalized < 3.5:
+        nice_interval = 2 * magnitude
+    elif normalized < 7.5:
+        nice_interval = 5 * magnitude
+    else:
+        nice_interval = 10 * magnitude
+    
+    tick_start = math.floor(value_min / nice_interval) * nice_interval
+    tick_end = math.ceil(value_max / nice_interval) * nice_interval
+    
+    # Generate ticks
+    num_ticks = int((tick_end - tick_start) / nice_interval) + 1
+    tick_values = [tick_start + i * nice_interval for i in range(num_ticks)]
+    
+    # Round based on nice_interval
+    if nice_interval >= 1:
+        tick_values = [round(t, 0) for t in tick_values]
+    elif nice_interval >= 0.1:
+        tick_values = [round(t, 1) for t in tick_values]
+    elif nice_interval >= 0.01:
+        tick_values = [round(t, 2) for t in tick_values]
+    else:
+        tick_values = [round(t, 3) for t in tick_values]
+    
+    # Remove duplicates
+    tick_values = list(dict.fromkeys(tick_values))
+
+    # Limit to 7 ticks
+    if len(tick_values) > 7:
+        tick_values = tick_values[::2]  # Take every 2nd value
+        if len(tick_values) > 7:
+            tick_values = tick_values[::2]  # Take every 2nd again if still too many
 
 
+
+indicator_name = human_indicator(config['indicator'])
+base_len = 0.55
+# Increase length by 0.05 for every 20 characters beyond 40
+extra_len = max(0, (len(indicator_name) - 40) / 10 * 0.05)
+colorbar_len = min(0.85, base_len + extra_len)  # Cap at 0.85 to avoid overflow
 
 fig.update_layout(
     # Paper and plot background
     paper_bgcolor= "rgba(52, 26, 87, 0.28)",
     plot_bgcolor="#ffffff",
+
 
     # Colorbar configuration
     coloraxis=dict(
@@ -325,15 +373,15 @@ fig.update_layout(
         colorbar=dict(
             title=dict(
                 text=f"<b>{human_indicator(config['indicator'])}</b>",
-                font=dict(size=16, color='#2c3e50', family='Arial'),
+                font=dict(size=10, color='#2c3e50', family='Arial'),
                 side='right'
             ),
             tickfont=dict(size=13, color='#34495e', family='Arial'),
             tickmode='array',
             tickvals=tick_values,
-            ticktext=[f"{val:.1f}" for val in tick_values],
-            thickness=22,
-            len=0.55,
+            ticktext=[f"{val:.2f}" if val < 1 else f"{val:.1f}" for val in tick_values],
+            thickness=30,
+            len=colorbar_len,
             x=0.98,
             xanchor="right",
             xpad=15,
@@ -352,6 +400,7 @@ fig.update_layout(
         ),
         colorscale=color_scale
     ),
+
 
     # Overall layout dimensions
     height=650,
@@ -698,14 +747,14 @@ if selected_country_spotlight != '-- Select a country --' and not year_data.empt
                 delta_color='inverse'
             )
 
-        # Achievements
-        badges = get_achievement_badge(selected_country_spotlight, year_data)
-        if badges:
-            st.markdown("**Achievements:**")
-            badge_cols = st.columns(len(badges))
-            for i, badge in enumerate(badges):
-                with badge_cols[i]:
-                    st.info(badge)
+        # # Achievements
+        # badges = get_achievement_badge(selected_country_spotlight, year_data)
+        # if badges:
+        #     st.markdown("**Achievements:**")
+        #     badge_cols = st.columns(len(badges))
+        #     for i, badge in enumerate(badges):
+        #         with badge_cols[i]:
+        #             st.info(badge)
 
         # Sparkline chart
         country_history = filtered_df[filtered_df['country'] == selected_country_spotlight].sort_values('year')
@@ -889,199 +938,8 @@ if show_rankings:
 
             st.dataframe(rankings_df, use_container_width=True, hide_index=True)
 
-# --------------------------------------------------
-# Export Section - Robust Version
-# --------------------------------------------------
-st.divider()
-st.markdown("### Export Options")
 
-required_vars = ['year_data', 'filtered_df', 'config', 'selected_year', 'fig', 'color_scale', 'country_metadata']
-missing_vars = [var for var in required_vars if var not in globals()]
 
-if missing_vars:
-    st.error(f"❌ Cannot display export options. Missing variables: {', '.join(missing_vars)}")
-else:
-    try:
-        # Create tabs for different export types
-        export_tab1, export_tab2 = st.tabs(["Data Export", "Visualization Export"])
-
-        # ----------------------------
-        # Data Export
-        # ----------------------------
-        with export_tab1:
-            st.markdown("### Download Data")
-
-            col1, col2 = st.columns(2)
-
-            with col1:
-                export_format = st.selectbox(
-                    "Select data format",
-                    ["CSV", "Excel (XLSX)", "JSON", "TSV"]
-                )
-
-            with col2:
-                data_selection = st.selectbox(
-                    "Select dataset",
-                    [
-                        "Current Year Data",
-                        "Full Time Series",
-                        "Rankings (Current Year)",
-                        "Complete Dataset (All Years + Metadata)"
-                    ]
-                )
-
-            # ----------------------------
-            # Prepare DataFrame for Export
-            # ----------------------------
-            try:
-                if data_selection == "Current Year Data":
-                    cols = ['country', 'country_code', 'value', 'rank', 'regional_avg',
-                            'change_from_prev', 'trend_arrow', 'population', 'gdp', 'income_group']
-                    rename_cols = ['Country', 'Code', human_indicator(config['indicator']),
-                                   'Rank', 'Regional Avg', 'YoY Change', 'Trend',
-                                   'Population', 'GDP', 'Income Group']
-                    export_df = year_data[cols].copy()
-                    export_df.columns = rename_cols
-                    filename_base = f"Data_{config['indicator']}_{selected_year}".replace(" ", "_")
-
-                elif data_selection == "Full Time Series":
-                    cols = ['country', 'country_code', 'year', 'value', 'rank', 'regional_avg', 'change_from_prev']
-                    rename_cols = ['Country', 'Code', 'Year', human_indicator(config['indicator']),
-                                   'Rank', 'Regional Avg', 'Change']
-                    export_df = filtered_df[cols].copy()
-                    export_df.columns = rename_cols
-                    filename_base = f"TimeSeries_{config['indicator']}_{config['year_range'][0]}-{config['year_range'][1]}".replace(" ", "_")
-
-                elif data_selection == "Rankings (Current Year)":
-                    cols = ['rank', 'country', 'value', 'regional_avg', 'change_from_prev']
-                    rename_cols = ['Rank', 'Country', human_indicator(config['indicator']),
-                                   'Regional Avg', 'YoY Change']
-                    export_df = year_data.sort_values('rank')[cols].copy()
-                    export_df.columns = rename_cols
-                    export_df['Difference from Avg'] = (
-                        export_df[human_indicator(config['indicator'])] - export_df['Regional Avg']
-                    ).round(2)
-                    filename_base = f"Rankings_{config['indicator']}_{selected_year}".replace(" ", "_")
-
-                else:  # Complete Dataset
-                    export_df = filtered_df.copy()
-                    filename_base = f"Complete_{config['indicator']}_Dataset".replace(" ", "_")
-
-            except Exception as e:
-                st.error(f"❌ Error preparing data for export: {str(e)}")
-                export_df = pd.DataFrame()  # empty fallback
-
-            # Add metadata
-            metadata = {
-                "Indicator": config.get('indicator', 'N/A'),
-                "Selected_Year": selected_year,
-                "Year_Range": f"{config['year_range'][0]}-{config['year_range'][1]}" if 'year_range' in config else "N/A",
-                "Countries": len(config.get('countries', [])),
-                "Export_Date": pd.Timestamp.now().strftime("%Y-%m-%d %H:%M:%S"),
-                "Color_Scale": color_scale
-            }
-
-            # Preview
-            if not export_df.empty:
-                with st.expander("Preview data", expanded=False):
-                    st.dataframe(export_df.head(10), use_container_width=True)
-                    st.caption(f"Showing first 10 of {len(export_df)} rows")
-
-            # ----------------------------
-            # Export Buttons
-            # ----------------------------
-            try:
-                if not export_df.empty:
-                    if export_format == "CSV":
-                        st.download_button(
-                            label=f"⬇Download as CSV",
-                            data=export_df.to_csv(index=False),
-                            file_name=f"{filename_base}.csv",
-                            mime="text/csv",
-                            use_container_width=True
-                        )
-                    elif export_format == "Excel (XLSX)":
-                        from io import BytesIO
-                        output = BytesIO()
-                        with pd.ExcelWriter(output, engine='openpyxl') as writer:
-                            export_df.to_excel(writer, sheet_name='Data', index=False)
-                            pd.DataFrame([metadata]).to_excel(writer, sheet_name='Metadata', index=False)
-                        output.seek(0)
-                        st.download_button(
-                            label=f"Download as Excel",
-                            data=output,
-                            file_name=f"{filename_base}.xlsx",
-                            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                            use_container_width=True
-                        )
-                    elif export_format == "JSON":
-                        st.download_button(
-                            label=f"Download as JSON",
-                            data=export_df.to_json(orient='records', indent=2),
-                            file_name=f"{filename_base}.json",
-                            mime="application/json",
-                            use_container_width=True
-                        )
-                    else:  # TSV
-                        st.download_button(
-                            label=f"⬇Download as TSV",
-                            data=export_df.to_csv(index=False, sep='\t'),
-                            file_name=f"{filename_base}.tsv",
-                            mime="text/tab-separated-values",
-                            use_container_width=True
-                        )
-            except Exception as e:
-                st.error(f"❌ Error generating download button: {str(e)}")
-
-        # ----------------------------
-        # Visualization Export
-        # ----------------------------
-        with export_tab2:
-            st.markdown("### Download Visualization")
-            col1, col2 = st.columns(2)
-
-            with col1:
-                viz_format = st.selectbox(
-                    "Select image format",
-                    ["PNG (High Quality)", "SVG (Vector)", "PDF", "HTML (Interactive)", "JPEG"]
-                )
-
-            with col2:
-                viz_size = st.selectbox(
-                    "Select size/resolution",
-                    ["Standard (1200x800)", "Large (1920x1080)", "Extra Large (2560x1440)", "Print Quality (3840x2160)"]
-                )
-
-            size_map = {
-                "Standard (1200x800)": (1200, 800),
-                "Large (1920x1080)": (1920, 1080),
-                "Extra Large (2560x1440)": (2560, 1440),
-                "Print Quality (3840x2160)": (3840, 2160)
-            }
-            width, height = size_map.get(viz_size, (1200, 800))
-            viz_filename = f"Map_{config['indicator']}_{selected_year}".replace(" ", "_")
-
-            # Export logic with Kaleido check
-            try:
-                if viz_format == "HTML (Interactive)":
-                    html_bytes = fig.to_html(include_plotlyjs='cdn').encode('utf-8')
-                    st.download_button("⬇Download HTML", data=html_bytes, file_name=f"{viz_filename}.html",
-                                       mime="text/html", use_container_width=True)
-                else:
-                    try:
-                        fmt_map = {'PNG (High Quality)': 'png', 'SVG (Vector)': 'svg', 'PDF': 'pdf', 'JPEG': 'jpeg'}
-                        fmt = fmt_map.get(viz_format, 'png')
-                        img_bytes = fig.to_image(format=fmt, width=width, height=height)
-                        st.download_button(f"⬇Download {viz_format}", data=img_bytes,
-                                           file_name=f"{viz_filename}.{fmt}", use_container_width=True)
-                    except Exception:
-                        st.error("❌ Image export unavailable. Install Kaleido: `pip install kaleido`")
-                        st.caption("Run: `pip install kaleido` in your terminal")
-            except Exception as e:
-                st.error(f"❌ Visualization export failed: {str(e)}")
-
-    except Exception as e:
-        st.error(f"❌ Error in export section: {str(e)}")
 
 # --------------------------------------------------
 # Footer
