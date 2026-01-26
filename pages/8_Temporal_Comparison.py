@@ -1705,71 +1705,71 @@ except Exception as e:
     st.error(f"❌ Error in export section: {str(e)}")
     st.caption("Please try a different export format or contact support if the issue persists.")
 
-# --------------------------------------------------
-# Visualization Export Section (FIXED)
-# --------------------------------------------------
-st.markdown("---")
-st.markdown("### Export Visualizations")
+# # --------------------------------------------------
+# # Visualization Export Section (FIXED)
+# # --------------------------------------------------
+# st.markdown("---")
+# st.markdown("### Export Visualizations")
 
-if export_fig is None:
-    st.info("ℹ️ Visualization export not available for this view")
-else:
-    col1, col2 = st.columns(2)
+# if export_fig is None:
+#     st.info("ℹ️ Visualization export not available for this view")
+# else:
+#     col1, col2 = st.columns(2)
 
-    with col1:
-        viz_format = st.selectbox(
-            "Select image format",
-            ["PNG (High Quality)", "SVG (Vector)", "PDF", "HTML (Interactive)", "JPEG"]
-        )
+#     with col1:
+#         viz_format = st.selectbox(
+#             "Select image format",
+#             ["PNG (High Quality)", "SVG (Vector)", "PDF", "HTML (Interactive)", "JPEG"]
+#         )
 
-    with col2:
-        viz_size = st.selectbox(
-            "Select size/resolution",
-            ["Standard (1200x800)", "Large (1920x1080)", "Extra Large (2560x1440)", "Print Quality (3840x2160)"]
-        )
+#     with col2:
+#         viz_size = st.selectbox(
+#             "Select size/resolution",
+#             ["Standard (1200x800)", "Large (1920x1080)", "Extra Large (2560x1440)", "Print Quality (3840x2160)"]
+#         )
 
-    size_map = {
-        "Standard (1200x800)": (1200, 800),
-        "Large (1920x1080)": (1920, 1080),
-        "Extra Large (2560x1440)": (2560, 1440),
-        "Print Quality (3840x2160)": (3840, 2160)
-    }
+#     size_map = {
+#         "Standard (1200x800)": (1200, 800),
+#         "Large (1920x1080)": (1920, 1080),
+#         "Extra Large (2560x1440)": (2560, 1440),
+#         "Print Quality (3840x2160)": (3840, 2160)
+#     }
 
-    width, height = size_map.get(viz_size, (1200, 800))
-    viz_filename = f"Comparison_{indicator}_{period_then}_vs_{period_now}".replace(" ", "_")
+#     width, height = size_map.get(viz_size, (1200, 800))
+#     viz_filename = f"Comparison_{indicator}_{period_then}_vs_{period_now}".replace(" ", "_")
 
-    if viz_format == "HTML (Interactive)":
-        try:
-            html_bytes = export_fig.to_html(include_plotlyjs="cdn").encode("utf-8")
-            st.download_button(
-                "⬇️ Download HTML",
-                data=html_bytes,
-                file_name=f"{viz_filename}.html",
-                mime="text/html",
-                use_container_width=True
-            )
-        except Exception as e:
-            st.error(f"❌ Error exporting HTML: {str(e)}")
-    else:
-        fmt_map = {
-            "PNG (High Quality)": "png",
-            "SVG (Vector)": "svg",
-            "PDF": "pdf",
-            "JPEG": "jpeg"
-        }
-        fmt = fmt_map[viz_format]
-        try:
-            img_bytes = export_fig.to_image(format=fmt, width=width, height=height)
-            st.download_button(
-                f"⬇️ Download {viz_format}",
-                data=img_bytes,
-                file_name=f"{viz_filename}.{fmt}",
-                mime=f"image/{fmt}",
-                use_container_width=True
-            )
-        except Exception as e:
-            st.error(f"❌ Image export unavailable: {str(e)}")
-            st.info("💡 Install Kaleido for image export: `pip install kaleido`")
+#     if viz_format == "HTML (Interactive)":
+#         try:
+#             html_bytes = export_fig.to_html(include_plotlyjs="cdn").encode("utf-8")
+#             st.download_button(
+#                 "⬇️ Download HTML",
+#                 data=html_bytes,
+#                 file_name=f"{viz_filename}.html",
+#                 mime="text/html",
+#                 use_container_width=True
+#             )
+#         except Exception as e:
+#             st.error(f"❌ Error exporting HTML: {str(e)}")
+#     else:
+#         fmt_map = {
+#             "PNG (High Quality)": "png",
+#             "SVG (Vector)": "svg",
+#             "PDF": "pdf",
+#             "JPEG": "jpeg"
+#         }
+#         fmt = fmt_map[viz_format]
+#         try:
+#             img_bytes = export_fig.to_image(format=fmt, width=width, height=height)
+#             st.download_button(
+#                 f"⬇️ Download {viz_format}",
+#                 data=img_bytes,
+#                 file_name=f"{viz_filename}.{fmt}",
+#                 mime=f"image/{fmt}",
+#                 use_container_width=True
+#             )
+#         except Exception as e:
+#             st.error(f"❌ Image export unavailable: {str(e)}")
+#             st.info("💡 Install Kaleido for image export: `pip install kaleido`")
 
 st.caption("Temporal Comparison | South Asia Inequality Analysis Platform")
 
