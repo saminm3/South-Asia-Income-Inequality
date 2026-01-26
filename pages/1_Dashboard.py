@@ -480,19 +480,28 @@ else:
     best_value = latest_data['value'].min() if not latest_data.empty else 0
     worst_value = latest_data['value'].max() if not latest_data.empty else 0 
 
-# Calculate data coverage
-data_coverage = (filtered_df.notna().sum()['value'] / len(filtered_df) * 100)
+# Calculate data coverage properly
+# Expected data points = countries × years in selected range
+num_countries = len(config['countries'])
+num_years = config['year_range'][1] - config['year_range'][0] + 1
+expected_data_points = num_countries * num_years
+
+# Actual data points (after filtering and deduplication)
+actual_data_points = len(filtered_df)
+
+# Coverage percentage
+data_coverage = (actual_data_points / expected_data_points * 100) if expected_data_points > 0 else 0
+
 
 # ✅ FIX #4: METRIC CARDS WITH STORYTELLING CONTEXT
 col1, col2, col3, col4, col5= st.columns(5)
 
 with col1:
-    delta_symbol = "↓" if yoy_pct < 0 else "↑"
     metric_label = "Current Value" if is_single_country else "Regional Average"
     st.metric(
         label=metric_label,
         value=f"{regional_avg:.1f}",
-        delta=f"{delta_symbol} {abs(yoy_pct):.1f}%"
+        delta=f"{abs(yoy_pct):.1f}%"
     )
     # Context text
     if is_single_country:
@@ -525,7 +534,8 @@ with col2:
         st.metric(
             label=f"Best Performer ({latest_year})",
             value=best_country,
-            delta=f"{best_value:.1f}"
+            delta=f"{best_value:.1f}",
+            delta_color="off"
         )
         # Context text
         if is_positive_indicator:
@@ -547,7 +557,7 @@ with col3:
             label=f"Needs Attention ({latest_year})",
             value=worst_country,
             delta=f"{worst_value:.1f}",
-            delta_color="inverse"
+            delta_color="off"
         )
         # Context text
         if is_positive_indicator:
@@ -557,10 +567,12 @@ with col3:
     st.markdown(f'<p class="metric-context">{context}</p>', unsafe_allow_html=True)
 
 with col4:
+    # Calculate delta from baseline (50% = half the data)
+    coverage_delta = int(data_coverage - 50)
     st.metric(
         label="Data Coverage",
         value=f"{data_coverage:.0f}%",
-        delta=f"↑ {int(data_coverage - 50)} points" if data_coverage > 50 else f"↓ {int(50 - data_coverage)} points"
+        delta=f"{coverage_delta:+d}"
     )
     # Context text
     if data_coverage >= 90:
@@ -583,8 +595,6 @@ with col5:
     context = f"{years_span}-year analysis period"
     st.markdown(f'<p class="metric-context">{context}</p>', unsafe_allow_html=True)
     
-    
-
 
 # ═══════════════════════════════════════════════════════════════════
 # API-DRIVEN INSIGHTS (APPEARS WHEN API ENRICHMENT IS ENABLED)
