@@ -523,7 +523,7 @@ with col2:
         context = "Single country analysis"
     else:
         st.metric(
-            label="Best Performer",
+            label=f"Best Performer ({latest_year})",
             value=best_country,
             delta=f"{best_value:.1f}"
         )
@@ -544,7 +544,7 @@ with col3:
         context = "Add more countries to compare"
     else:
         st.metric(
-            label="Needs Attention",
+            label=f"Needs Attention ({latest_year})",
             value=worst_country,
             delta=f"{worst_value:.1f}",
             delta_color="inverse"
