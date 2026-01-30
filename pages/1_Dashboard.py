@@ -223,7 +223,13 @@ def ensure_public_analysis(df):
         indicators = sorted(df["indicator"].dropna().unique().tolist())
         min_year = int(df["year"].min())
         max_year = int(df["year"].max())
-        default_indicator = "gini_index" if "gini_index" in indicators else (indicators[0] if indicators else None)
+        # Prioritize Top 10% Income Share, then Gini, then first available
+        if 'Top 10% Income Share' in indicators:
+            default_indicator = 'Top 10% Income Share'
+        elif 'gini_index' in indicators:
+            default_indicator = 'gini_index'
+        else:
+            default_indicator = indicators[0] if indicators else None
         
         st.session_state.analysis_config = {
             "countries": countries,

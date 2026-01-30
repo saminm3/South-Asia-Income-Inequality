@@ -155,7 +155,13 @@ max_year = int(df['year'].max())
 
 # Create defaults if none exist
 if st.session_state.analysis_config is None:
-    default_indicator = 'gini_index' if 'gini_index' in all_indicators else (all_indicators[0] if all_indicators else None)
+    # Prioritize Top 10% Income Share, then Gini, then first available
+    if 'Top 10% Income Share' in all_indicators:
+        default_indicator = 'Top 10% Income Share'
+    elif 'gini_index' in all_indicators:
+        default_indicator = 'gini_index'
+    else:
+        default_indicator = all_indicators[0] if all_indicators else None
     default_year_start = max(min_year, max_year - 20)
     default_year_range = (default_year_start, max_year)
     
