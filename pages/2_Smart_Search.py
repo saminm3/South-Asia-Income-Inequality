@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import sys
+import re
 from pathlib import Path
 from datetime import datetime
 
@@ -17,7 +18,7 @@ from utils.sidebar import apply_all_styles
 # --------------------------------------------------
 st.set_page_config(
     page_title="Smart Search",
-    page_icon="🔍",
+    page_icon="search",
     layout="wide"
 )
 render_help_button("search")
@@ -156,17 +157,18 @@ if 'analysis_config' not in st.session_state:
 # --------------------------------------------------
 # Main Title
 # --------------------------------------------------
-st.title("🔍 Smart Search & Navigation Hub")
+st.title("Smart Search & Navigation Hub")
 st.caption("Quick access to data, insights, and navigation")
 
 st.markdown("""
 <div style='background: rgba(139, 92, 246, 0.1); padding: 15px; border-radius: 8px; border-left: 4px solid #8b5cf6; margin-bottom: 20px;'>
     <div style='color: #e2e8f0; font-size: 0.9rem;'>
-        <strong style='color: #a78bfa;'>💡 How it works:</strong><br>
+        <strong style='color: #a78bfa;'>How it works:</strong><br>
         • <strong>Search</strong> for countries, indicators, or years<br>
-        • <strong>Click buttons</strong> to navigate instantly with filters applied<br>
-        • <strong>Use bookmarks</strong> for one-click access to common views<br>
-        • <strong>Keyboard shortcuts</strong> for power users
+        • <strong>Commands</strong> for instant navigation (map, dashboard, simulator, etc.)<br>
+        • <strong>Comparisons</strong> using natural language (compare India Pakistan)<br>
+        • <strong>Time filters</strong> like "recent", "last decade", "2015-2023"<br>
+        • <strong>Bookmarks</strong> for one-click access to common views
     </div>
 </div>
 """, unsafe_allow_html=True)
@@ -184,11 +186,11 @@ def load_search_data():
 try:
     df_main, df_all = load_search_data()
 except:
-    st.error("⚠️ Failed to load data. Please ensure data files exist.")
+    st.error("Failed to load data. Please ensure data files exist.")
     st.stop()
 
 if df_main.empty and df_all.empty:
-    st.error("❌ No data available for search.")
+    st.error("No data available for search.")
     st.stop()
 
 # Use whichever is available
@@ -208,6 +210,67 @@ with col4:
     st.metric("Total Records", f"{len(df):,}")
 
 st.divider()
+
+# --------------------------------------------------
+# ENHANCED COMMAND DEFINITIONS
+# --------------------------------------------------
+
+# Navigation commands - expanded
+COMMAND_KEYWORDS = {
+    # Core pages
+    'map': 'pages/3_Map_Analysis.py',
+    'correlation': 'pages/4_Correlations.py',
+    'dashboard': 'pages/1_Dashboard.py',
+    'simulator': 'pages/5_Income_Simulator.py',
+    'temporal': 'pages/8_Temporal_Comparison.py',
+    'quality': 'pages/6_Data_Quality.py',
+    'insights': 'pages/7_Indicator_Insights.py',
+    'help': 'pages/9_Help.py',
+    'home': 'home.py',
+    
+    # Aliases
+    'income': 'pages/5_Income_Simulator.py',
+    'compare': 'pages/8_Temporal_Comparison.py',
+    'data': 'pages/6_Data_Quality.py',
+    'sunburst': 'pages/7_Indicator_Insights.py',
+    'overview': 'pages/1_Dashboard.py',
+    'summary': 'pages/1_Dashboard.py',
+}
+
+# Time range shortcuts
+def get_time_range(keyword, max_year, min_year):
+    """Get time range based on keyword"""
+    time_ranges = {
+        'recent': (max_year - 4, max_year),
+        'last 5 years': (max_year - 4, max_year),
+        'last decade': (max_year - 9, max_year),
+        'last 10 years': (max_year - 9, max_year),
+        '2020s': (2020, max_year),
+        '2010s': (2010, 2019),
+        '2000s': (2000, 2009),
+        'all time': (min_year, max_year),
+        'full range': (min_year, max_year),
+        'complete': (min_year, max_year),
+    }
+    
+    for key, range_tuple in time_ranges.items():
+        if key in keyword.lower():
+            return range_tuple
+    
+    return None
+
+# Category keywords
+CATEGORY_KEYWORDS = {
+    'poverty': 'Poverty',
+    'inequality': 'Income Inequality',
+    'income': 'Income & Growth',
+    'education': 'Education',
+    'employment': 'Employment',
+    'infrastructure': 'Infrastructure',
+    'health': 'Health',
+    'economic': 'Income & Growth',
+    'labor': 'Employment',
+}
 
 # --------------------------------------------------
 # HELPER FUNCTIONS FOR NAVIGATION
@@ -232,7 +295,7 @@ def apply_country_filter(country):
         'year_range': (max(min_year, max_year - 10), max_year),
         'color_scale': 'Viridis'
     }
-    navigate_with_filter("pages/1_Dashboard.py", config)
+    navigate_with_filter('pages/1_Dashboard.py', config)
 
 def apply_indicator_filter(indicator):
     """Apply indicator filter and navigate to dashboard"""
@@ -246,389 +309,438 @@ def apply_indicator_filter(indicator):
         'year_range': (max(min_year, max_year - 10), max_year),
         'color_scale': 'Viridis'
     }
-    navigate_with_filter("pages/1_Dashboard.py", config)
+    navigate_with_filter('pages/1_Dashboard.py', config)
 
-def apply_year_filter(year):
-    """Apply year filter and navigate to map"""
+def get_gini_indicator():
+    """Detect GINI indicator name from actual data"""
+    indicators = df['indicator'].unique().tolist()
+    
+    # Try exact match first
+    if 'gini_index' in indicators:
+        return 'gini_index'
+    
+    # Try variations
+    for ind in indicators:
+        if 'gini' in ind.lower():
+            return ind
+    
+    # Fallback to first indicator
+    return indicators[0] if indicators else 'gini_index'
+
+# --------------------------------------------------
+# ENHANCED SEARCH PARSER
+# --------------------------------------------------
+
+def detect_comparison_command(query, df):
+    """Detect country comparison requests like 'compare India Pakistan'"""
+    query_lower = query.lower()
+    countries = df['country'].unique().tolist()
+    
+    # Check for comparison keywords
+    if any(word in query_lower for word in ['compare', 'vs', 'versus', 'versus']):
+        # Extract country names
+        found_countries = []
+        for country in countries:
+            if country.lower() in query_lower:
+                found_countries.append(country)
+        
+        if len(found_countries) >= 2:
+            return {
+                'type': 'comparison',
+                'countries': found_countries,
+                'action': 'navigate',
+                'page': 'pages/1_Dashboard.py'
+            }
+    
+    return None
+
+def detect_time_range_command(query, max_year, min_year):
+    """Detect time range commands like 'recent', 'last decade', '2015-2023'"""
+    query_lower = query.lower()
+    
+    # Check predefined keywords
+    time_range = get_time_range(query_lower, max_year, min_year)
+    if time_range:
+        return time_range
+    
+    # Detect year ranges like "2015-2023" or "2015 to 2023"
+    year_pattern = r'(\d{4})\s*[-–to]+\s*(\d{4})'
+    match = re.search(year_pattern, query)
+    if match:
+        start_year = int(match.group(1))
+        end_year = int(match.group(2))
+        if min_year <= start_year <= max_year and min_year <= end_year <= max_year:
+            return (start_year, end_year)
+    
+    return None
+
+def detect_category_command(query):
+    """Detect category filter commands like 'poverty indicators'"""
+    query_lower = query.lower()
+    
+    for keyword, category in CATEGORY_KEYWORDS.items():
+        if keyword in query_lower:
+            return category
+    
+    return None
+
+def detect_help_command(query):
+    """Detect help requests like 'what is gini' or 'how to export'"""
+    query_lower = query.lower()
+    
+    help_keywords = ['how to', 'what is', 'explain', 'help', 'tutorial']
+    
+    if any(keyword in query_lower for keyword in help_keywords):
+        return {
+            'type': 'help',
+            'query': query,
+            'page': 'pages/9_Help.py'
+        }
+    
+    return None
+
+def detect_export_command(query):
+    """Detect export/download requests"""
+    query_lower = query.lower()
+    
+    export_keywords = ['export', 'download', 'save']
+    
+    if any(keyword in query_lower for keyword in export_keywords):
+        return {
+            'type': 'export',
+            'message': 'Navigate to Dashboard or Map page, then use the download buttons for PNG, SVG, HTML, or JSON export.'
+        }
+    
+    return None
+
+def detect_ranking_command(query):
+    """Detect ranking requests like 'top 5', 'rank by poverty'"""
+    query_lower = query.lower()
+    
+    ranking_keywords = ['top', 'bottom', 'best', 'worst', 'rank', 'highest', 'lowest']
+    
+    if any(keyword in query_lower for keyword in ranking_keywords):
+        return {
+            'type': 'ranking',
+            'query': query,
+            'message': 'Navigate to Dashboard for country rankings and comparisons.'
+        }
+    
+    return None
+
+def parse_smart_search(query, df):
+    """
+    Master search parser - detects intent and extracts entities
+    Returns: dict with 'type' and relevant data
+    """
+    query_lower = query.lower().strip()
+    
+    if not query_lower:
+        return None
+    
+    max_year = int(df['year'].max())
+    min_year = int(df['year'].min())
     countries = df['country'].unique().tolist()
     indicators = df['indicator'].unique().tolist()
-    default_indicator = "gini_index" if "gini_index" in indicators else indicators[0]
     
-    config = {
-        'countries': countries,
-        'indicator': default_indicator,
-        'year_range': (year, year),
-        'color_scale': 'Viridis'
+    # Priority 1: Help commands
+    help_result = detect_help_command(query_lower)
+    if help_result:
+        return help_result
+    
+    # Priority 2: Navigation commands
+    for keyword, page in COMMAND_KEYWORDS.items():
+        if keyword in query_lower:
+            return {
+                'type': 'navigation',
+                'page': page,
+                'keyword': keyword
+            }
+    
+    # Priority 3: Comparison commands
+    comparison_result = detect_comparison_command(query_lower, df)
+    if comparison_result:
+        return comparison_result
+    
+    # Priority 4: Export commands
+    export_result = detect_export_command(query_lower)
+    if export_result:
+        return export_result
+    
+    # Priority 5: Ranking commands
+    ranking_result = detect_ranking_command(query_lower)
+    if ranking_result:
+        return ranking_result
+    
+    # Priority 6: Time range detection
+    time_range = detect_time_range_command(query_lower, max_year, min_year)
+    
+    # Priority 7: Category detection
+    category = detect_category_command(query_lower)
+    
+    # Priority 8: Country search
+    found_countries = [c for c in countries if c.lower() in query_lower]
+    
+    # Priority 9: Indicator search
+    found_indicators = []
+    for ind in indicators:
+        # Check if query matches indicator name
+        if query_lower in ind.lower():
+            found_indicators.append(ind)
+        # Also check human-readable name
+        try:
+            human_name = human_indicator(ind).lower()
+            if query_lower in human_name:
+                found_indicators.append(ind)
+        except:
+            pass
+    
+    # Remove duplicates
+    found_indicators = list(set(found_indicators))
+    
+    # Priority 10: Year search
+    year_matches = re.findall(r'\b(19|20)\d{2}\b', query)
+    found_years = [int(y) for y in year_matches if min_year <= int(y) <= max_year]
+    
+    # Build comprehensive result
+    return {
+        'type': 'multi_search',
+        'countries': found_countries,
+        'indicators': found_indicators,
+        'years': found_years,
+        'time_range': time_range,
+        'category': category,
+        'query': query
     }
-    navigate_with_filter("pages/3_Map_Analysis.py", config)
 
 # --------------------------------------------------
-# SECTION 1: Smart Search Command Palette
+# SECTION 1: Main Search Interface
 # --------------------------------------------------
-st.subheader("Quick Search Command Palette")
+st.subheader("Search & Command Center")
 
-# Keyboard shortcut hint
-st.markdown("""
-<div style='background-color: rgba(100,100,100,0.1); padding: 10px; border-radius: 5px; margin-bottom: 15px;'>
-    💡 <b>Tip:</b> Type to search countries, indicators, years, or commands. 
-    
-</div>
-""", unsafe_allow_html=True)
-
-# Main search input
 search_query = st.text_input(
-    "🔍 Type your search query",
-    placeholder="Try: 'Bangladesh', 'GINI', '2020', 'map', 'high inequality'...",
+    "Search or enter command...",
     key="main_search_input",
+    placeholder="Try: 'compare India Pakistan', 'recent data', 'map', 'poverty trends', '2015-2023'...",
     label_visibility="collapsed"
 )
 
-# --------------------------------------------------
-# Search Processing Function
-# --------------------------------------------------
-def smart_search(query, dataframe):
-    """Advanced search across multiple dimensions"""
-    if not query:
-        return None
-    
-    query = query.lower().strip()
-    results = {
-        'countries': [],
-        'indicators': [],
-        'years': [],
-        'commands': [],
-        'filters': []
-    }
-    
-    # 1. Search Countries
-    matching_countries = dataframe[
-        dataframe['country'].str.lower().str.contains(query, na=False)
-    ]['country'].unique()
-    
-    if len(matching_countries) > 0:
-        for country in matching_countries:
-            country_data = dataframe[dataframe['country'] == country]
-            results['countries'].append({
-                'name': country,
-                'indicators_available': country_data['indicator'].nunique(),
-                'years_covered': f"{int(country_data['year'].min())}–{int(country_data['year'].max())}",
-                'latest_year': int(country_data['year'].max()),
-                'data_points': len(country_data)
-            })
-    
-    # 2. Search Indicators
-    matching_indicators = dataframe[
-        dataframe['indicator'].str.lower().str.contains(query, na=False)
-    ]['indicator'].unique()
-    
-    if len(matching_indicators) > 0:
-        for indicator in matching_indicators:
-            ind_data = dataframe[dataframe['indicator'] == indicator]
-            latest_data = ind_data[ind_data['year'] == ind_data['year'].max()]
-            results['indicators'].append({
-                'name': indicator,
-                'human_name': human_indicator(indicator),
-                'countries_available': ind_data['country'].nunique(),
-                'latest_value': latest_data['value'].mean() if not latest_data.empty else None
-            })
-    
-    # 3. Search Years
-    if query.isdigit() and len(query) == 4:
-        year = int(query)
-        if year in dataframe['year'].values:
-            year_data = dataframe[dataframe['year'] == year]
-            results['years'].append({
-                'year': year,
-                'records': len(year_data),
-                'countries': year_data['country'].nunique(),
-                'indicators': year_data['indicator'].nunique()
-            })
-    
-    # 4. Command Keywords
-    command_keywords = {
-        'map': {'name': 'Geographic Map', 'page': 'pages/3_Map_Analysis.py', 'description': 'Choropleth map with animation'},
-        'correlation': {'name': ' Correlations', 'page': 'pages/4_Correlations.py', 'description': 'Analyze relationships'},
-        'dashboard': {'name': ' Dashboard', 'page': 'pages/1_Dashboard.py', 'description': 'Multi-dimensional overview'},
-        'Indicator Insights': {'name': 'Indicator Insights', 'page': 'pages/7_Indicator_Insights.py', 'description': 'Hierarchical visualization'},
-        'simulator': {'name': 'Simulator', 'page': 'pages/5_Income_Simulator.py', 'description': 'Income inequality modeling'},
-        'quality': {'name': 'Data Quality', 'page': 'pages/6_Data_Quality.py', 'description': 'Data completeness monitor'},
-        'temporal': {'name': ' Temporal', 'page': 'pages/8_Temporal_Comparison.py', 'description': 'Time comparison analysis'}
-    }
-    
-    for keyword, info in command_keywords.items():
-        if keyword in query:
-            results['commands'].append(info)
-    
-    # 5. Smart Filters
-    # Safely detect GINI indicator
-    gini_variations = ['gini_index', 'GINI Index', 'SI.POV.GINI', 'gini', 'GINI']
-    detected_gini = None
-    for variation in gini_variations:
-        if variation in dataframe['indicator'].values:
-            detected_gini = variation
-            break
-
-    # Calculate filter countries safely
-    high_inequality_countries = []
-    low_inequality_countries = []
-
-    if detected_gini:
-        try:
-            gini_data = dataframe[dataframe['indicator'] == detected_gini]
-            if not gini_data.empty:
-                avg_by_country = gini_data.groupby('country')['value'].mean()
-                high_inequality_countries = avg_by_country[avg_by_country > 40].index.tolist()
-                low_inequality_countries = avg_by_country[avg_by_country < 30].index.tolist()
-        except:
-            pass  # Leave lists empty if calculation fails
-
-    filter_keywords = {
-        'high inequality': {'countries': high_inequality_countries,
-                           'description': 'Countries with GINI > 40'},
-        'low inequality': {'countries': low_inequality_countries,
-                          'description': 'Countries with GINI < 30'},
-        'improving': {'description': 'Countries with decreasing inequality trend'},
-        'declining': {'description': 'Countries with increasing inequality'}
-    }
-    
-    for filter_key, filter_info in filter_keywords.items():
-        if filter_key in query:
-            results['filters'].append({
-                'name': filter_key.title(),
-                'description': filter_info['description'],
-                'countries': filter_info.get('countries', [])
-            })
-    
-    return results
-
-# --------------------------------------------------
-# Display Search Results with WORKING BUTTONS
-# --------------------------------------------------
 if search_query:
     # Add to history
     if search_query not in st.session_state.search_history:
         st.session_state.search_history.insert(0, search_query)
         st.session_state.search_history = st.session_state.search_history[:10]
     
-    search_results = smart_search(search_query, df)
+    # Parse search
+    result = parse_smart_search(search_query, df)
     
-    if search_results:
-        total_results = sum(len(search_results[key]) for key in search_results if search_results[key])
+    if result:
+        st.markdown("---")
+        st.subheader("Search Results")
         
-        if total_results == 0:
-            st.warning(f"🔍 No results found for '{search_query}'. Try different keywords.")
-        else:
-            st.success(f"✅ Found {total_results} results for '{search_query}'")
+        # Handle different result types
+        if result['type'] == 'navigation':
+            st.success(f"Command detected: {result['keyword']}")
+            col1, col2 = st.columns([3, 1])
+            with col1:
+                st.info(f"Navigate to: **{result['keyword'].title()}** page")
+            with col2:
+                if st.button(f"Go to {result['keyword'].title()}", type="primary", key="nav_btn"):
+                    st.switch_page(result['page'])
+        
+        elif result['type'] == 'comparison':
+            st.success(f"Comparison request: {' vs '.join(result['countries'])}")
+            col1, col2 = st.columns([3, 1])
+            with col1:
+                st.info(f"Will compare **{len(result['countries'])} countries** on Dashboard")
+            with col2:
+                if st.button("View Comparison", type="primary", key="comp_btn"):
+                    max_year = int(df['year'].max())
+                    config = {
+                        'countries': result['countries'],
+                        'indicator': get_gini_indicator(),
+                        'year_range': (max_year - 10, max_year),
+                        'color_scale': 'Viridis'
+                    }
+                    navigate_with_filter(result['page'], config)
+        
+        elif result['type'] == 'help':
+            st.info(f"Help request: {result['query']}")
+            col1, col2 = st.columns([3, 1])
+            with col1:
+                st.write("The Help page contains comprehensive documentation and guides.")
+            with col2:
+                if st.button("Open Help", type="primary", key="help_btn"):
+                    st.switch_page(result['page'])
+        
+        elif result['type'] == 'export':
+            st.info("Export/Download request")
+            st.markdown(f"""
+            <div style='background: rgba(139, 92, 246, 0.1); padding: 15px; border-radius: 8px;'>
+                <strong>How to export:</strong><br>
+                1. Navigate to Dashboard or Map Analysis page<br>
+                2. Configure your visualization<br>
+                3. Use the download buttons for PNG, SVG, HTML, or JSON export
+            </div>
+            """, unsafe_allow_html=True)
+        
+        elif result['type'] == 'ranking':
+            st.info(f"Ranking request: {result['query']}")
+            col1, col2 = st.columns([3, 1])
+            with col1:
+                st.write("The Dashboard page shows country rankings and performance comparisons.")
+            with col2:
+                if st.button("View Rankings", type="primary", key="rank_btn"):
+                    st.switch_page("pages/1_Dashboard.py")
+        
+        elif result['type'] == 'multi_search':
+            # Display all found entities
+            results_found = False
             
-            # Display results by category
-            result_types = {
-                'countries': (' Countries', search_results['countries']),
-                'indicators': ('Indicators', search_results['indicators']),
-                'years': (' Years', search_results['years']),
-                'commands': (' Quick Actions', search_results['commands']),
-                'filters': (' Smart Filters', search_results['filters'])
-            }
+            if result['countries']:
+                results_found = True
+                st.markdown("**Countries found:**")
+                col1, col2 = st.columns([3, 1])
+                with col1:
+                    st.write(', '.join(result['countries']))
+                with col2:
+                    if st.button("Analyze Countries", type="primary", key="country_btn"):
+                        config = {
+                            'countries': result['countries'],
+                            'indicator': result['indicators'][0] if result['indicators'] else get_gini_indicator(),
+                            'year_range': result['time_range'] or (int(df['year'].max()) - 10, int(df['year'].max())),
+                            'color_scale': 'Viridis'
+                        }
+                        navigate_with_filter("pages/1_Dashboard.py", config)
             
-            for result_type, (title, items) in result_types.items():
-                if items:
-                    st.markdown(f"### {title}")
-                    
-                    if result_type == 'countries':
-                        for country_info in items:
-                            col1, col2 = st.columns([3, 1])
-                            
-                            with col1:
-                                st.markdown(f"""
-                                <div class='command-card'>
-                                    <h4> {country_info['name']}</h4>
-                                    <p style='color: #94a3b8; font-size: 0.9rem;'>
-                                        <b>Indicators:</b> {country_info['indicators_available']} available<br>
-                                        <b>Coverage:</b> {country_info['years_covered']}<br>
-                                        <b>Data Points:</b> {country_info['data_points']} records
-                                    </p>
-                                </div>
-                                """, unsafe_allow_html=True)
-                            
-                            with col2:
-                                st.write("")  # Spacing
-                                if st.button(f"Explore →", key=f"country_{country_info['name']}", 
-                                           use_container_width=True, type="primary"):
-                                    apply_country_filter(country_info['name'])
-                    
-                    elif result_type == 'indicators':
-                        for indicator in items:
-                            col1, col2 = st.columns([3, 1])
-                            
-                            with col1:
-                                latest_val = format_value(indicator['latest_value']) if indicator['latest_value'] else 'N/A'
-                                st.markdown(f"""
-                                <div class='command-card'>
-                                    <h4> {indicator['human_name']}</h4>
-                                    <p style='color: #94a3b8; font-size: 0.9rem;'>
-                                        <b>Countries:</b> {indicator['countries_available']} available<br>
-                                        <b>Latest Regional Avg:</b> {latest_val}
-                                    </p>
-                                </div>
-                                """, unsafe_allow_html=True)
-                            
-                            with col2:
-                                st.write("")  # Spacing
-                                if st.button(f"Analyze →", key=f"ind_{indicator['name'][:20]}", 
-                                           use_container_width=True, type="primary"):
-                                    apply_indicator_filter(indicator['name'])
-                    
-                    elif result_type == 'years':
-                        for year_info in items:
-                            col1, col2 = st.columns([3, 1])
-                            
-                            with col1:
-                                st.markdown(f"""
-                                <div class='command-card'>
-                                    <h4> Year {year_info['year']}</h4>
-                                    <p style='color: #94a3b8; font-size: 0.9rem;'>
-                                        <b>Records:</b> {year_info['records']}<br>
-                                        <b>Countries:</b> {year_info['countries']}<br>
-                                        <b>Indicators:</b> {year_info['indicators']}
-                                    </p>
-                                </div>
-                                """, unsafe_allow_html=True)
-                            
-                            with col2:
-                                st.write("")  # Spacing
-                                if st.button(f"View Map →", key=f"year_{year_info['year']}", 
-                                           use_container_width=True, type="primary"):
-                                    apply_year_filter(year_info['year'])
-                    
-                    elif result_type == 'commands':
-                        for cmd in items:
-                            col1, col2 = st.columns([3, 1])
-                            
-                            with col1:
-                                st.markdown(f"""
-                                <div class='command-card'>
-                                    <h4>{cmd['name']}</h4>
-                                    <p style='color: #94a3b8; font-size: 0.9rem;'>
-                                        {cmd['description']}
-                                    </p>
-                                </div>
-                                """, unsafe_allow_html=True)
-                            
-                            with col2:
-                                st.write("")  # Spacing
-                                if st.button(f"Go →", key=f"cmd_{cmd['page'][:15]}", 
-                                           use_container_width=True, type="primary"):
-                                    st.switch_page(cmd['page'])
-                    
-                    elif result_type == 'filters':
-                        for filter_info in items:
-                            col1, col2 = st.columns([3, 1])
-                            
-                            with col1:
-                                st.markdown(f"""
-                                <div class='command-card'>
-                                    <h4>🎯 {filter_info['name']}</h4>
-                                    <p style='color: #94a3b8; font-size: 0.9rem;'>
-                                        {filter_info['description']}<br>
-                                        <b>Countries:</b> {len(filter_info.get('countries', []))} matched
-                                    </p>
-                                </div>
-                                """, unsafe_allow_html=True)
-                            
-                            with col2:
-                                st.write("")  # Spacing
-                                if st.button(f"Apply →", key=f"filter_{filter_info['name'][:20]}", 
-                                           use_container_width=True, type="primary"):
-                                    if filter_info.get('countries'):
-                                        config = {
-                                            'countries': filter_info['countries'],
-                                            'indicator': detected_gini_indicator,  # Use auto-detected GINI
-                                            'year_range': (int(df['year'].min()), int(df['year'].max())),
-                                            'color_scale': 'Viridis'
-                                        }
-                                        navigate_with_filter("pages/1_Dashboard.py", config)
+            if result['indicators']:
+                results_found = True
+                st.markdown("**Indicators found:**")
+                col1, col2 = st.columns([3, 1])
+                with col1:
+                    # Show first 5 indicators
+                    display_indicators = result['indicators'][:5]
+                    for ind in display_indicators:
+                        try:
+                            st.write(f"- {human_indicator(ind)}")
+                        except:
+                            st.write(f"- {ind}")
+                    if len(result['indicators']) > 5:
+                        st.caption(f"... and {len(result['indicators']) - 5} more")
+                with col2:
+                    if st.button("Analyze Indicator", type="primary", key="indicator_btn"):
+                        config = {
+                            'countries': result['countries'] if result['countries'] else df['country'].unique().tolist(),
+                            'indicator': result['indicators'][0],
+                            'year_range': result['time_range'] or (int(df['year'].max()) - 10, int(df['year'].max())),
+                            'color_scale': 'Viridis'
+                        }
+                        navigate_with_filter("pages/1_Dashboard.py", config)
+            
+            if result['years']:
+                results_found = True
+                st.markdown("**Years found:**")
+                col1, col2 = st.columns([3, 1])
+                with col1:
+                    st.write(', '.join(map(str, result['years'])))
+                with col2:
+                    if st.button("View on Map", type="primary", key="year_btn"):
+                        selected_year = result['years'][0]
+                        config = {
+                            'countries': df['country'].unique().tolist(),
+                            'indicator': get_gini_indicator(),
+                            'year_range': (selected_year, selected_year),
+                            'color_scale': 'Viridis'
+                        }
+                        navigate_with_filter("pages/3_Map_Analysis.py", config)
+            
+            if result['time_range']:
+                results_found = True
+                st.markdown("**Time range:**")
+                col1, col2 = st.columns([3, 1])
+                with col1:
+                    st.write(f"{result['time_range'][0]} to {result['time_range'][1]}")
+                with col2:
+                    if st.button("Apply Time Filter", type="primary", key="time_btn"):
+                        config = {
+                            'countries': result['countries'] if result['countries'] else df['country'].unique().tolist(),
+                            'indicator': result['indicators'][0] if result['indicators'] else get_gini_indicator(),
+                            'year_range': result['time_range'],
+                            'color_scale': 'Viridis'
+                        }
+                        navigate_with_filter("pages/1_Dashboard.py", config)
+            
+            if result['category']:
+                results_found = True
+                st.markdown("**Category:**")
+                col1, col2 = st.columns([3, 1])
+                with col1:
+                    st.write(result['category'])
+                with col2:
+                    if st.button("View Category", type="primary", key="cat_btn"):
+                        # Navigate to dashboard with category filter
+                        st.info(f"Category filtering: Select '{result['category']}' indicators on Dashboard")
+                        st.switch_page("pages/1_Dashboard.py")
+            
+            if not results_found:
+                st.warning("No results found. Try refining your search.")
 
 st.divider()
 
 # --------------------------------------------------
-# SECTION 2: Quick Action Shortcuts (ALL PAGES!)
+# SECTION 2: Popular Queries
 # --------------------------------------------------
-st.subheader("Quick Action Shortcuts")
-st.caption("One-click navigation to all analysis pages")
+st.subheader("Popular Queries")
 
-# Row 1: Main pages
-col1, col2, col3, col4 = st.columns(4)
+col1, col2, col3 = st.columns(3)
 
 with col1:
-    if st.button("Home", use_container_width=True, type="secondary", key="nav_home"):
-        st.switch_page("home.py")
-        
-with col2:
-    if st.button("Dashboard", use_container_width=True, type="secondary", key="nav_dashboard"):
+    st.markdown("**Quick Navigation**")
+    if st.button("Dashboard", use_container_width=True, key="pop_dashboard"):
         st.switch_page("pages/1_Dashboard.py")
-
-with col3:
-    if st.button(" Map Analysis", use_container_width=True, type="secondary", key="nav_map"):
+    if st.button("Map Analysis", use_container_width=True, key="pop_map"):
         st.switch_page("pages/3_Map_Analysis.py")
-
-with col4:
-    if st.button(" Correlations", use_container_width=True, type="secondary", key="nav_corr"):
+    if st.button("Correlation Explorer", use_container_width=True, key="pop_corr"):
         st.switch_page("pages/4_Correlations.py")
 
-# Row 2: Additional pages
-col5, col6, col7, col8 = st.columns(4)
+with col2:
+    st.markdown("**Data Views**")
+    if st.button("Recent Data (Last 5 Years)", use_container_width=True, key="pop_recent"):
+        max_year = int(df['year'].max())
+        config = {
+            'countries': df['country'].unique().tolist(),
+            'indicator': get_gini_indicator(),
+            'year_range': (max_year - 4, max_year),
+            'color_scale': 'Viridis'
+        }
+        navigate_with_filter("pages/1_Dashboard.py", config)
+    
+    if st.button("Complete Timeline (2000-2024)", use_container_width=True, key="pop_full"):
+        config = {
+            'countries': df['country'].unique().tolist(),
+            'indicator': get_gini_indicator(),
+            'year_range': (int(df['year'].min()), int(df['year'].max())),
+            'color_scale': 'Viridis'
+        }
+        navigate_with_filter("pages/1_Dashboard.py", config)
 
-with col5:
-    if st.button(" Income Simulator", use_container_width=True, type="secondary", key="nav_sim"):
+with col3:
+    st.markdown("**Analysis Tools**")
+    if st.button("Income Simulator", use_container_width=True, key="pop_sim"):
         st.switch_page("pages/5_Income_Simulator.py")
-
-with col6:
-    if st.button(" Data Quality", use_container_width=True, type="secondary", key="nav_quality"):
+    if st.button("Data Quality Check", use_container_width=True, key="pop_quality"):
         st.switch_page("pages/6_Data_Quality.py")
-
-with col7:
-    if st.button(" Indicator Insights", use_container_width=True, type="secondary", key="nav_sunburst"):
-        st.switch_page("pages/7_Indicator_Insights.py")
-
-with col8:
-    if st.button("Temporal", use_container_width=True, type="secondary", key="nav_temporal"):
+    if st.button("Temporal Comparison", use_container_width=True, key="pop_temporal"):
         st.switch_page("pages/8_Temporal_Comparison.py")
-
-# Row 3: Help (centered)
-col_spacer, col_help, col_spacer2 = st.columns([3, 2, 3])
-with col_help:
-    if st.button("Help", use_container_width=True, type="secondary", key="nav_help"):
-        st.switch_page("pages/9_Help.py")
 
 st.divider()
 
 # --------------------------------------------------
-# SECTION 3: Bookmarked Views (SAFE VERSION WITH ERROR HANDLING!)
+# SECTION 3: Enhanced Bookmarks
 # --------------------------------------------------
-st.subheader(" Quick Access Bookmarks")
-st.caption("Pre-configured views for common analysis needs")
+st.subheader("Bookmarked Views")
 
-# Helper function to find the actual GINI indicator name in data
-def get_gini_indicator():
-    """Auto-detect the GINI indicator name from available data"""
-    # Try common variations
-    gini_variations = ['gini_index', 'GINI Index', 'SI.POV.GINI', 'gini', 'GINI']
-    
-    for variation in gini_variations:
-        # Exact match
-        if variation in df['indicator'].values:
-            return variation
-        # Case-insensitive match
-        try:
-            matches = df[df['indicator'].str.contains(variation, case=False, na=False)]
-            if not matches.empty:
-                return matches['indicator'].iloc[0]
-        except:
-            continue
-    
-    # Fallback: return first indicator
-    return df['indicator'].iloc[0] if not df.empty else 'gini_index'
-
-# Helper function to safely get high inequality countries
+# Helper functions for safe data access
 def get_high_inequality_countries(threshold=40):
     """Get countries with average GINI > threshold, with fallback"""
     try:
@@ -641,20 +753,15 @@ def get_high_inequality_countries(threshold=40):
         avg_gini = gini_data.groupby('country')['value'].mean()
         high_countries = avg_gini[avg_gini > threshold].index.tolist()
         
-        # If no countries match, lower threshold or use all
         if not high_countries:
-            # Try lower threshold
             high_countries = avg_gini[avg_gini > 35].index.tolist()
             if not high_countries:
-                # Use all countries as fallback
                 return df['country'].unique().tolist()
         
         return high_countries
     except Exception as e:
-        # If anything fails, return all countries
         return df['country'].unique().tolist()
 
-# Helper function to safely get low inequality countries
 def get_low_inequality_countries(threshold=30):
     """Get countries with average GINI < threshold, with fallback"""
     try:
@@ -667,59 +774,84 @@ def get_low_inequality_countries(threshold=30):
         avg_gini = gini_data.groupby('country')['value'].mean()
         low_countries = avg_gini[avg_gini < threshold].index.tolist()
         
-        # If no countries match, try higher threshold or use all
         if not low_countries:
-            # Try higher threshold
             low_countries = avg_gini[avg_gini < 35].index.tolist()
             if not low_countries:
-                # Use all countries as fallback
                 return df['country'].unique().tolist()
         
         return low_countries
     except Exception as e:
-        # If anything fails, return all countries
         return df['country'].unique().tolist()
 
-# Get the actual GINI indicator name from data
 detected_gini_indicator = get_gini_indicator()
+max_year = int(df['year'].max())
+min_year = int(df['year'].min())
 
-# SAFE BOOKMARKS with automatic error handling
+# Enhanced bookmarks
 bookmarks = {
-    " High Inequality Countries": {
+    "All Countries Overview": {
+        "description": "Dashboard view with all countries, GINI index, last 10 years",
+        "countries": df['country'].unique().tolist(),
+        "indicator": detected_gini_indicator,
+        "year_range": (max(min_year, max_year - 9), max_year),
+        "page": "pages/1_Dashboard.py"
+    },
+    "High Inequality Focus": {
         "description": "Countries with GINI > 40 (severe inequality)",
         "countries": get_high_inequality_countries(40),
         "indicator": detected_gini_indicator,
+        "year_range": (max(min_year, max_year - 9), max_year),
         "page": "pages/1_Dashboard.py"
     },
-    " Low Inequality Countries": {
-        "description": "Countries with GINI < 30 (more equitable)",
+    "Low Inequality Focus": {
+        "description": "Countries with GINI < 30 (more equitable distribution)",
         "countries": get_low_inequality_countries(30),
         "indicator": detected_gini_indicator,
+        "year_range": (max(min_year, max_year - 9), max_year),
         "page": "pages/1_Dashboard.py"
     },
-    " Recent Decade Analysis": {
-        "description": "Focus on 2015-2024 data",
+    "Recent Analysis (2020-2024)": {
+        "description": "Focus on most recent 5 years of data",
         "countries": df['country'].unique().tolist(),
         "indicator": detected_gini_indicator,
-        "year_range": (max(2015, int(df['year'].min())), int(df['year'].max())),
+        "year_range": (max(2020, min_year), max_year),
         "page": "pages/1_Dashboard.py"
     },
-    " GDP vs Inequality": {
-        "description": "Explore economic growth and inequality relationship",
+    "Last Decade (2015-2024)": {
+        "description": "Ten-year analysis of inequality trends",
+        "countries": df['country'].unique().tolist(),
+        "indicator": detected_gini_indicator,
+        "year_range": (max(2015, min_year), max_year),
+        "page": "pages/1_Dashboard.py"
+    },
+    "Complete Timeline (2000-2024)": {
+        "description": "Full 24-year historical analysis",
+        "countries": df['country'].unique().tolist(),
+        "indicator": detected_gini_indicator,
+        "year_range": (min_year, max_year),
+        "page": "pages/1_Dashboard.py"
+    },
+    "Geographic Visualization": {
+        "description": "Latest year choropleth map view",
+        "countries": df['country'].unique().tolist(),
+        "indicator": detected_gini_indicator,
+        "year_range": (max_year, max_year),
+        "page": "pages/3_Map_Analysis.py"
+    },
+    "Correlation Analysis": {
+        "description": "Explore relationships between inequality and drivers",
         "page": "pages/4_Correlations.py"
     },
-    " Regional Comparison": {
-        "description": "Compare all countries side-by-side",
+    "Indicator Insights (Sunburst)": {
+        "description": "Multi-dimensional indicator dominance patterns",
         "countries": df['country'].unique().tolist(),
-        "indicator": detected_gini_indicator,
         "page": "pages/7_Indicator_Insights.py"
     },
-    " Latest Year Geographic View": {
-        "description": "Map visualization of most recent data",
+    "Temporal Comparison Tool": {
+        "description": "Compare different time periods side-by-side",
         "countries": df['country'].unique().tolist(),
         "indicator": detected_gini_indicator,
-        "year_range": (int(df['year'].max()), int(df['year'].max())),
-        "page": "pages/3_Map_Analysis.py"
+        "page": "pages/8_Temporal_Comparison.py"
     }
 }
 
@@ -748,23 +880,23 @@ with col_desc:
     
     # Show filter info if countries are specified
     if 'countries' in bookmark_info:
-        st.caption(f"📍 Will filter to: {len(bookmark_info['countries'])} countries")
+        st.caption(f"Filters: {len(bookmark_info['countries'])} countries")
 
 with col_action:
     st.write("")  # Spacing
     st.write("")  # Spacing
-    if st.button("Execute Bookmark →", use_container_width=True, type="primary", key="execute_bookmark"):
+    if st.button("Execute Bookmark", use_container_width=True, type="primary", key="execute_bookmark"):
         # Build config if needed
         if 'countries' in bookmark_info:
             # Validate that we have countries
             if not bookmark_info['countries']:
-                st.error("❌ No countries match this filter. Please try a different bookmark.")
+                st.error("No countries match this filter. Please try a different bookmark.")
                 st.stop()
             
             config = {
                 'countries': bookmark_info['countries'],
                 'indicator': bookmark_info.get('indicator', detected_gini_indicator),
-                'year_range': bookmark_info.get('year_range', (int(df['year'].min()), int(df['year'].max()))),
+                'year_range': bookmark_info.get('year_range', (min_year, max_year)),
                 'color_scale': 'Viridis'
             }
             navigate_with_filter(bookmark_info['page'], config)
@@ -778,7 +910,7 @@ st.divider()
 # SECTION 4: Search History
 # --------------------------------------------------
 if st.session_state.search_history:
-    st.subheader(" Recent Searches")
+    st.subheader("Recent Searches")
     
     col1, col2 = st.columns([4, 1])
     with col1:
@@ -788,11 +920,11 @@ if st.session_state.search_history:
             st.session_state.search_history = []
             st.rerun()
     
-    # Display history as clickable pills
+    # Display history as clickable buttons
     cols = st.columns(5)
     for idx, query in enumerate(st.session_state.search_history[:10]):
         with cols[idx % 5]:
-            if st.button(f"🔍 {query}", key=f"history_{idx}", use_container_width=True):
+            if st.button(f"{query}", key=f"history_{idx}", use_container_width=True):
                 st.session_state.main_search_input = query
                 st.rerun()
 
@@ -801,46 +933,60 @@ st.divider()
 # --------------------------------------------------
 # SECTION 5: Search Tips & Help
 # --------------------------------------------------
-with st.expander("💡 Search Tips & Keyboard Shortcuts"):
+with st.expander("Search Tips & Command Reference"):
     col1, col2 = st.columns(2)
     
     with col1:
         st.markdown("""
         ### Search Capabilities
         
-        ** By Country:**
+        **By Country:**
         - Type: `Bangladesh`, `India`, `Pakistan`
-        - Click "Explore →" to view in dashboard
+        - Click "Analyze" to view in dashboard
         
-        ** By Indicator:**
-        - Type: `GINI`, `HDI`, `GDP`
-        - Click "Analyze →" to view trends
+        **By Indicator:**
+        - Type: `GINI`, `HDI`, `GDP`, `poverty`
+        - Click "Analyze" to view trends
         
-        ** By Year:**
+        **By Year:**
         - Type: `2020`, `2015`, `2010`
-        - Click "View Map →" to see geographic view
+        - Click "View Map" for geographic view
         
-        **⚡ By Command:**
-        - Type: `map`, `correlation`, `dashboard`
-        - Click "Go →" to navigate instantly
+        **By Command:**
+        - Type: `map`, `dashboard`, `simulator`, `correlation`
+        - Instant navigation to pages
+        
+        **Time Ranges:**
+        - `recent` - Last 5 years
+        - `last decade` - Last 10 years
+        - `2015-2023` - Custom range
+        - `all time` - Complete timeline
         """)
     
     with col2:
         st.markdown("""
-        ### Pro Tips
+        ### Advanced Features
         
-        ✅ **Combine terms:** `Bangladesh 2020`  
-        ✅ **Partial matches:** `gin` finds GINI  
-        ✅ **Natural language:** `high inequality`  
-        ✅ **Use bookmarks:** Fastest for common views  
-        ✅ **Check history:** Re-run past searches  
+        **Comparisons:**
+        - `compare India Pakistan` - Multi-country analysis
+        - `India vs Bangladesh` - Side-by-side comparison
         
-        ### What's Different
+        **Categories:**
+        - `poverty indicators` - Filter by category
+        - `education data` - Category-specific view
         
-         **Real Navigation:** Buttons actually work!  
-         **Filters Applied:** Goes to page with data pre-loaded  
-         **One-Click Actions:** No manual configuration needed  
-         **Working Bookmarks:** Execute complex views instantly
+        **Commands List:**
+        - `dashboard` - Main dashboard
+        - `map` - Geographic visualization
+        - `correlation` - Correlation explorer
+        - `simulator` - Income simulator
+        - `temporal` - Time comparison
+        - `quality` - Data quality check
+        - `insights` - Sunburst visualization
+        - `help` - Documentation
+        
+        **Export:**
+        - Type `export` or `download` for instructions
         """)
 
 # --------------------------------------------------
@@ -849,7 +995,8 @@ with st.expander("💡 Search Tips & Keyboard Shortcuts"):
 st.divider()
 st.markdown("""
 <div style='text-align: center; color: #94a3b8; font-size: 0.85rem;'>
-    <p><strong>🔍 Smart Search & Navigation Hub</strong> | South Asia Inequality Analysis Platform</p>
+    <p><strong>Smart Search & Navigation Hub</strong> | South Asia Inequality Analysis Platform</p>
+    <p>Enhanced with natural language commands, time filters, comparisons, and intelligent parsing</p>
 </div>
 """, unsafe_allow_html=True)
 
