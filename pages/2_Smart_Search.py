@@ -337,7 +337,7 @@ def detect_comparison_command(query, df):
     countries = df['country'].unique().tolist()
     
     # Check for comparison keywords
-    if any(word in query_lower for word in ['compare', 'vs', 'versus', 'versus']):
+    if any(word in query_lower for word in ['compare', 'vs', 'versus',]):
         # Extract country names
         found_countries = []
         for country in countries:
