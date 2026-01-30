@@ -232,6 +232,17 @@ def ensure_public_analysis(df):
             "color_scale": "Viridis",
         }
 
+def render_availability_badge(actual_min, actual_max, selected_min, selected_max):
+    """Render data availability warning badge if ranges mismatch"""
+    if actual_min != selected_min or actual_max != selected_max:
+        st.markdown(f"""
+        <div style="background: rgba(245, 158, 11, 0.1); border-left: 3px solid #f59e0b; padding: 10px 15px; border-radius: 6px; margin-bottom: 15px;">
+            <span style="color: #fbbf24; font-size: 0.875rem;">
+                ⚠️ <b>Data Availability:</b> Actual data spans <b>{actual_min}–{actual_max}</b> (Selected range: {selected_min}–{selected_max})
+            </span>
+        </div>
+        """, unsafe_allow_html=True)
+
 # Load data
 df = load_inequality_data()
 
@@ -807,14 +818,9 @@ selected_min_year = config['year_range'][0]
 selected_max_year = config['year_range'][1]
 
 # Show data availability info if there's a mismatch
-if actual_min_year != selected_min_year or actual_max_year != selected_max_year:
-    st.markdown(f"""
-    <div style="background: rgba(245, 158, 11, 0.1); border-left: 3px solid #f59e0b; padding: 10px 15px; border-radius: 6px; margin-bottom: 15px;">
-        <span style="color: #fbbf24; font-size: 0.875rem;">
-            ⚠️ <b>Data Availability:</b> Actual data spans <b>{actual_min_year}–{actual_max_year}</b> (Selected range: {selected_min_year}–{selected_max_year})
-        </span>
-    </div>
-    """, unsafe_allow_html=True)
+# Show data availability info if there's a mismatch
+render_availability_badge(actual_min_year, actual_max_year, selected_min_year, selected_max_year)
+
 
 
 # Main area chart -
@@ -953,6 +959,8 @@ st.markdown(f"""
 
 st.markdown("---")
 st.markdown('<div class="section-header">Country Comparison & Distribution</div>', unsafe_allow_html=True)
+render_availability_badge(actual_min_year, actual_max_year, selected_min_year, selected_max_year)
+
 
 col_viz1, col_viz2 = st.columns([1.5, 1], gap="large")  # ✅ FIX: Added gap="large"
 
@@ -1248,6 +1256,8 @@ st.markdown(legend_html, unsafe_allow_html=True)
 
 st.markdown("---")
 st.markdown('<div class="section-header" style="font-size: 1.5rem;">Country Correlation Analysis</div>', unsafe_allow_html=True)
+render_availability_badge(actual_min_year, actual_max_year, selected_min_year, selected_max_year)
+
 
 st.markdown("""
 <div style="background: rgba(59, 130, 246, 0.05); padding: 15px; border-radius: 8px; border-left: 3px solid #3b82f6; margin-bottom: 20px;">
@@ -1645,6 +1655,8 @@ if show_correlation and correlation_matrix is not None:
 
 st.markdown("---")
 st.markdown('<div class="section-header">Detailed Rankings & Individual Trends</div>', unsafe_allow_html=True)
+render_availability_badge(actual_min_year, actual_max_year, selected_min_year, selected_max_year)
+
 
 col_bottom1, col_bottom2 = st.columns([1, 1.5])
 
