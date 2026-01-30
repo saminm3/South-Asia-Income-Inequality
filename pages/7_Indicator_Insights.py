@@ -440,24 +440,39 @@ for c in countries_in_view:
 
 scores_df = pd.DataFrame(scores).sort_values("score", ascending=False).reset_index(drop=True)
 
+# ------------------------------------------------------------
+# FIX: Do not assign inequality level if no inequality indicators exist
+# ------------------------------------------------------------
+
 levels = {}
-if len(scores_df) <= 1:
-    for c in countries_in_view:
+
+# First: mark countries with 0% inequality-indicator share as NO DATA
+for c in countries_in_view:
+    if ineq_share_map.get(c, 0.0) == 0.0:
+        levels[c] = "NO DATA"
+
+# Then: only rank the remaining countries (those with some inequality coverage)
+rankable = scores_df[scores_df["country"].isin([c for c in countries_in_view if levels.get(c) != "NO DATA"])]
+
+if len(rankable) <= 1:
+    for c in rankable["country"].tolist():
         levels[c] = "Moderate"
 else:
-    for i, row in scores_df.iterrows():
+    for i, row in rankable.reset_index(drop=True).iterrows():
         if i == 0:
             levels[row["country"]] = "High"
-        elif i == len(scores_df) - 1:
+        elif i == len(rankable) - 1:
             levels[row["country"]] = "Lower"
         else:
             levels[row["country"]] = "Moderate"
 
+
+
 st.markdown(f"**For {selected_year}, among the selected countries:**")
 for c in countries_in_view:
     lvl = levels.get(c, "Moderate")
-    emoji = "🔴" if lvl == "High" else ("🟠" if lvl == "Moderate" else "🟢")
-    st.write(f"- {emoji} **{lvl} inequality signal:** {c}")
+    emoji = "⚪" if lvl == "NO DATA" else ("🔴" if lvl == "High" else ("🟠" if lvl == "Moderate" else "🟢"))
+    st.write(f"- {emoji} **{lvl} signal:** {c}")
 
 st.caption(
     "This is a descriptive, dominance-based inequality signal derived from available "
@@ -466,7 +481,8 @@ st.caption(
 
 for c in countries_in_view:
     lvl = levels.get(c, "Moderate")
-    emoji = "🔴" if lvl == "High" else ("🟠" if lvl == "Moderate" else "🟢")
+    emoji = "⚪" if lvl == "NO DATA" else ("🔴" if lvl == "High" else ("🟠" if lvl == "Moderate" else "🟢"))
+
 
     top_drivers = drivers_map.get(c, [])
     driver_text = ", ".join(top_drivers) if top_drivers else "available indicators"
@@ -482,24 +498,36 @@ for c in countries_in_view:
         
         st.markdown("**Interpretation:**")
         
-        if lvl == "High":
+        if lvl == "NO DATA":
+           explanation = f"""
+           **{c}** cannot be assigned a **signal** for this year because the inequality-specific indicators
+           (Gini, income shares, poverty, or unemployment) are not available in the dataset for the selected year.
+
+           The visualization still displays the indicators that *are* available for {c} in this year (for example: **{driver_text}**),
+           but those alone are not sufficient to infer inequality.
+
+           
+           """
+
+
+        elif levels[c] == "High":
             explanation = f"""
-            **{c}** displays a **HIGH inequality signal** because inequality-related indicators (such as {driver_text}) 
-            dominate its socioeconomic profile, while economic growth and development factors show relatively weaker presence. 
-            This suggests inequality challenges are prominent and may require targeted policy intervention.
+            **{c}** displays a **HIGH inequality signal** because inequality-related indicators
+            dominate its socioeconomic profile relative to other countries in the same year.
             """
-        elif lvl == "Moderate":
+
+        elif levels[c] == "Moderate":
             explanation = f"""
-            **{c}** shows a **MODERATE inequality signal** with a balanced socioeconomic mix. Inequality-related drivers 
-            ({driver_text}) are visible but counterbalanced by economic growth and development indicators. 
-            This suggests neither inequality nor growth factors overwhelmingly dominate the country's profile.
+            **{c}** shows a **MODERATE inequality signal**, where inequality indicators are present
+            but balanced by development and economic indicators.
             """
-        else:
+
+        else:  # Lower
             explanation = f"""
-            **{c}** exhibits a **LOWER inequality signal** (relative to regional peers) because economic growth, development, 
-            and infrastructure indicators ({driver_text}) are more prominent than inequality-specific metrics. 
-            This indicates a comparatively better-balanced socioeconomic landscape, though inequality may still exist at lower visibility.
+            **{c}** exhibits a **LOWER inequality signal** relative to regional peers,
+            based on the available inequality-related indicators.
             """
+
         
         st.markdown(explanation)
         
@@ -531,7 +559,8 @@ spot_country = countries_in_view[st.session_state.spotlight_idx]
 
 with colB:
     lvl = levels.get(spot_country, "Moderate")
-    emoji = "🔴" if lvl == "High" else ("🟠" if lvl == "Moderate" else "🟢")
+    emoji = "⚪" if lvl == "NO DATA" else ("🔴" if lvl == "High" else ("🟠" if lvl == "Moderate" else "🟢"))
+
     st.subheader(f"Spotlight: {spot_country} ({selected_year}) — {emoji} {lvl} signal")
     st.caption("Use Previous/Next to explore — this uses Home selection automatically.")
 
