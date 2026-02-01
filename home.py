@@ -473,11 +473,14 @@ with col_btn2:
 st.markdown("<br><br>", unsafe_allow_html=True)
 st.markdown("""
 <div style="text-align: center; padding: 2rem 0; border-top: 1px solid rgba(148, 163, 184, 0.1);">
-    <p style="color: #64748b; font-size: 0.85rem; margin: 0;">
+    <p style="color: #64748b; font-size: 1.00rem; margin: 0;">
         <strong style="color: #8b5cf6;">South Asia Inequality Analytics Platform</strong>
     </p>
-    <p style="color: #475569; font-size: 0.7rem; margin-top: 0.5rem;">
+    <p style="color: #475569; font-size: 0.85rem; margin-top: 0.5rem;">
         Built with  for data-driven policy making
+    </p>
+    <p style="color: #475569; font-size: 0.85rem; margin-top: 0.5rem;">
+        Developed by Samin Mehzabeen, Shaiera Sultana Oishe, Tabassum Bintay Mafij & Asma Faria Mayami.
     </p>
 </div>
 """, unsafe_allow_html=True)
